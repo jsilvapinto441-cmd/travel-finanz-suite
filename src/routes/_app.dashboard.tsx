@@ -1,0 +1,214 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { PageContainer, PageHeader } from "@/components/page-header";
+import { KpiCard } from "@/components/kpi-card";
+import { Card } from "@/components/ui/card";
+import { formatCurrency, formatMonth } from "@/lib/format";
+import {
+  ArrowDownLeft, ArrowUpRight, TrendingUp, AlertTriangle, Wallet, Building2,
+} from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell, Legend,
+} from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { StatusBadge } from "@/components/status-badge";
+
+export const Route = createFileRoute("/_app/dashboard")({
+  component: Dashboard,
+});
+
+function Dashboard() {
+  const [empresaId, setEmpresaId] = useState<string>("all");
+
+  const { data: empresas } = useQuery({
+    queryKey: ["empresas-list"],
+    queryFn: async () => (await supabase.from("empresas").select("id, nome, cor").order("nome")).data ?? [],
+  });
+
+  const { data: recebiveis } = useQuery({
+    queryKey: ["dash-recebiveis", empresaId],
+    queryFn: async () => {
+      let q = supabase.from("recebiveis").select("*");
+      if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+      return (await q).data ?? [];
+    },
+  });
+
+  const { data: despesas } = useQuery({
+    queryKey: ["dash-despesas", empresaId],
+    queryFn: async () => {
+      let q = supabase.from("despesas").select("*");
+      if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+      return (await q).data ?? [];
+    },
+  });
+
+  const totalReceber = (recebiveis ?? []).filter((r) => r.status !== "cancelado").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
+  const recebido = (recebiveis ?? []).filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
+  const totalDespesa = (despesas ?? []).filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
+  const pago = (despesas ?? []).filter((d) => d.status === "pago").reduce((s, d) => s + Number(d.valor ?? 0), 0);
+  const lucro = recebido - pago;
+  const atrasados = [
+    ...(recebiveis ?? []).filter((r) => r.status === "atrasado"),
+    ...(despesas ?? []).filter((d) => d.status === "atrasado"),
+  ];
+
+  // Monthly flow (last 6 months)
+  const now = new Date();
+  const months: { key: string; label: string; entradas: number; saidas: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    months.push({ key, label: formatMonth(d), entradas: 0, saidas: 0 });
+  }
+  for (const r of recebiveis ?? []) {
+    const dateStr = r.data_recebimento ?? r.data_vencimento;
+    if (!dateStr) continue;
+    const key = dateStr.slice(0, 7);
+    const m = months.find((x) => x.key === key);
+    if (m) m.entradas += Number(r.valor_total ?? 0);
+  }
+  for (const d of despesas ?? []) {
+    const dateStr = d.data_pagamento ?? d.data_vencimento;
+    if (!dateStr) continue;
+    const key = dateStr.slice(0, 7);
+    const m = months.find((x) => x.key === key);
+    if (m) m.saidas += Number(d.valor ?? 0);
+  }
+
+  // Despesas by category
+  const catMap = new Map<string, number>();
+  for (const d of despesas ?? []) {
+    catMap.set(d.categoria, (catMap.get(d.categoria) ?? 0) + Number(d.valor ?? 0));
+  }
+  const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
+  const colors = ["#0d7a5f", "#c9a84c", "#064e3b", "#8b6f4e", "#0f766e", "#a16207", "#15803d", "#854d0e", "#166534", "#713f12"];
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Dashboard Financeiro"
+        description="Visão consolidada de receitas, despesas e lucro."
+        actions={
+          <Select value={empresaId} onValueChange={setEmpresaId}>
+            <SelectTrigger className="w-[220px]">
+              <Building2 className="size-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Filtrar empresa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as empresas</SelectItem>
+              {empresas?.map((e) => (
+                <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <KpiCard label="Total a Receber" value={formatCurrency(totalReceber)}
+          hint={`Recebido: ${formatCurrency(recebido)}`} icon={<ArrowDownLeft className="size-5" />} tone="success" />
+        <KpiCard label="Total Despesas" value={formatCurrency(totalDespesa)}
+          hint={`Pago: ${formatCurrency(pago)}`} icon={<ArrowUpRight className="size-5" />} tone="destructive" />
+        <KpiCard label="Lucro Líquido" value={formatCurrency(lucro)}
+          hint="Recebido - Pago" icon={<TrendingUp className="size-5" />} tone="gold" />
+        <KpiCard label="Em Atraso" value={atrasados.length}
+          hint="Contas vencidas" icon={<AlertTriangle className="size-5" />} tone="warning" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <Card className="lg:col-span-2 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-display font-semibold">Fluxo de Caixa</h3>
+              <p className="text-xs text-muted-foreground">Últimos 6 meses</p>
+            </div>
+            <Wallet className="size-5 text-muted-foreground" />
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer>
+              <BarChart data={months}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="entradas" name="Entradas" fill="var(--color-primary)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="saidas" name="Saídas" fill="var(--color-gold)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="font-display font-semibold mb-4">Despesas por Categoria</h3>
+          <div className="h-72">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={catData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
+                  {catData.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
+                </Pie>
+                <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-1.5 mt-2 text-xs">
+            {catData.slice(0, 5).map((c, i) => (
+              <div key={c.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="size-2.5 rounded-full" style={{ background: colors[i % colors.length] }} />
+                  <span className="capitalize">{c.name.replace(/_/g, " ")}</span>
+                </div>
+                <span className="font-medium">{formatCurrency(c.value)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display font-semibold">Evolução Mensal — Lucro</h3>
+        </div>
+        <div className="h-64">
+          <ResponsiveContainer>
+            <LineChart data={months.map((m) => ({ ...m, lucro: m.entradas - m.saidas }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+              <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+              <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
+              <Line type="monotone" dataKey="lucro" stroke="var(--color-primary)" strokeWidth={3} dot={{ r: 5, fill: "var(--color-gold)" }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      {atrasados.length > 0 && (
+        <Card className="p-6 mt-6 border-destructive/30">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="size-4 text-destructive" />
+            <h3 className="font-display font-semibold">Itens em Atraso</h3>
+            <span className="text-xs text-muted-foreground">({atrasados.length})</span>
+          </div>
+          <div className="space-y-2">
+            {atrasados.slice(0, 6).map((item: any) => (
+              <div key={item.id} className="flex items-center justify-between text-sm py-2 border-b border-border last:border-0">
+                <div>
+                  <div className="font-medium">{item.pagador ?? item.descricao}</div>
+                  <div className="text-xs text-muted-foreground">Venc. {item.data_vencimento ?? "—"}</div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-medium">{formatCurrency(item.valor_total ?? item.valor)}</span>
+                  <StatusBadge status={item.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </PageContainer>
+  );
+}
