@@ -59,7 +59,7 @@ export function DataTable<T extends { id: string }>({
     queryFn: async () => {
       const { data, error } = await supabase.from(table as any).select("*").order(orderBy, { ascending });
       if (error) throw error;
-      return (data ?? []) as T[];
+      return (data ?? []) as unknown as T[];
     },
   });
 
