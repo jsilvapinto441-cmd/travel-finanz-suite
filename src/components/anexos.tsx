@@ -94,7 +94,8 @@ export function AnexosManager({
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
-      const ext = file.name.split(".").pop() ?? "bin";
+      const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
+      // Nome renomeado automaticamente — não usamos o nome original no path
       const path = `${entidade}/${entidade_id}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("anexos")
         .upload(path, file, { contentType: file.type, upsert: false });
@@ -107,6 +108,7 @@ export function AnexosManager({
         await supabase.storage.from("anexos").remove([path]);
         throw dbErr;
       }
+      await audit("upload", entidade, entidade_id, { nome: file.name, tamanho: file.size, mime: file.type });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["anexos", entidade, entidade_id] });
@@ -121,6 +123,7 @@ export function AnexosManager({
       await supabase.storage.from("anexos").remove([a.path]);
       const { error } = await supabase.from("anexos").delete().eq("id", a.id);
       if (error) throw error;
+      await audit("delete_file", entidade, entidade_id, { nome: a.nome, path: a.path });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["anexos", entidade, entidade_id] });
@@ -134,6 +137,7 @@ export function AnexosManager({
     const { data, error } = await supabase.storage.from("anexos")
       .createSignedUrl(a.path, 60);
     if (error || !data) { toast.error("Falha ao gerar link"); return; }
+    audit("download", entidade, entidade_id, { nome: a.nome });
     window.open(data.signedUrl, "_blank");
   }
 
@@ -141,12 +145,14 @@ export function AnexosManager({
     if (!files?.length) return;
     setUploading(true);
     for (const f of Array.from(files)) {
-      if (f.size > 20 * 1024 * 1024) { toast.error(`${f.name}: máx 20MB`); continue; }
+      const err = validateFile(f);
+      if (err) { toast.error(err); continue; }
       await upload.mutateAsync(f);
     }
     setUploading(false);
     if (inputRef.current) inputRef.current.value = "";
   }
+
 
   return (
     <Popover>
