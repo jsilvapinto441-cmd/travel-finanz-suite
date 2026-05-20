@@ -22,12 +22,17 @@ function Page() {
   const { data: contratos } = useContratos();
   return (
     <PageContainer>
-      <PageHeader title="Recebíveis" description="Contas a receber." />
+      <PageHeader title="Recebíveis" description="Contas a receber. Lançamentos parcelados geram parcelas filhas automaticamente." />
       <DataTable<T>
         table="recebiveis" title="Recebível" searchFields={["pagador", "numero_fatura"]}
-        defaultValues={{ status: "em_aberto", parcelas: 1 }}
+        defaultValues={{ status: "em_aberto", parcelas: 1, frequencia: "mensal" }}
         columns={[
-          { key: "pagador", label: "Pagador", render: (r) => <span className="font-medium">{r.pagador}</span> },
+          { key: "pagador", label: "Pagador", render: (r) => (
+            <div>
+              <div className="font-medium">{r.pagador}</div>
+              {r.parcelas > 1 && <div className="text-xs text-muted-foreground">Parcela {r.numero_parcela}/{r.parcelas}</div>}
+            </div>
+          ) },
           { key: "empresa", label: "Empresa", render: (r) => nomeById(empresas, r.empresa_id) },
           { key: "numero_fatura", label: "Fatura" },
           { key: "valor_total", label: "Valor", render: (r) => formatCurrency(r.valor_total) },
