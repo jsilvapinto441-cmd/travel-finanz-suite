@@ -5,6 +5,7 @@ import { TextField, NumberField, SelectField, TextAreaField } from "@/components
 import { useEmpresas, useMissoes, useContratos, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
+import { AnexosCell } from "@/components/anexos";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
