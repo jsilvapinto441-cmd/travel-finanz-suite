@@ -43,11 +43,8 @@ export function AppShell() {
     <div className="flex min-h-screen bg-background">
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
 
-        <div className="px-6 py-7 border-b border-sidebar-border">
-          <img src={logo} alt="PRODUZ" className="h-8 w-auto" />
-          <div className="text-[11px] tracking-wider uppercase text-sidebar-foreground/60 mt-2">
-            Gestão Interna
-          </div>
+        <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center">
+          <img src={logo} alt="PRODUZ" className="h-9 w-auto" />
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {nav.map((item) => {
