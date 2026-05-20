@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useIdleTimeout } from "@/lib/idle-timeout";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import logo from "@/assets/produz-logo.png";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
