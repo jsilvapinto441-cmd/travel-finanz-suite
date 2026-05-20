@@ -115,9 +115,13 @@ export type Database = {
           descricao: string
           empresa_id: string | null
           fornecedor_id: string | null
+          frequencia: string
           id: string
           missao_id: string | null
+          numero_parcela: number
           observacoes: string | null
+          parcelas: number
+          parent_id: string | null
           status: Database["public"]["Enums"]["status_financeiro"]
           updated_at: string
           valor: number
@@ -132,9 +136,13 @@ export type Database = {
           descricao: string
           empresa_id?: string | null
           fornecedor_id?: string | null
+          frequencia?: string
           id?: string
           missao_id?: string | null
+          numero_parcela?: number
           observacoes?: string | null
+          parcelas?: number
+          parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
           valor?: number
@@ -149,9 +157,13 @@ export type Database = {
           descricao?: string
           empresa_id?: string | null
           fornecedor_id?: string | null
+          frequencia?: string
           id?: string
           missao_id?: string | null
+          numero_parcela?: number
           observacoes?: string | null
+          parcelas?: number
+          parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
           valor?: number
@@ -183,6 +195,13 @@ export type Database = {
             columns: ["missao_id"]
             isOneToOne: false
             referencedRelation: "missoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "despesas"
             referencedColumns: ["id"]
           },
         ]
@@ -381,12 +400,15 @@ export type Database = {
           data_recebimento: string | null
           data_vencimento: string | null
           empresa_id: string | null
+          frequencia: string
           id: string
           missao_id: string | null
           numero_fatura: string | null
+          numero_parcela: number
           observacoes: string | null
           pagador: string
           parcelas: number
+          parent_id: string | null
           status: Database["public"]["Enums"]["status_financeiro"]
           updated_at: string
           valor_parcela: number
@@ -400,12 +422,15 @@ export type Database = {
           data_recebimento?: string | null
           data_vencimento?: string | null
           empresa_id?: string | null
+          frequencia?: string
           id?: string
           missao_id?: string | null
           numero_fatura?: string | null
+          numero_parcela?: number
           observacoes?: string | null
           pagador: string
           parcelas?: number
+          parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
           valor_parcela?: number
@@ -419,12 +444,15 @@ export type Database = {
           data_recebimento?: string | null
           data_vencimento?: string | null
           empresa_id?: string | null
+          frequencia?: string
           id?: string
           missao_id?: string | null
           numero_fatura?: string | null
+          numero_parcela?: number
           observacoes?: string | null
           pagador?: string
           parcelas?: number
+          parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
           valor_parcela?: number
@@ -452,6 +480,13 @@ export type Database = {
             referencedRelation: "missoes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "recebiveis_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "recebiveis"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -477,9 +512,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      fluxo_caixa_mensal: {
+        Row: {
+          empresa_id: string | null
+          mes: string | null
+          previsto_entradas: number | null
+          previsto_saidas: number | null
+          realizado_entradas: number | null
+          realizado_saidas: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      add_freq: {
+        Args: { base_date: string; freq: string; n: number }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -488,6 +537,7 @@ export type Database = {
         Returns: boolean
       }
       is_authenticated_user: { Args: never; Returns: boolean }
+      marcar_atrasados: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "financeiro" | "viewer"
