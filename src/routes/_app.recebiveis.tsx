@@ -51,6 +51,11 @@ function Page() {
               options={(contratos ?? []).map((c) => ({ value: c.id, label: `${c.numero ?? ""} ${c.cliente}` }))} />
             <NumberField label="Valor Total" value={values.valor_total} onChange={(v) => setValues({ ...values, valor_total: v })} />
             <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
+            <SelectField label="Frequência" value={values.frequencia ?? "mensal"} onChange={(v) => setValues({ ...values, frequencia: v })}
+              options={[
+                { value: "mensal", label: "Mensal" }, { value: "quinzenal", label: "Quinzenal" },
+                { value: "semanal", label: "Semanal" }, { value: "anual", label: "Anual" },
+              ]} />
             <NumberField label="Valor Parcela" value={values.valor_parcela} onChange={(v) => setValues({ ...values, valor_parcela: v })} />
             <TextField label="Vencimento" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} type="date" />
             <TextField label="Recebimento" value={values.data_recebimento} onChange={(v) => setValues({ ...values, data_recebimento: v })} type="date" />
