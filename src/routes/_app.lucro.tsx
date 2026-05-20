@@ -12,34 +12,44 @@ import {
 
 export const Route = createFileRoute("/_app/lucro")({ component: Page });
 
-function Page() {
-  const { data: empresas } = useQuery({
-    queryKey: ["lucro-empresas"],
-    queryFn: async () => (await supabase.from("empresas").select("*").order("nome")).data ?? [],
-  });
-  const { data: contratos } = useQuery({
-    queryKey: ["lucro-contratos"],
-    queryFn: async () => (await supabase.from("contratos").select("*")).data ?? [],
-  });
-  const { data: recebiveis } = useQuery({
-    queryKey: ["lucro-recebiveis"],
-    queryFn: async () => (await supabase.from("recebiveis").select("*")).data ?? [],
-  });
-  const { data: despesas } = useQuery({
-    queryKey: ["lucro-despesas"],
-    queryFn: async () => (await supabase.from("despesas").select("*")).data ?? [],
-  });
+type LucroEmpresa = {
+  empresa_id: string; nome: string; cor: string | null;
+  receita_realizada: number; receita_prevista: number;
+  despesa_realizada: number; despesa_prevista: number;
+  lucro_realizado: number; lucro_projetado: number;
+};
+type LucroContrato = {
+  contrato_id: string; empresa_id: string | null; cliente: string; numero: string | null;
+  valor_contrato: number;
+  receita_realizada: number; receita_prevista: number;
+  despesa_realizada: number; despesa_prevista: number;
+  lucro_realizado: number; lucro_projetado: number;
+};
 
-  const recPaid = (id: string | null, key: "contrato_id" | "empresa_id") =>
-    (recebiveis ?? []).filter((r) => r[key] === id && r.status === "pago")
-      .reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
-  const expPaid = (id: string | null, key: "contrato_id" | "empresa_id") =>
-    (despesas ?? []).filter((r) => r[key] === id && r.status === "pago")
-      .reduce((s, r) => s + Number(r.valor ?? 0), 0);
+function Page() {
+  const db = supabase as unknown as {
+    from: (t: string) => {
+      select: (c: string) => { order: (col: string) => Promise<{ data: unknown }> };
+    };
+  };
+  const { data: empresas = [] } = useQuery({
+    queryKey: ["lucro-por-empresa"],
+    queryFn: async () => {
+      const { data } = await db.from("lucro_por_empresa").select("*").order("nome");
+      return (data ?? []) as LucroEmpresa[];
+    },
+  });
+  const { data: contratos = [] } = useQuery({
+    queryKey: ["lucro-por-contrato"],
+    queryFn: async () => {
+      const { data } = await db.from("lucro_por_contrato").select("*").order("cliente");
+      return (data ?? []) as LucroContrato[];
+    },
+  });
 
   return (
     <PageContainer>
-      <PageHeader title="Lucros" description="Análise de lucro por contrato e por empresa." />
+      <PageHeader title="Lucros" description="Lucro realizado (pago/recebido) e projetado (incluindo previstos) por empresa e contrato." />
       <Tabs defaultValue="empresas">
         <TabsList>
           <TabsTrigger value="empresas">Por Empresa</TabsTrigger>
@@ -52,35 +62,32 @@ function Page() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Empresa</TableHead>
-                  <TableHead className="text-right">Receitas</TableHead>
-                  <TableHead className="text-right">Despesas</TableHead>
-                  <TableHead className="text-right">Lucro Líquido</TableHead>
+                  <TableHead className="text-right">Recebido</TableHead>
+                  <TableHead className="text-right">Pago</TableHead>
+                  <TableHead className="text-right">Lucro Realizado</TableHead>
+                  <TableHead className="text-right">Lucro Projetado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {empresas?.map((e) => {
-                  const r = recPaid(e.id, "empresa_id");
-                  const d = expPaid(e.id, "empresa_id");
-                  const lucro = r - d;
-                  return (
-                    <TableRow key={e.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2 font-medium">
-                          <span className="size-2.5 rounded-full" style={{ background: e.cor ?? "#0d7a5f" }} />
-                          {e.nome}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right text-success">{formatCurrency(r)}</TableCell>
-                      <TableCell className="text-right text-destructive">{formatCurrency(d)}</TableCell>
-                      <TableCell className={"text-right font-semibold " + (lucro >= 0 ? "text-primary" : "text-destructive")}>
-                        <span className="inline-flex items-center gap-1">
-                          {lucro >= 0 ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}
-                          {formatCurrency(lucro)}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {empresas.map((e) => (
+                  <TableRow key={e.empresa_id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2 font-medium">
+                        <span className="size-2.5 rounded-full" style={{ background: e.cor ?? "#0d7a5f" }} />
+                        {e.nome}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-success">{formatCurrency(e.receita_realizada)}</TableCell>
+                    <TableCell className="text-right text-destructive">{formatCurrency(e.despesa_realizada)}</TableCell>
+                    <TableCell className={"text-right font-semibold " + (e.lucro_realizado >= 0 ? "text-primary" : "text-destructive")}>
+                      <span className="inline-flex items-center gap-1">
+                        {e.lucro_realizado >= 0 ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}
+                        {formatCurrency(e.lucro_realizado)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">{formatCurrency(e.lucro_projetado)}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </Card>
@@ -95,26 +102,25 @@ function Page() {
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="text-right">Recebido</TableHead>
                   <TableHead className="text-right">Gasto</TableHead>
-                  <TableHead className="text-right">Lucro</TableHead>
+                  <TableHead className="text-right">Lucro Real.</TableHead>
+                  <TableHead className="text-right">Lucro Proj.</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contratos?.map((c) => {
-                  const r = recPaid(c.id, "contrato_id");
-                  const d = expPaid(c.id, "contrato_id");
-                  const lucro = r - d;
-                  return (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">{c.cliente} {c.numero && <span className="text-xs text-muted-foreground">#{c.numero}</span>}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(c.valor)}</TableCell>
-                      <TableCell className="text-right text-success">{formatCurrency(r)}</TableCell>
-                      <TableCell className="text-right text-destructive">{formatCurrency(d)}</TableCell>
-                      <TableCell className={"text-right font-semibold " + (lucro >= 0 ? "text-primary" : "text-destructive")}>
-                        {formatCurrency(lucro)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {contratos.map((c) => (
+                  <TableRow key={c.contrato_id}>
+                    <TableCell className="font-medium">
+                      {c.cliente} {c.numero && <span className="text-xs text-muted-foreground">#{c.numero}</span>}
+                    </TableCell>
+                    <TableCell className="text-right">{formatCurrency(c.valor_contrato)}</TableCell>
+                    <TableCell className="text-right text-success">{formatCurrency(c.receita_realizada)}</TableCell>
+                    <TableCell className="text-right text-destructive">{formatCurrency(c.despesa_realizada)}</TableCell>
+                    <TableCell className={"text-right font-semibold " + (c.lucro_realizado >= 0 ? "text-primary" : "text-destructive")}>
+                      {formatCurrency(c.lucro_realizado)}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">{formatCurrency(c.lucro_projetado)}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </Card>

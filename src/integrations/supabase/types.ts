@@ -132,6 +132,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contratos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_empresa"
+            referencedColumns: ["empresa_id"]
+          },
+          {
             foreignKeyName: "contratos_missao_id_fkey"
             columns: ["missao_id"]
             isOneToOne: false
@@ -213,11 +220,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "despesas_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_contrato"
+            referencedColumns: ["contrato_id"]
+          },
+          {
             foreignKeyName: "despesas_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_empresa"
+            referencedColumns: ["empresa_id"]
           },
           {
             foreignKeyName: "despesas_fornecedor_id_fkey"
@@ -368,6 +389,13 @@ export type Database = {
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "funcionarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_empresa"
+            referencedColumns: ["empresa_id"]
+          },
         ]
       }
       missoes: {
@@ -503,11 +531,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "recebiveis_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_contrato"
+            referencedColumns: ["contrato_id"]
+          },
+          {
             foreignKeyName: "recebiveis_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recebiveis_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_empresa"
+            referencedColumns: ["empresa_id"]
           },
           {
             foreignKeyName: "recebiveis_missao_id_fkey"
@@ -556,6 +598,51 @@ export type Database = {
           previsto_saidas: number | null
           realizado_entradas: number | null
           realizado_saidas: number | null
+        }
+        Relationships: []
+      }
+      lucro_por_contrato: {
+        Row: {
+          cliente: string | null
+          contrato_id: string | null
+          despesa_prevista: number | null
+          despesa_realizada: number | null
+          empresa_id: string | null
+          lucro_projetado: number | null
+          lucro_realizado: number | null
+          numero: string | null
+          receita_prevista: number | null
+          receita_realizada: number | null
+          valor_contrato: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_empresa"
+            referencedColumns: ["empresa_id"]
+          },
+        ]
+      }
+      lucro_por_empresa: {
+        Row: {
+          cor: string | null
+          despesa_prevista: number | null
+          despesa_realizada: number | null
+          empresa_id: string | null
+          lucro_projetado: number | null
+          lucro_realizado: number | null
+          nome: string | null
+          receita_prevista: number | null
+          receita_realizada: number | null
         }
         Relationships: []
       }
