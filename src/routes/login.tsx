@@ -7,14 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { z } from "zod";
+import { audit } from "@/lib/audit";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+type Mode = "login" | "signup" | "forgot";
+
+const emailSchema = z.string().trim().email("Email inválido").max(255);
+const passwordSchema = z.string().min(8, "Mínimo 8 caracteres").max(72, "Máximo 72 caracteres");
+const nomeSchema = z.string().trim().min(2, "Nome muito curto").max(100);
+
 function LoginPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
@@ -30,14 +38,27 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      const safeEmail = emailSchema.parse(email);
+
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        passwordSchema.parse(password);
+        const { error } = await supabase.auth.signInWithPassword({ email: safeEmail, password });
+        if (error) {
+          // Auditoria de falha (registra antes do throw para registrar mesmo sem sessão)
+          await supabase.from("activity_logs").insert({
+            acao: "login_failed", entidade: "auth",
+            detalhes: { email: safeEmail, motivo: error.message },
+          }).then(() => {}, () => {});
+          throw error;
+        }
+        await audit("login", "auth");
         toast.success("Bem-vindo de volta");
         navigate({ to: "/" });
-      } else {
+      } else if (mode === "signup") {
+        nomeSchema.parse(nome);
+        passwordSchema.parse(password);
         const { error } = await supabase.auth.signUp({
-          email,
+          email: safeEmail,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
@@ -47,13 +68,33 @@ function LoginPage() {
         if (error) throw error;
         toast.success("Conta criada. Verifique seu email para confirmar.");
         setMode("login");
+      } else {
+        // forgot
+        const { error } = await supabase.auth.resetPasswordForEmail(safeEmail, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        await audit("password_reset_request", "auth", null, { email: safeEmail });
+        toast.success("Se o email existir, enviaremos as instruções.");
+        setMode("login");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao autenticar");
+      if (err instanceof z.ZodError) {
+        toast.error(err.issues[0]?.message ?? "Dados inválidos");
+      } else {
+        toast.error(err instanceof Error ? err.message : "Erro ao autenticar");
+      }
     } finally {
       setLoading(false);
     }
   }
+
+  const title =
+    mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Recuperar senha";
+  const description =
+    mode === "login" ? "Acesso restrito à equipe administrativa."
+      : mode === "signup" ? "Cadastre um novo usuário interno."
+      : "Informe seu email para receber o link de redefinição.";
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden">
@@ -77,56 +118,66 @@ function LoginPage() {
 
         <Card className="shadow-prestige border-border/60">
           <CardHeader>
-            <CardTitle>{mode === "login" ? "Entrar" : "Criar conta"}</CardTitle>
-            <CardDescription>
-              {mode === "login"
-                ? "Acesso restrito à equipe administrativa."
-                : "Cadastre um novo usuário interno."}
-            </CardDescription>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "signup" && (
                 <div className="space-y-1.5">
                   <Label htmlFor="nome">Nome</Label>
-                  <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+                  <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required maxLength={100} />
                 </div>
               )}
               <div className="space-y-1.5">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" autoComplete="email" value={email}
-                  onChange={(e) => setEmail(e.target.value)} required />
+                  onChange={(e) => setEmail(e.target.value)} required maxLength={255} />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Senha</Label>
-                <Input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"}
-                  value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-              </div>
+              {mode !== "forgot" && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input id="password" type="password"
+                    autoComplete={mode === "login" ? "current-password" : "new-password"}
+                    value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} maxLength={72} />
+                  {mode === "signup" && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Mínimo 8 caracteres. Senhas comprometidas (HIBP) são bloqueadas.
+                    </p>
+                  )}
+                </div>
+              )}
               <Button type="submit" className="w-full gradient-emerald text-primary-foreground" disabled={loading}>
                 {loading && <Loader2 className="size-4 animate-spin mr-2" />}
-                {mode === "login" ? "Entrar" : "Criar conta"}
+                {mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Enviar link"}
               </Button>
             </form>
-            <div className="text-sm text-center mt-4 text-muted-foreground">
-              {mode === "login" ? (
+
+            <div className="text-sm text-center mt-4 text-muted-foreground space-y-1">
+              {mode === "login" && (
                 <>
-                  Primeiro acesso?{" "}
-                  <button onClick={() => setMode("signup")} className="text-primary font-medium hover:underline">
-                    Criar conta
-                  </button>
+                  <div>
+                    <button onClick={() => setMode("forgot")} className="text-primary font-medium hover:underline">
+                      Esqueci minha senha
+                    </button>
+                  </div>
+                  <div>
+                    Primeiro acesso?{" "}
+                    <button onClick={() => setMode("signup")} className="text-primary font-medium hover:underline">
+                      Criar conta
+                    </button>
+                  </div>
                 </>
-              ) : (
-                <>
-                  Já tem conta?{" "}
-                  <button onClick={() => setMode("login")} className="text-primary font-medium hover:underline">
-                    Entrar
-                  </button>
-                </>
+              )}
+              {mode !== "login" && (
+                <button onClick={() => setMode("login")} className="text-primary font-medium hover:underline">
+                  Voltar ao login
+                </button>
               )}
             </div>
             <div className="text-center mt-2">
               <Link to="/" className="text-xs text-muted-foreground hover:text-foreground">
-                Voltar
+                Voltar ao site
               </Link>
             </div>
           </CardContent>
