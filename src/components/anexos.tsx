@@ -166,6 +166,7 @@ export function AnexosManager({
           {canEdit && (
             <>
               <input ref={inputRef} type="file" multiple className="hidden"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.xls,.xlsx,.csv,.txt,.odt,.ods"
                 onChange={(e) => handleFiles(e.target.files)} />
               <Button size="sm" onClick={() => inputRef.current?.click()}
                 disabled={uploading} className="gradient-emerald text-primary-foreground h-8">
