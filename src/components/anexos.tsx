@@ -5,9 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Paperclip, Upload, Trash2, Loader2, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { audit } from "@/lib/audit";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
+
+const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+
+// Whitelist de extensões aceitas (faturas, contratos, comprovantes)
+const ALLOWED_EXT = new Set([
+  "pdf", "png", "jpg", "jpeg", "webp", "gif",
+  "doc", "docx", "xls", "xlsx", "csv", "txt", "odt", "ods",
+]);
+
+// Blacklist explícita de executáveis e scripts
+const BLOCKED_EXT = new Set([
+  "exe","bat","cmd","com","msi","scr","ps1","sh","bash","zsh",
+  "js","mjs","cjs","ts","jsx","tsx","html","htm","svg","php","py","rb","jar","apk","dmg","app",
+]);
 
 type Anexo = {
   id: string; entidade: string; entidade_id: string;
@@ -21,6 +36,17 @@ function formatSize(n: number | null) {
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
+
+function validateFile(file: File): string | null {
+  if (file.size > MAX_SIZE) return `${file.name}: excede 20MB`;
+  if (file.size === 0) return `${file.name}: arquivo vazio`;
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  if (!ext) return `${file.name}: extensão obrigatória`;
+  if (BLOCKED_EXT.has(ext)) return `${file.name}: tipo de arquivo bloqueado`;
+  if (!ALLOWED_EXT.has(ext)) return `${file.name}: extensão .${ext} não permitida`;
+  return null;
+}
+
 
 export function useAnexosCount(entidade: string, entidade_id: string) {
   return useQuery({
