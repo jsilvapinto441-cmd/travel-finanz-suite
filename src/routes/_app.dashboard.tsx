@@ -34,9 +34,6 @@ function Dashboard() {
     queryKey: ["empresas-list"],
     queryFn: async () => (await supabase.from("empresas").select("id, nome, cor").order("nome")).data ?? [],
   });
-    queryKey: ["empresas-list"],
-    queryFn: async () => (await supabase.from("empresas").select("id, nome, cor").order("nome")).data ?? [],
-  });
 
   const { data: recebiveis } = useQuery({
     queryKey: ["dash-recebiveis", empresaId],
