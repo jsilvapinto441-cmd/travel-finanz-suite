@@ -6,6 +6,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useIdleTimeout } from "@/lib/idle-timeout";
+import { useCallback } from "react";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
