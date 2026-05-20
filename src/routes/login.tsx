@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import { audit } from "@/lib/audit";
-import logo from "@/assets/produz-logo-outline.png";
+import logo from "@/assets/produz-logo-white.png";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
