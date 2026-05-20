@@ -48,6 +48,7 @@ function Page() {
           { key: "valor", label: "Valor", render: (r) => formatCurrency(r.valor) },
           { key: "data_vencimento", label: "Vencimento", render: (r) => formatDate(r.data_vencimento) },
           { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
+          { key: "anexos", label: "Anexos", render: (r) => <AnexosCell entidade="despesas" entidade_id={r.id} /> },
         ]}
         renderForm={({ values, setValues }) => (
           <div className="grid grid-cols-2 gap-4">
