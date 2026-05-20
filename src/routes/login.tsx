@@ -179,9 +179,6 @@ function LoginPage() {
           </CardContent>
         </Card>
 
-        <p className="text-xs text-center mt-6 text-muted-foreground">
-          O primeiro usuário cadastrado se torna administrador automaticamente.
-        </p>
       </div>
     </div>
   );
