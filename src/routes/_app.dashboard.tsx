@@ -13,6 +13,7 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { useMemo, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
 
 export const Route = createFileRoute("/_app/dashboard")({
