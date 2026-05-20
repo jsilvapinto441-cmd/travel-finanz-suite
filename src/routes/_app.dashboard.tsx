@@ -12,8 +12,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from "recharts";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { StatusBadge } from "@/components/status-badge";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -27,72 +26,83 @@ function Dashboard() {
   useQuery({
     queryKey: ["marcar-atrasados"],
     queryFn: async () => { await supabase.rpc("marcar_atrasados" as any); return true; },
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
 
   const { data: empresas } = useQuery({
     queryKey: ["empresas-list"],
     queryFn: async () => (await supabase.from("empresas").select("id, nome, cor").order("nome")).data ?? [],
+    staleTime: 5 * 60_000,
   });
 
   const { data: recebiveis } = useQuery({
     queryKey: ["dash-recebiveis", empresaId],
     queryFn: async () => {
-      let q = supabase.from("recebiveis").select("*");
+      let q = supabase
+        .from("recebiveis")
+        .select("id,pagador,empresa_id,valor_total,status,data_vencimento,data_recebimento");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
       return (await q).data ?? [];
     },
+    staleTime: 60_000,
   });
 
   const { data: despesas } = useQuery({
     queryKey: ["dash-despesas", empresaId],
     queryFn: async () => {
-      let q = supabase.from("despesas").select("*");
+      let q = supabase
+        .from("despesas")
+        .select("id,descricao,empresa_id,valor,status,categoria,data_vencimento,data_pagamento");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
       return (await q).data ?? [];
     },
+    staleTime: 60_000,
   });
 
-  const totalReceber = (recebiveis ?? []).filter((r) => r.status !== "cancelado").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
-  const recebido = (recebiveis ?? []).filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
-  const totalDespesa = (despesas ?? []).filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
-  const pago = (despesas ?? []).filter((d) => d.status === "pago").reduce((s, d) => s + Number(d.valor ?? 0), 0);
-  const lucro = recebido - pago;
-  const atrasados = [
-    ...(recebiveis ?? []).filter((r) => r.status === "atrasado"),
-    ...(despesas ?? []).filter((d) => d.status === "atrasado"),
-  ];
+  const aggregates = useMemo(() => {
+    const recs = recebiveis ?? [];
+    const desps = despesas ?? [];
+    const totalReceber = recs.filter((r) => r.status !== "cancelado").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
+    const recebido = recs.filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
+    const totalDespesa = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
+    const pago = desps.filter((d) => d.status === "pago").reduce((s, d) => s + Number(d.valor ?? 0), 0);
+    const atrasados = [
+      ...recs.filter((r) => r.status === "atrasado"),
+      ...desps.filter((d) => d.status === "atrasado"),
+    ];
 
-  // Monthly flow (last 6 months)
-  const now = new Date();
-  const months: { key: string; label: string; entradas: number; saidas: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    months.push({ key, label: formatMonth(d), entradas: 0, saidas: 0 });
-  }
-  for (const r of recebiveis ?? []) {
-    const dateStr = r.data_recebimento ?? r.data_vencimento;
-    if (!dateStr) continue;
-    const key = dateStr.slice(0, 7);
-    const m = months.find((x) => x.key === key);
-    if (m) m.entradas += Number(r.valor_total ?? 0);
-  }
-  for (const d of despesas ?? []) {
-    const dateStr = d.data_pagamento ?? d.data_vencimento;
-    if (!dateStr) continue;
-    const key = dateStr.slice(0, 7);
-    const m = months.find((x) => x.key === key);
-    if (m) m.saidas += Number(d.valor ?? 0);
-  }
+    const now = new Date();
+    const months: { key: string; label: string; entradas: number; saidas: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      months.push({ key, label: formatMonth(d), entradas: 0, saidas: 0 });
+    }
+    const monthIdx = new Map(months.map((m, i) => [m.key, i]));
+    for (const r of recs) {
+      const dateStr = r.data_recebimento ?? r.data_vencimento;
+      if (!dateStr) continue;
+      const idx = monthIdx.get(dateStr.slice(0, 7));
+      if (idx !== undefined) months[idx].entradas += Number(r.valor_total ?? 0);
+    }
+    for (const d of desps) {
+      const dateStr = d.data_pagamento ?? d.data_vencimento;
+      if (!dateStr) continue;
+      const idx = monthIdx.get(dateStr.slice(0, 7));
+      if (idx !== undefined) months[idx].saidas += Number(d.valor ?? 0);
+    }
 
-  // Despesas by category
-  const catMap = new Map<string, number>();
-  for (const d of despesas ?? []) {
-    catMap.set(d.categoria, (catMap.get(d.categoria) ?? 0) + Number(d.valor ?? 0));
-  }
-  const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
-  const colors = ["#0d7a5f", "#c9a84c", "#064e3b", "#8b6f4e", "#0f766e", "#a16207", "#15803d", "#854d0e", "#166534", "#713f12"];
+    const catMap = new Map<string, number>();
+    for (const d of desps) {
+      catMap.set(d.categoria, (catMap.get(d.categoria) ?? 0) + Number(d.valor ?? 0));
+    }
+    const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
+
+    return { totalReceber, recebido, totalDespesa, pago, lucro: recebido - pago, atrasados, months, catData };
+  }, [recebiveis, despesas]);
+
+  const { totalReceber, recebido, totalDespesa, pago, lucro, atrasados, months, catData } = aggregates;
+  const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
 
   return (
     <PageContainer>
