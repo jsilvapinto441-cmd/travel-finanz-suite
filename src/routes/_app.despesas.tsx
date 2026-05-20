@@ -31,12 +31,17 @@ function Page() {
   const { data: fornecedores } = useFornecedores();
   return (
     <PageContainer>
-      <PageHeader title="Despesas" description="Contas a pagar e despesas empresariais." />
+      <PageHeader title="Despesas" description="Contas a pagar. Despesas parceladas geram as próximas automaticamente." />
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
-        defaultValues={{ status: "em_aberto", categoria: "outros" }}
+        defaultValues={{ status: "em_aberto", categoria: "outros", parcelas: 1, frequencia: "mensal" }}
         columns={[
-          { key: "descricao", label: "Descrição", render: (r) => <span className="font-medium">{r.descricao}</span> },
+          { key: "descricao", label: "Descrição", render: (r) => (
+            <div>
+              <div className="font-medium">{r.descricao}</div>
+              {r.parcelas > 1 && <div className="text-xs text-muted-foreground">Parcela {r.numero_parcela}/{r.parcelas}</div>}
+            </div>
+          ) },
           { key: "categoria", label: "Categoria", render: (r) => <span className="capitalize">{r.categoria.replace(/_/g, " ")}</span> },
           { key: "empresa", label: "Empresa", render: (r) => nomeById(empresas, r.empresa_id) },
           { key: "valor", label: "Valor", render: (r) => formatCurrency(r.valor) },
