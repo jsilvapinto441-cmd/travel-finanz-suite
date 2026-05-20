@@ -5,6 +5,7 @@ import { TextField, NumberField, SelectField, TextAreaField } from "@/components
 import { useEmpresas, useMissoes, useContratos, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
+import { AnexosCell } from "@/components/anexos";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
@@ -38,6 +39,7 @@ function Page() {
           { key: "valor_total", label: "Valor", render: (r) => formatCurrency(r.valor_total) },
           { key: "data_vencimento", label: "Vencimento", render: (r) => formatDate(r.data_vencimento) },
           { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
+          { key: "anexos", label: "Anexos", render: (r) => <AnexosCell entidade="recebiveis" entidade_id={r.id} /> },
         ]}
         renderForm={({ values, setValues }) => (
           <div className="grid grid-cols-2 gap-4">
