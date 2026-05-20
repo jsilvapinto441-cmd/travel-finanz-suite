@@ -13,6 +13,7 @@ type T = {
   fornecedor_id: string | null; descricao: string; categoria: string; valor: number;
   data_vencimento: string | null; data_pagamento: string | null; banco: string | null;
   status: string; observacoes: string | null;
+  parent_id: string | null; numero_parcela: number; parcelas: number; frequencia: string;
 };
 
 const CATEGORIAS = [
