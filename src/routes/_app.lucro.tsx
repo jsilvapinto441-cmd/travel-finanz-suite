@@ -27,19 +27,22 @@ type LucroContrato = {
 };
 
 function Page() {
+  const db = supabase as unknown as {
+    from: (t: string) => {
+      select: (c: string) => { order: (col: string) => Promise<{ data: unknown }> };
+    };
+  };
   const { data: empresas = [] } = useQuery({
     queryKey: ["lucro-por-empresa"],
     queryFn: async () => {
-      const { data } = await (supabase.from("lucro_por_empresa" as never) as never)
-        .select("*").order("nome");
+      const { data } = await db.from("lucro_por_empresa").select("*").order("nome");
       return (data ?? []) as LucroEmpresa[];
     },
   });
   const { data: contratos = [] } = useQuery({
     queryKey: ["lucro-por-contrato"],
     queryFn: async () => {
-      const { data } = await (supabase.from("lucro_por_contrato" as never) as never)
-        .select("*").order("cliente");
+      const { data } = await db.from("lucro_por_contrato").select("*").order("cliente");
       return (data ?? []) as LucroContrato[];
     },
   });
