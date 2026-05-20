@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useIdleTimeout } from "@/lib/idle-timeout";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import logo from "@/assets/produz-logo.png";
+import logo from "@/assets/produz-logo-light.png";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -44,13 +44,9 @@ export function AppShell() {
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
 
         <div className="px-6 py-7 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <div className="bg-white rounded-lg px-3 py-2 flex items-center justify-center">
-              <img src={logo} alt="PRODUZ" className="h-6 w-auto" />
-            </div>
-            <div className="text-[11px] tracking-wider uppercase text-sidebar-foreground/60">
-              Gestão Interna
-            </div>
+          <img src={logo} alt="PRODUZ" className="h-8 w-auto" />
+          <div className="text-[11px] tracking-wider uppercase text-sidebar-foreground/60 mt-2">
+            Gestão Interna
           </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
