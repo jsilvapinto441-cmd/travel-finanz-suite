@@ -13,6 +13,7 @@ type T = {
   pagador: string; numero_fatura: string | null; valor_total: number; parcelas: number;
   valor_parcela: number; data_vencimento: string | null; data_recebimento: string | null;
   banco: string | null; status: string; categoria: string | null; observacoes: string | null;
+  parent_id: string | null; numero_parcela: number; frequencia: string;
 };
 
 function Page() {
