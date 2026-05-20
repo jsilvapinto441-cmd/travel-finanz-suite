@@ -13,6 +13,7 @@ type T = {
   fornecedor_id: string | null; descricao: string; categoria: string; valor: number;
   data_vencimento: string | null; data_pagamento: string | null; banco: string | null;
   status: string; observacoes: string | null;
+  parent_id: string | null; numero_parcela: number; parcelas: number; frequencia: string;
 };
 
 const CATEGORIAS = [
@@ -30,12 +31,17 @@ function Page() {
   const { data: fornecedores } = useFornecedores();
   return (
     <PageContainer>
-      <PageHeader title="Despesas" description="Contas a pagar e despesas empresariais." />
+      <PageHeader title="Despesas" description="Contas a pagar. Despesas parceladas geram as próximas automaticamente." />
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
-        defaultValues={{ status: "em_aberto", categoria: "outros" }}
+        defaultValues={{ status: "em_aberto", categoria: "outros", parcelas: 1, frequencia: "mensal" }}
         columns={[
-          { key: "descricao", label: "Descrição", render: (r) => <span className="font-medium">{r.descricao}</span> },
+          { key: "descricao", label: "Descrição", render: (r) => (
+            <div>
+              <div className="font-medium">{r.descricao}</div>
+              {r.parcelas > 1 && <div className="text-xs text-muted-foreground">Parcela {r.numero_parcela}/{r.parcelas}</div>}
+            </div>
+          ) },
           { key: "categoria", label: "Categoria", render: (r) => <span className="capitalize">{r.categoria.replace(/_/g, " ")}</span> },
           { key: "empresa", label: "Empresa", render: (r) => nomeById(empresas, r.empresa_id) },
           { key: "valor", label: "Valor", render: (r) => formatCurrency(r.valor) },
@@ -48,7 +54,13 @@ function Page() {
               <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} required />
             </div>
             <SelectField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} options={CATEGORIAS} />
-            <NumberField label="Valor" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
+            <NumberField label="Valor (total)" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
+            <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
+            <SelectField label="Frequência" value={values.frequencia ?? "mensal"} onChange={(v) => setValues({ ...values, frequencia: v })}
+              options={[
+                { value: "mensal", label: "Mensal" }, { value: "quinzenal", label: "Quinzenal" },
+                { value: "semanal", label: "Semanal" }, { value: "anual", label: "Anual" },
+              ]} />
             <SelectField label="Empresa" value={values.empresa_id ?? ""} onChange={(v) => setValues({ ...values, empresa_id: v })}
               options={(empresas ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
             <SelectField label="Missão" value={values.missao_id ?? ""} onChange={(v) => setValues({ ...values, missao_id: v })}

@@ -23,6 +23,13 @@ export const Route = createFileRoute("/_app/dashboard")({
 function Dashboard() {
   const [empresaId, setEmpresaId] = useState<string>("all");
 
+  // Auto-marca itens vencidos como atrasados ao abrir o dashboard
+  useQuery({
+    queryKey: ["marcar-atrasados"],
+    queryFn: async () => { await supabase.rpc("marcar_atrasados" as any); return true; },
+    staleTime: 60_000,
+  });
+
   const { data: empresas } = useQuery({
     queryKey: ["empresas-list"],
     queryFn: async () => (await supabase.from("empresas").select("id, nome, cor").order("nome")).data ?? [],

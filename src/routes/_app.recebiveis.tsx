@@ -13,6 +13,7 @@ type T = {
   pagador: string; numero_fatura: string | null; valor_total: number; parcelas: number;
   valor_parcela: number; data_vencimento: string | null; data_recebimento: string | null;
   banco: string | null; status: string; categoria: string | null; observacoes: string | null;
+  parent_id: string | null; numero_parcela: number; frequencia: string;
 };
 
 function Page() {
@@ -21,12 +22,17 @@ function Page() {
   const { data: contratos } = useContratos();
   return (
     <PageContainer>
-      <PageHeader title="Recebíveis" description="Contas a receber." />
+      <PageHeader title="Recebíveis" description="Contas a receber. Lançamentos parcelados geram parcelas filhas automaticamente." />
       <DataTable<T>
         table="recebiveis" title="Recebível" searchFields={["pagador", "numero_fatura"]}
-        defaultValues={{ status: "em_aberto", parcelas: 1 }}
+        defaultValues={{ status: "em_aberto", parcelas: 1, frequencia: "mensal" }}
         columns={[
-          { key: "pagador", label: "Pagador", render: (r) => <span className="font-medium">{r.pagador}</span> },
+          { key: "pagador", label: "Pagador", render: (r) => (
+            <div>
+              <div className="font-medium">{r.pagador}</div>
+              {r.parcelas > 1 && <div className="text-xs text-muted-foreground">Parcela {r.numero_parcela}/{r.parcelas}</div>}
+            </div>
+          ) },
           { key: "empresa", label: "Empresa", render: (r) => nomeById(empresas, r.empresa_id) },
           { key: "numero_fatura", label: "Fatura" },
           { key: "valor_total", label: "Valor", render: (r) => formatCurrency(r.valor_total) },
@@ -45,6 +51,11 @@ function Page() {
               options={(contratos ?? []).map((c) => ({ value: c.id, label: `${c.numero ?? ""} ${c.cliente}` }))} />
             <NumberField label="Valor Total" value={values.valor_total} onChange={(v) => setValues({ ...values, valor_total: v })} />
             <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
+            <SelectField label="Frequência" value={values.frequencia ?? "mensal"} onChange={(v) => setValues({ ...values, frequencia: v })}
+              options={[
+                { value: "mensal", label: "Mensal" }, { value: "quinzenal", label: "Quinzenal" },
+                { value: "semanal", label: "Semanal" }, { value: "anual", label: "Anual" },
+              ]} />
             <NumberField label="Valor Parcela" value={values.valor_parcela} onChange={(v) => setValues({ ...values, valor_parcela: v })} />
             <TextField label="Vencimento" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} type="date" />
             <TextField label="Recebimento" value={values.data_recebimento} onChange={(v) => setValues({ ...values, data_recebimento: v })} type="date" />
