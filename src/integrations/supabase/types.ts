@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      anexos: {
+        Row: {
+          created_at: string
+          entidade: string
+          entidade_id: string
+          id: string
+          mime: string | null
+          nome: string
+          path: string
+          tamanho: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          entidade: string
+          entidade_id: string
+          id?: string
+          mime?: string | null
+          nome: string
+          path: string
+          tamanho?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          entidade?: string
+          entidade_id?: string
+          id?: string
+          mime?: string | null
+          nome?: string
+          path?: string
+          tamanho?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contratos: {
         Row: {
           cliente: string
