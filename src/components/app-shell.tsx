@@ -45,14 +45,11 @@ export function AppShell() {
 
         <div className="px-6 py-7 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-lg gradient-gold flex items-center justify-center font-display font-bold text-sidebar-primary-foreground">
-              P
+            <div className="bg-white rounded-lg px-3 py-2 flex items-center justify-center">
+              <img src={logo} alt="PRODUZ" className="h-6 w-auto" />
             </div>
-            <div>
-              <div className="font-display font-bold text-lg leading-none">PRODUZ</div>
-              <div className="text-[11px] tracking-wider uppercase text-sidebar-foreground/60 mt-1">
-                Gestão Interna
-              </div>
+            <div className="text-[11px] tracking-wider uppercase text-sidebar-foreground/60">
+              Gestão Interna
             </div>
           </div>
         </div>
