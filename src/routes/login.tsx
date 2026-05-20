@@ -105,15 +105,10 @@ function LoginPage() {
       </div>
 
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center mb-8 gap-3">
-          <div className="size-12 rounded-xl gradient-gold flex items-center justify-center font-display font-bold text-xl text-gold-foreground shadow-prestige">
-            P
-          </div>
-          <div>
-            <div className="font-display font-bold text-2xl">PRODUZ</div>
-            <div className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground">
-              Gestão Premium
-            </div>
+        <div className="flex flex-col items-center justify-center mb-8 gap-2">
+          <img src={logo} alt="PRODUZ" className="h-14 w-auto" />
+          <div className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground">
+            Gestão Premium
           </div>
         </div>
 
