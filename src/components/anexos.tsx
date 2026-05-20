@@ -5,9 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Paperclip, Upload, Trash2, Loader2, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { audit } from "@/lib/audit";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
+
+const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+
+// Whitelist de extensões aceitas (faturas, contratos, comprovantes)
+const ALLOWED_EXT = new Set([
+  "pdf", "png", "jpg", "jpeg", "webp", "gif",
+  "doc", "docx", "xls", "xlsx", "csv", "txt", "odt", "ods",
+]);
+
+// Blacklist explícita de executáveis e scripts
+const BLOCKED_EXT = new Set([
+  "exe","bat","cmd","com","msi","scr","ps1","sh","bash","zsh",
+  "js","mjs","cjs","ts","jsx","tsx","html","htm","svg","php","py","rb","jar","apk","dmg","app",
+]);
 
 type Anexo = {
   id: string; entidade: string; entidade_id: string;
@@ -21,6 +36,17 @@ function formatSize(n: number | null) {
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
+
+function validateFile(file: File): string | null {
+  if (file.size > MAX_SIZE) return `${file.name}: excede 20MB`;
+  if (file.size === 0) return `${file.name}: arquivo vazio`;
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  if (!ext) return `${file.name}: extensão obrigatória`;
+  if (BLOCKED_EXT.has(ext)) return `${file.name}: tipo de arquivo bloqueado`;
+  if (!ALLOWED_EXT.has(ext)) return `${file.name}: extensão .${ext} não permitida`;
+  return null;
+}
+
 
 export function useAnexosCount(entidade: string, entidade_id: string) {
   return useQuery({
@@ -68,7 +94,8 @@ export function AnexosManager({
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
-      const ext = file.name.split(".").pop() ?? "bin";
+      const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
+      // Nome renomeado automaticamente — não usamos o nome original no path
       const path = `${entidade}/${entidade_id}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("anexos")
         .upload(path, file, { contentType: file.type, upsert: false });
@@ -81,6 +108,7 @@ export function AnexosManager({
         await supabase.storage.from("anexos").remove([path]);
         throw dbErr;
       }
+      await audit("upload", entidade, entidade_id, { nome: file.name, tamanho: file.size, mime: file.type });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["anexos", entidade, entidade_id] });
@@ -95,6 +123,7 @@ export function AnexosManager({
       await supabase.storage.from("anexos").remove([a.path]);
       const { error } = await supabase.from("anexos").delete().eq("id", a.id);
       if (error) throw error;
+      await audit("delete_file", entidade, entidade_id, { nome: a.nome, path: a.path });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["anexos", entidade, entidade_id] });
@@ -108,6 +137,7 @@ export function AnexosManager({
     const { data, error } = await supabase.storage.from("anexos")
       .createSignedUrl(a.path, 60);
     if (error || !data) { toast.error("Falha ao gerar link"); return; }
+    audit("download", entidade, entidade_id, { nome: a.nome });
     window.open(data.signedUrl, "_blank");
   }
 
@@ -115,12 +145,14 @@ export function AnexosManager({
     if (!files?.length) return;
     setUploading(true);
     for (const f of Array.from(files)) {
-      if (f.size > 20 * 1024 * 1024) { toast.error(`${f.name}: máx 20MB`); continue; }
+      const err = validateFile(f);
+      if (err) { toast.error(err); continue; }
       await upload.mutateAsync(f);
     }
     setUploading(false);
     if (inputRef.current) inputRef.current.value = "";
   }
+
 
   return (
     <Popover>
@@ -134,6 +166,7 @@ export function AnexosManager({
           {canEdit && (
             <>
               <input ref={inputRef} type="file" multiple className="hidden"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.xls,.xlsx,.csv,.txt,.odt,.ods"
                 onChange={(e) => handleFiles(e.target.files)} />
               <Button size="sm" onClick={() => inputRef.current?.click()}
                 disabled={uploading} className="gradient-emerald text-primary-foreground h-8">

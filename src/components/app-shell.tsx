@@ -6,6 +6,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useIdleTimeout } from "@/lib/idle-timeout";
+import { useCallback } from "react";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -28,9 +31,17 @@ export function AppShell() {
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
   const roleLabel = isAdmin ? "Administrador" : roles[0] ?? "—";
 
+  const handleIdle = useCallback(async () => {
+    toast.info("Sessão encerrada por inatividade");
+    await signOut();
+    navigate({ to: "/login" });
+  }, [signOut, navigate]);
+  useIdleTimeout(30, handleIdle);
+
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+
         <div className="px-6 py-7 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-lg gradient-gold flex items-center justify-center font-display font-bold text-sidebar-primary-foreground">
