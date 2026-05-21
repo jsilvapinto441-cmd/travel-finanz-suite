@@ -30,12 +30,17 @@ export function KpiCard({
   return (
     <Card className={cn("relative overflow-hidden p-5 bg-gradient-to-br", toneClass)}>
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <div className="flex-1 min-w-0">
           <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
             {label}
           </div>
-          <div className="text-2xl font-display font-bold mt-2 truncate">{value}</div>
-          {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
+          <div
+            className="font-display font-bold mt-2 leading-tight break-words tabular-nums text-[clamp(1.125rem,2.2vw,1.5rem)]"
+            style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+          >
+            {value}
+          </div>
+          {hint && <div className="text-xs text-muted-foreground mt-1 break-words">{hint}</div>}
         </div>
         {icon && (
           <div className={cn("size-10 rounded-lg flex items-center justify-center shrink-0", iconTone)}>
