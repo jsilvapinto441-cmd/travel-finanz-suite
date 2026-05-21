@@ -43,6 +43,7 @@ interface DataTableProps<T extends { id: string }> {
   toolbar?: ReactNode;
   emptyHint?: string;
   pageSize?: number;
+  extraRowActions?: (row: T) => ReactNode;
 }
 
 export function DataTable<T extends { id: string }>({
