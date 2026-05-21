@@ -52,10 +52,8 @@ function Page() {
         ]}
         renderForm={({ values, setValues }) => (
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} required />
-            </div>
             <SelectField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} options={CATEGORIAS} />
+
             <CurrencyField label="Valor (total)" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
             <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
             <SelectField label="Frequência" value={values.frequencia ?? "mensal"} onChange={(v) => setValues({ ...values, frequencia: v })}
@@ -80,8 +78,12 @@ function Page() {
                 { value: "atrasado", label: "Atrasado" }, { value: "cancelado", label: "Cancelado" },
               ]} />
             <div className="col-span-2">
+              <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} required />
+            </div>
+            <div className="col-span-2">
               <TextAreaField label="Observações" value={values.observacoes} onChange={(v) => setValues({ ...values, observacoes: v })} />
             </div>
+
           </div>
         )}
       />
