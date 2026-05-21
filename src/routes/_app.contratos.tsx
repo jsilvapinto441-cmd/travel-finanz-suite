@@ -136,8 +136,39 @@ function ContratoForm({
         <div className="grid grid-cols-2 gap-4">
           <TextField label="Cliente" value={values.cliente} onChange={(v) => setValues({ ...values, cliente: v })} required />
           <TextField label="Destino" value={values.destino} onChange={(v) => setValues({ ...values, destino: v })} />
-          <TextField label="Data de embarque" type="date" value={values.data_embarque} onChange={(v) => setValues({ ...values, data_embarque: v })} />
-          <TextField label="Data de retorno" type="date" value={values.data_retorno} onChange={(v) => setValues({ ...values, data_retorno: v })} />
+          <TextField
+            label="Data de embarque"
+            type="date"
+            value={values.data_embarque}
+            onChange={(v) => {
+              const dias = qtdDias ?? null;
+              const novo: Partial<T> = { ...values, data_embarque: v };
+              if (v && dias && dias >= 1) novo.data_retorno = addDays(v, dias);
+              setValues(novo);
+            }}
+          />
+          <Field label="Quantidade de dias">
+            <Input
+              type="number"
+              min={1}
+              value={qtdDias ?? ""}
+              placeholder="Ex: 7"
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === "") {
+                  setValues({ ...values, data_retorno: null });
+                  return;
+                }
+                const d = Math.max(1, Math.floor(Number(raw) || 1));
+                if (values.data_embarque) {
+                  setValues({ ...values, data_retorno: addDays(values.data_embarque, d) });
+                }
+              }}
+            />
+          </Field>
+          <Field label="Data de retorno (calculada)">
+            <Input type="date" value={values.data_retorno ?? ""} readOnly className="bg-muted/40 cursor-not-allowed" />
+          </Field>
           <Field label="Nº de passageiros">
             <div className="relative">
               <Users className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
