@@ -47,6 +47,55 @@ export function TextAreaField({ label, value, onChange }: { label: string; value
   );
 }
 
+const BRL_DECIMAL = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function formatCentsToBRL(cents: number): string {
+  return "R$ " + BRL_DECIMAL.format(cents / 100);
+}
+
+function numberToCents(n: number | string | null | undefined): number {
+  const v = typeof n === "string" ? Number(n) : (n ?? 0);
+  if (!Number.isFinite(v)) return 0;
+  return Math.round(v * 100);
+}
+
+export function CurrencyField({
+  label, value, onChange, required,
+}: { label: string; value: any; onChange: (v: number) => void; required?: boolean }) {
+  const [display, setDisplay] = useState(() => formatCentsToBRL(numberToCents(value)));
+
+  useEffect(() => {
+    const incoming = numberToCents(value);
+    const current = Math.round((Number(display.replace(/[^\d]/g, "")) || 0));
+    if (incoming !== current) {
+      setDisplay(formatCentsToBRL(incoming));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  function handleChange(raw: string) {
+    const digits = raw.replace(/\D/g, "").slice(0, 15);
+    const cents = digits === "" ? 0 : Number(digits);
+    setDisplay(formatCentsToBRL(cents));
+    onChange(cents / 100);
+  }
+
+  return (
+    <Field label={label}>
+      <Input
+        inputMode="numeric"
+        value={display}
+        onChange={(e) => handleChange(e.target.value)}
+        onFocus={(e) => e.target.select()}
+        required={required}
+      />
+    </Field>
+  );
+}
+
 export function SelectField({
   label, value, onChange, options, placeholder,
 }: {
