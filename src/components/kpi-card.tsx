@@ -39,11 +39,11 @@ export function KpiCard({
             style={{
               fontSize: (() => {
                 const len = String(value ?? "").length;
-                if (len <= 10) return "clamp(1.375rem, 2.4vw, 1.75rem)";
-                if (len <= 13) return "clamp(1.125rem, 2vw, 1.5rem)";
-                if (len <= 16) return "clamp(1rem, 1.7vw, 1.25rem)";
-                if (len <= 20) return "clamp(0.875rem, 1.4vw, 1.05rem)";
-                return "clamp(0.75rem, 1.2vw, 0.95rem)";
+                if (len <= 10) return "clamp(1rem, 1.5vw, 1.25rem)";
+                if (len <= 13) return "clamp(0.9rem, 1.3vw, 1.125rem)";
+                if (len <= 16) return "clamp(0.8rem, 1.15vw, 1rem)";
+                if (len <= 20) return "clamp(0.7rem, 1vw, 0.9rem)";
+                return "clamp(0.65rem, 0.85vw, 0.8rem)";
               })(),
             }}
           >
