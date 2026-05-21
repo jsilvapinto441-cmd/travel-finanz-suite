@@ -211,6 +211,8 @@ function RecebivelForm({
                   <th className="text-left px-2 py-2 font-medium">#</th>
                   <th className="text-left px-2 py-2 font-medium">Nº Fatura</th>
                   <th className="text-right px-2 py-2 font-medium">Valor</th>
+                  <th className="text-right px-2 py-2 font-medium">Pago</th>
+                  <th className="text-right px-2 py-2 font-medium">Restante</th>
                   <th className="text-left px-2 py-2 font-medium">Vencimento</th>
                   <th className="text-left px-2 py-2 font-medium">Status</th>
                   <th className="text-left px-2 py-2 font-medium">Banco</th>
@@ -225,8 +227,10 @@ function RecebivelForm({
                       {values.numero_fatura ? `${values.numero_fatura}-${pad(i + 1)}` : "—"}
                     </td>
                     <td className="px-2 py-2 text-right font-medium tabular-nums">{formatCurrency(v)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">{formatCurrency(0)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums">{formatCurrency(v)}</td>
                     <td className="px-2 py-2 tabular-nums">{formatDate(parcelaDatas[i])}</td>
-                    <td className="px-2 py-2"><StatusBadge status={i === 0 ? (values.status ?? "em_aberto") : "em_aberto"} /></td>
+                    <td className="px-2 py-2"><StatusBadge status="em_aberto" /></td>
                     <td className="px-2 py-2 text-muted-foreground">{values.banco || "—"}</td>
                     <td className="px-2 py-2 text-muted-foreground">{values.categoria || "—"}</td>
                   </tr>
