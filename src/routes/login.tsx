@@ -9,6 +9,10 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import { audit } from "@/lib/audit";
+import {
+  checkLoginAllowed, registerLoginFailure, registerLoginSuccess,
+  checkResetAllowed, registerResetSent, formatSeconds,
+} from "@/lib/rate-limit";
 import logo from "@/assets/produz-logo-white.png";
 
 export const Route = createFileRoute("/login")({
