@@ -59,7 +59,7 @@ function Dashboard() {
       const { data } = await supabase
         .from("registros_pagamento" as any)
         .select("id,data_pagamento,valor,recebivel_id");
-      return (data ?? []) as { id: string; data_pagamento: string; valor: number; recebivel_id: string }[];
+      return (data ?? []) as unknown as { id: string; data_pagamento: string; valor: number; recebivel_id: string }[];
     },
     staleTime: 60_000,
   });
