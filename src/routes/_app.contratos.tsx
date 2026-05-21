@@ -46,6 +46,7 @@ const FREQS = [
   { value: "mensal", label: "Mensal" },
   { value: "quinzenal", label: "Quinzenal" },
   { value: "semanal", label: "Semanal" },
+  { value: "unico", label: "Único" },
 ];
 const STATUS = [
   { value: "rascunho", label: "Rascunho" },
