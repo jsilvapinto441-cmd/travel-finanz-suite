@@ -51,7 +51,7 @@ function Page() {
               options={(missoes ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
             <SelectField label="Contrato" value={values.contrato_id ?? ""} onChange={(v) => setValues({ ...values, contrato_id: v })}
               options={(contratos ?? []).map((c) => ({ value: c.id, label: `${c.numero ?? ""} ${c.cliente}` }))} />
-            <NumberField label="Valor Total" value={values.valor_total} onChange={(v) => setValues({ ...values, valor_total: v })} />
+            <CurrencyField label="Valor Total" value={values.valor_total} onChange={(v) => setValues({ ...values, valor_total: v })} />
             <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
             <SelectField label="Frequência" value={values.frequencia ?? "mensal"} onChange={(v) => setValues({ ...values, frequencia: v })}
               options={[
