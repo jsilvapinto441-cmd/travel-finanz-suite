@@ -189,14 +189,15 @@ function Dashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard label="Total a Receber" value={formatCurrency(totalReceber)}
-          hint={`Recebido: ${formatCurrency(recebido)}`} icon={<ArrowDownLeft className="size-5" />} tone="success" />
+          hint={`Vencido: ${formatCurrency(totalVencido)}`} icon={<ArrowDownLeft className="size-5" />} tone="success" />
+        <KpiCard label="Recebido no Mês" value={formatCurrency(recebidoMes)}
+          hint="Pagamentos registrados" icon={<TrendingUp className="size-5" />} tone="gold" />
         <KpiCard label="Total Despesas" value={formatCurrency(totalDespesa)}
           hint={`Pago: ${formatCurrency(pago)}`} icon={<ArrowUpRight className="size-5" />} tone="destructive" />
-        <KpiCard label="Lucro Líquido" value={formatCurrency(lucro)}
-          hint="Recebido - Pago" icon={<TrendingUp className="size-5" />} tone="gold" />
-        <KpiCard label="Em Atraso" value={atrasados.length}
-          hint="Contas vencidas" icon={<AlertTriangle className="size-5" />} tone="warning" />
+        <KpiCard label="Inadimplência" value={`${inadimplencia}%`}
+          hint={`${atrasados.length} itens em atraso`} icon={<AlertTriangle className="size-5" />} tone="warning" />
       </div>
+      {void lucro}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <Card className="lg:col-span-2 p-6">
