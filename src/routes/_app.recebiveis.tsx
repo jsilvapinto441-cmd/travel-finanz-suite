@@ -1,16 +1,34 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
-import { DataTable } from "@/components/data-table";
 import { TextField, CurrencyField, SelectField, TextAreaField, Field } from "@/components/form-fields";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Accordion, AccordionItem, AccordionTrigger, AccordionContent,
+} from "@/components/ui/accordion";
 import { useEmpresas, useMissoes, useContratos, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
-import { CircleDollarSign, ExternalLink } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { useDebounce } from "@/lib/use-debounce";
+import { toast } from "sonner";
+import {
+  CircleDollarSign, ExternalLink, Plus, Pencil, Trash2, Search, Loader2,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
@@ -45,8 +63,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 function RecebivelForm({
-  values, setValues,
-  empresas, missoes, contratos,
+  values, setValues, empresas, missoes, contratos,
 }: {
   values: Partial<T>;
   setValues: React.Dispatch<React.SetStateAction<Partial<T>>>;
@@ -77,7 +94,7 @@ function RecebivelForm({
             <ReadOnlyField label="Missão" value={nomeById(missoes, values.missao_id ?? null)} />
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Para alterar valor, parcelas ou datas, edite o contrato. Pagamentos são registrados pelo botão "Registrar pagamento" na lista.
+            Para alterar valor, parcelas ou datas, edite o contrato. Pagamentos são registrados pelo botão "Pagamento" na lista.
           </p>
         </div>
       ) : (
@@ -114,70 +131,318 @@ function RecebivelForm({
   );
 }
 
+type Group = {
+  key: string;
+  cliente: string;
+  contrato_id: string | null;
+  contratoLabel: string | null;
+  rows: T[];
+  total: number;
+  pago: number;
+  restante: number;
+  proximoVenc: string | null;
+  countAberto: number;
+  countVencido: number;
+};
+
+function buildGroups(rows: T[], contratos: { id: string; cliente: string; numero: string | null }[]): Group[] {
+  const map = new Map<string, Group>();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
+  for (const r of rows) {
+    const key = r.contrato_id ?? `avulso:${r.pagador}`;
+    let g = map.get(key);
+    if (!g) {
+      const c = r.contrato_id ? contratos.find((x) => x.id === r.contrato_id) : null;
+      g = {
+        key,
+        cliente: c?.cliente ?? r.pagador ?? "—",
+        contrato_id: r.contrato_id,
+        contratoLabel: c ? `${c.numero ?? ""} ${c.cliente}`.trim() : null,
+        rows: [],
+        total: 0, pago: 0, restante: 0,
+        proximoVenc: null,
+        countAberto: 0, countVencido: 0,
+      };
+      map.set(key, g);
+    }
+    g.rows.push(r);
+    const v = Number(r.valor_parcela ?? r.valor_total ?? 0);
+    const pago = Number(r.valor_pago ?? 0);
+    g.total += v;
+    g.pago += pago;
+    g.restante += Math.max(v - pago, 0);
+
+    if (r.status !== "pago" && r.data_vencimento) {
+      const dv = new Date(r.data_vencimento);
+      if (!g.proximoVenc || new Date(g.proximoVenc) > dv) g.proximoVenc = r.data_vencimento;
+      if (dv < today) g.countVencido += 1;
+      else g.countAberto += 1;
+    } else if (r.status !== "pago") {
+      g.countAberto += 1;
+    }
+  }
+
+  for (const g of map.values()) {
+    g.rows.sort((a, b) => {
+      if (a.numero_parcela !== b.numero_parcela) return a.numero_parcela - b.numero_parcela;
+      return (a.data_vencimento ?? "").localeCompare(b.data_vencimento ?? "");
+    });
+  }
+
+  return Array.from(map.values()).sort((a, b) => a.cliente.localeCompare(b.cliente));
+}
+
 function Page() {
+  const qc = useQueryClient();
+  const { canEdit, isAdmin } = useAuth();
   const { data: empresas } = useEmpresas();
   const { data: missoes } = useMissoes();
   const { data: contratos } = useContratos();
 
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounce(searchInput, 200);
+
   const [payOpen, setPayOpen] = useState(false);
   const [payTarget, setPayTarget] = useState<T | null>(null);
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<T | null>(null);
+  const defaultValues: Partial<T> = { status: "em_aberto", parcelas: 1, frequencia: "mensal" };
+  const [values, setValues] = useState<Partial<T>>(defaultValues);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["recebiveis"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("recebiveis")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as T[];
+    },
+  });
+
+  const filtered = useMemo(() => {
+    const rows = data ?? [];
+    if (!search) return rows;
+    const q = search.toLowerCase();
+    return rows.filter((r) =>
+      (r.pagador ?? "").toLowerCase().includes(q) ||
+      (r.numero_fatura ?? "").toLowerCase().includes(q)
+    );
+  }, [data, search]);
+
+  const groups = useMemo(
+    () => buildGroups(filtered, contratos ?? []),
+    [filtered, contratos]
+  );
+
+  const upsert = useMutation({
+    mutationFn: async (payload: Partial<T>) => {
+      if (editing) {
+        const { error } = await supabase.from("recebiveis").update(payload as any).eq("id", editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("recebiveis").insert(payload as any);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["recebiveis"] });
+      toast.success(editing ? "Atualizado com sucesso" : "Criado com sucesso");
+      setFormOpen(false); setEditing(null); setValues(defaultValues);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("recebiveis").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["recebiveis"] });
+      toast.success("Excluído");
+      setDeletingId(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const openNew = () => { setEditing(null); setValues(defaultValues); setFormOpen(true); };
+  const openEdit = (row: T) => { setEditing(row); setValues(row); setFormOpen(true); };
 
   return (
     <PageContainer>
       <PageHeader title="Recebíveis" description="Parcelas geradas pelos contratos + recebíveis avulsos." />
-      <DataTable<T>
-        table="recebiveis"
-        title="Recebível"
-        searchFields={["pagador", "numero_fatura"]}
-        defaultValues={{ status: "em_aberto", parcelas: 1, frequencia: "mensal" }}
-        extraRowActions={(row) => (
-          <Button size="sm" variant="ghost"
-            className="text-primary hover:bg-primary/10 h-8 px-2"
-            onClick={(e) => { e.stopPropagation(); setPayTarget(row); setPayOpen(true); }}>
-            <CircleDollarSign className="size-3.5 mr-1" />
-            Pagamento
-          </Button>
-        )}
-        columns={[
-          {
-            key: "pagador", label: "Pagador",
-            render: (r) => (
-              <div>
-                <div className="font-medium">{r.pagador}</div>
-                {r.parcelas > 1 && (
-                  <div className="text-xs text-muted-foreground">
-                    {r.numero_parcela === 0 ? "Entrada" : `Parcela ${r.numero_parcela}/${r.parcelas}`}
+
+      <Card className="overflow-hidden">
+        <div className="p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between border-b">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Buscar por cliente ou fatura..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
+          {canEdit && (
+            <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="size-4 mr-1" /> Novo
+            </Button>
+          )}
+        </div>
+
+        {isLoading ? (
+          <div className="p-4 space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+          </div>
+        ) : groups.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground text-sm">Nenhum recebível encontrado.</div>
+        ) : (
+          <Accordion type="multiple" className="divide-y">
+            {groups.map((g) => (
+              <AccordionItem key={g.key} value={g.key} className="border-0 border-b last:border-b-0">
+                <AccordionTrigger className="px-4 hover:bg-muted/30 hover:no-underline">
+                  <div className="flex flex-1 items-center gap-4 pr-4">
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="font-medium truncate flex items-center gap-2">
+                        {g.cliente}
+                        {g.contratoLabel && (
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
+                            · {g.contratoLabel}
+                          </span>
+                        )}
+                        {!g.contrato_id && (
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">· avulso</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                        <span>{g.rows.length} {g.rows.length === 1 ? "parcela" : "parcelas"}</span>
+                        {g.countVencido > 0 && <span className="text-destructive">{g.countVencido} vencida(s)</span>}
+                        {g.countAberto > 0 && <span>{g.countAberto} em aberto</span>}
+                        {g.proximoVenc && <span>Próx. venc.: {formatDate(g.proximoVenc)}</span>}
+                      </div>
+                    </div>
+                    <div className="hidden sm:flex flex-col items-end shrink-0 tabular-nums">
+                      <div className="text-sm font-semibold">{formatCurrency(g.total)}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {g.pago > 0 && <span className="text-success">Pago {formatCurrency(g.pago)} · </span>}
+                        Restante <span className="text-primary">{formatCurrency(g.restante)}</span>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            ),
-          },
-          { key: "empresa", label: "Empresa", render: (r) => nomeById(empresas, r.empresa_id) },
-          { key: "numero_fatura", label: "Fatura" },
-          {
-            key: "valor", label: "Valor",
-            render: (r) => {
-              const v = Number(r.valor_parcela ?? r.valor_total);
-              const pago = Number(r.valor_pago ?? 0);
-              return (
-                <div className="tabular-nums">
-                  <div className="font-medium">{formatCurrency(v)}</div>
-                  {pago > 0 && pago < v && (
-                    <div className="text-[10px] text-success">Pago {formatCurrency(pago)}</div>
-                  )}
-                </div>
-              );
-            },
-          },
-          { key: "data_vencimento", label: "Vencimento", render: (r) => formatDate(r.data_vencimento) },
-          { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
-          { key: "anexos", label: "Anexos", render: (r) => <AnexosCell entidade="recebiveis" entidade_id={r.id} /> },
-        ]}
-        renderForm={({ values, setValues }) => (
-          <RecebivelForm values={values} setValues={setValues}
-            empresas={empresas ?? []} missoes={missoes ?? []} contratos={contratos ?? []} />
+                </AccordionTrigger>
+                <AccordionContent className="px-0 pb-0">
+                  <div className="overflow-x-auto bg-muted/10 border-t">
+                    <table className="w-full text-sm">
+                      <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <tr className="border-b">
+                          <th className="text-left px-4 py-2 font-medium">Parcela</th>
+                          <th className="text-left px-4 py-2 font-medium">Empresa</th>
+                          <th className="text-left px-4 py-2 font-medium">Fatura</th>
+                          <th className="text-right px-4 py-2 font-medium">Valor</th>
+                          <th className="text-left px-4 py-2 font-medium">Vencimento</th>
+                          <th className="text-left px-4 py-2 font-medium">Status</th>
+                          <th className="text-left px-4 py-2 font-medium">Anexos</th>
+                          {canEdit && <th className="text-right px-4 py-2 font-medium">Ações</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {g.rows.map((r) => {
+                          const v = Number(r.valor_parcela ?? r.valor_total);
+                          const pago = Number(r.valor_pago ?? 0);
+                          return (
+                            <tr key={r.id} className="border-b last:border-b-0 hover:bg-muted/30">
+                              <td className="px-4 py-2">
+                                {r.parcelas > 1
+                                  ? (r.numero_parcela === 0 ? "Entrada" : `Parcela ${r.numero_parcela}/${r.parcelas}`)
+                                  : "Única"}
+                              </td>
+                              <td className="px-4 py-2">{nomeById(empresas, r.empresa_id)}</td>
+                              <td className="px-4 py-2">{r.numero_fatura ?? "—"}</td>
+                              <td className="px-4 py-2 text-right tabular-nums">
+                                <div className="font-medium">{formatCurrency(v)}</div>
+                                {pago > 0 && pago < v && (
+                                  <div className="text-[10px] text-success">Pago {formatCurrency(pago)}</div>
+                                )}
+                              </td>
+                              <td className="px-4 py-2 tabular-nums">{formatDate(r.data_vencimento)}</td>
+                              <td className="px-4 py-2"><StatusBadge status={r.status} /></td>
+                              <td className="px-4 py-2"><AnexosCell entidade="recebiveis" entidade_id={r.id} /></td>
+                              {canEdit && (
+                                <td className="px-4 py-2 text-right">
+                                  <div className="flex justify-end gap-1">
+                                    <Button size="sm" variant="ghost"
+                                      className="text-primary hover:bg-primary/10 h-8 px-2"
+                                      onClick={() => { setPayTarget(r); setPayOpen(true); }}>
+                                      <CircleDollarSign className="size-3.5 mr-1" />
+                                      Pagamento
+                                    </Button>
+                                    <Button size="icon" variant="ghost" onClick={() => openEdit(r)}>
+                                      <Pencil className="size-3.5" />
+                                    </Button>
+                                    {isAdmin && (
+                                      <Button size="icon" variant="ghost"
+                                        onClick={() => setDeletingId(r.id)}
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                        <Trash2 className="size-3.5" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         )}
-      />
+      </Card>
+
+      <Dialog open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) { setEditing(null); setValues(defaultValues); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing ? "Editar Recebível" : "Novo Recebível"}</DialogTitle>
+            <DialogDescription>Preencha os campos abaixo</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); upsert.mutate(values); }} className="space-y-4">
+            <RecebivelForm values={values} setValues={setValues}
+              empresas={empresas ?? []} missoes={missoes ?? []} contratos={contratos ?? []} />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={upsert.isPending} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                {upsert.isPending && <Loader2 className="size-4 animate-spin mr-2" />}
+                Salvar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deletingId && remove.mutate(deletingId)}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <PagamentoDialog
         recebivel={payTarget}
