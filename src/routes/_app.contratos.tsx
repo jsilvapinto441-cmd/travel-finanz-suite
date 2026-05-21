@@ -106,14 +106,25 @@ function ContratoForm({
     const per = Math.floor(cents / parcelas);
     const rem = cents - per * parcelas;
     const [y, m] = inicio.split("-").map(Number);
-    const dayClamped = Math.min(dia, lastDayOfMonth(y, m - 1));
-    const base = `${y}-${pad(m)}-${pad(dayClamped)}`;
-    return Array.from({ length: parcelas }, (_, i) => ({
+    let base: string;
+    if (freq === "mensal") {
+      const dayClamped = Math.min(dia, lastDayOfMonth(y, m - 1));
+      base = `${y}-${pad(m)}-${pad(dayClamped)}`;
+    } else {
+      base = inicio;
+    }
+    const n = freq === "unico" ? 1 : parcelas;
+    return Array.from({ length: n }, (_, i) => ({
       i: i + 1,
-      valor: (i === parcelas - 1 ? per + rem : per) / 100,
-      venc: addToDate(base, freq, i),
+      valor: (i === n - 1 ? per + rem : per) / 100,
+      venc: addToDate(base, freq, i + 1),
     }));
   }, [saldo, parcelas, freq, dia, inicio]);
+
+  // Quantidade de dias da viagem (calcula data_retorno automaticamente)
+  const qtdDias = values.data_embarque && values.data_retorno
+    ? Math.max(1, diffDays(values.data_embarque, values.data_retorno))
+    : null;
 
   return (
     <div className="space-y-6">
