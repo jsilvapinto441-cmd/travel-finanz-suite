@@ -1,17 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
 import { TextField, NumberField, CurrencyField, SelectField, TextAreaField } from "@/components/form-fields";
+import { Button } from "@/components/ui/button";
 import { useEmpresas, useMissoes, useContratos, useFornecedores, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
+import { PagamentoDialog } from "@/components/pagamento-dialog";
+import { CircleDollarSign } from "lucide-react";
 
 export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
 type T = {
   id: string; empresa_id: string | null; missao_id: string | null; contrato_id: string | null;
   fornecedor_id: string | null; descricao: string; categoria: string; valor: number;
+  valor_pago: number;
   data_vencimento: string | null; data_pagamento: string | null; banco: string | null;
   status: string; observacoes: string | null;
   parent_id: string | null; numero_parcela: number; parcelas: number; frequencia: string;
@@ -30,12 +35,24 @@ function Page() {
   const { data: missoes } = useMissoes();
   const { data: contratos } = useContratos();
   const { data: fornecedores } = useFornecedores();
+
+  const [payOpen, setPayOpen] = useState(false);
+  const [payTarget, setPayTarget] = useState<T | null>(null);
+
   return (
     <PageContainer>
-      <PageHeader title="Despesas" description="Contas a pagar. Despesas parceladas geram as próximas automaticamente." />
+      <PageHeader title="Despesas" description="Contas a pagar. O status é calculado automaticamente a partir dos pagamentos registrados." />
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
         defaultValues={{ status: "em_aberto", categoria: "outros", parcelas: 1, frequencia: "mensal" }}
+        extraRowActions={(row) => (
+          <Button size="sm" variant="ghost"
+            className="text-primary hover:bg-primary/10 h-8 px-2"
+            onClick={(e) => { e.stopPropagation(); setPayTarget(row); setPayOpen(true); }}>
+            <CircleDollarSign className="size-3.5 mr-1" />
+            Pagamento
+          </Button>
+        )}
         columns={[
           { key: "descricao", label: "Descrição", render: (r) => (
             <div>
@@ -45,7 +62,21 @@ function Page() {
           ) },
           { key: "categoria", label: "Categoria", render: (r) => <span className="capitalize">{r.categoria.replace(/_/g, " ")}</span> },
           { key: "empresa", label: "Empresa", render: (r) => nomeById(empresas, r.empresa_id) },
-          { key: "valor", label: "Valor", render: (r) => formatCurrency(r.valor) },
+          {
+            key: "valor", label: "Valor",
+            render: (r) => {
+              const v = Number(r.valor);
+              const pago = Number(r.valor_pago ?? 0);
+              return (
+                <div className="tabular-nums">
+                  <div className="font-medium">{formatCurrency(v)}</div>
+                  {pago > 0 && pago < v && (
+                    <div className="text-[10px] text-success">Pago {formatCurrency(pago)}</div>
+                  )}
+                </div>
+              );
+            },
+          },
           { key: "data_vencimento", label: "Vencimento", render: (r) => formatDate(r.data_vencimento) },
           { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
           { key: "anexos", label: "Anexos", render: (r) => <AnexosCell entidade="despesas" entidade_id={r.id} /> },
@@ -70,22 +101,31 @@ function Page() {
             <SelectField label="Fornecedor" value={values.fornecedor_id ?? ""} onChange={(v) => setValues({ ...values, fornecedor_id: v })}
               options={(fornecedores ?? []).map((f) => ({ value: f.id, label: f.nome }))} />
             <TextField label="Vencimento" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} type="date" />
-            <TextField label="Pagamento" value={values.data_pagamento} onChange={(v) => setValues({ ...values, data_pagamento: v })} type="date" />
             <TextField label="Banco" value={values.banco} onChange={(v) => setValues({ ...values, banco: v })} />
-            <SelectField label="Status" value={values.status} onChange={(v) => setValues({ ...values, status: v })}
-              options={[
-                { value: "em_aberto", label: "Em aberto" }, { value: "pago", label: "Pago" },
-                { value: "atrasado", label: "Atrasado" }, { value: "cancelado", label: "Cancelado" },
-              ]} />
             <div className="col-span-2">
               <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} required />
             </div>
             <div className="col-span-2">
               <TextAreaField label="Observações" value={values.observacoes} onChange={(v) => setValues({ ...values, observacoes: v })} />
             </div>
-
+            <p className="col-span-2 text-[11px] text-muted-foreground">
+              O <strong>status</strong> é calculado automaticamente. Para marcar como pago, use o botão <strong>Pagamento</strong> na lista.
+            </p>
           </div>
         )}
+      />
+
+      <PagamentoDialog
+        despesa={payTarget ? {
+          id: payTarget.id,
+          descricao: payTarget.descricao,
+          valor: Number(payTarget.valor),
+          valor_pago: Number(payTarget.valor_pago ?? 0),
+          numero_parcela: payTarget.numero_parcela,
+          parcelas: payTarget.parcelas,
+        } : null}
+        open={payOpen}
+        onOpenChange={(v) => { setPayOpen(v); if (!v) setPayTarget(null); }}
       />
     </PageContainer>
   );
