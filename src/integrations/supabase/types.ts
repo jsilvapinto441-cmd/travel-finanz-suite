@@ -84,44 +84,80 @@ export type Database = {
         Row: {
           cliente: string
           created_at: string
+          data_embarque: string | null
           data_fim: string | null
           data_inicio: string | null
+          data_retorno: string | null
+          destino: string | null
+          dia_vencimento: number
           empresa_id: string | null
+          frequencia: string
           id: string
           missao_id: string | null
+          num_passageiros: number | null
           numero: string | null
           observacoes: string | null
+          parcelas: number
           status: Database["public"]["Enums"]["status_contrato"]
+          tipo_servico:
+            | Database["public"]["Enums"]["tipo_servico_contrato"]
+            | null
           updated_at: string
           valor: number
+          valor_entrada: number
+          valor_saldo: number | null
         }
         Insert: {
           cliente: string
           created_at?: string
+          data_embarque?: string | null
           data_fim?: string | null
           data_inicio?: string | null
+          data_retorno?: string | null
+          destino?: string | null
+          dia_vencimento?: number
           empresa_id?: string | null
+          frequencia?: string
           id?: string
           missao_id?: string | null
+          num_passageiros?: number | null
           numero?: string | null
           observacoes?: string | null
+          parcelas?: number
           status?: Database["public"]["Enums"]["status_contrato"]
+          tipo_servico?:
+            | Database["public"]["Enums"]["tipo_servico_contrato"]
+            | null
           updated_at?: string
           valor?: number
+          valor_entrada?: number
+          valor_saldo?: number | null
         }
         Update: {
           cliente?: string
           created_at?: string
+          data_embarque?: string | null
           data_fim?: string | null
           data_inicio?: string | null
+          data_retorno?: string | null
+          destino?: string | null
+          dia_vencimento?: number
           empresa_id?: string | null
+          frequencia?: string
           id?: string
           missao_id?: string | null
+          num_passageiros?: number | null
           numero?: string | null
           observacoes?: string | null
+          parcelas?: number
           status?: Database["public"]["Enums"]["status_contrato"]
+          tipo_servico?:
+            | Database["public"]["Enums"]["tipo_servico_contrato"]
+            | null
           updated_at?: string
           valor?: number
+          valor_entrada?: number
+          valor_saldo?: number | null
         }
         Relationships: [
           {
@@ -573,6 +609,47 @@ export type Database = {
           },
         ]
       }
+      registros_pagamento: {
+        Row: {
+          created_at: string
+          data_pagamento: string
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
+          id: string
+          observacao: string | null
+          recebivel_id: string
+          user_id: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data_pagamento?: string
+          forma_pagamento?: Database["public"]["Enums"]["forma_pagamento"]
+          id?: string
+          observacao?: string | null
+          recebivel_id: string
+          user_id?: string | null
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          data_pagamento?: string
+          forma_pagamento?: Database["public"]["Enums"]["forma_pagamento"]
+          id?: string
+          observacao?: string | null
+          recebivel_id?: string
+          user_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registros_pagamento_recebivel_id_fkey"
+            columns: ["recebivel_id"]
+            isOneToOne: false
+            referencedRelation: "recebiveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -681,7 +758,19 @@ export type Database = {
         | "avulso"
         | "fornecedor"
         | "outros"
-      status_contrato: "rascunho" | "ativo" | "concluido" | "cancelado"
+      forma_pagamento:
+        | "pix"
+        | "transferencia"
+        | "boleto"
+        | "cartao"
+        | "dinheiro"
+      status_contrato:
+        | "rascunho"
+        | "ativo"
+        | "concluido"
+        | "cancelado"
+        | "em_analise"
+        | "aguardando_pagamento"
       status_financeiro:
         | "em_aberto"
         | "pago"
@@ -689,6 +778,11 @@ export type Database = {
         | "cancelado"
         | "parcial"
       status_generico: "ativo" | "inativo"
+      tipo_servico_contrato:
+        | "pacote_completo"
+        | "so_aereo"
+        | "so_hospedagem"
+        | "personalizado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -829,7 +923,15 @@ export const Constants = {
         "fornecedor",
         "outros",
       ],
-      status_contrato: ["rascunho", "ativo", "concluido", "cancelado"],
+      forma_pagamento: ["pix", "transferencia", "boleto", "cartao", "dinheiro"],
+      status_contrato: [
+        "rascunho",
+        "ativo",
+        "concluido",
+        "cancelado",
+        "em_analise",
+        "aguardando_pagamento",
+      ],
       status_financeiro: [
         "em_aberto",
         "pago",
@@ -838,6 +940,12 @@ export const Constants = {
         "parcial",
       ],
       status_generico: ["ativo", "inativo"],
+      tipo_servico_contrato: [
+        "pacote_completo",
+        "so_aereo",
+        "so_hospedagem",
+        "personalizado",
+      ],
     },
   },
 } as const

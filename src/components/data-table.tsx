@@ -43,12 +43,13 @@ interface DataTableProps<T extends { id: string }> {
   toolbar?: ReactNode;
   emptyHint?: string;
   pageSize?: number;
+  extraRowActions?: (row: T) => ReactNode;
 }
 
 export function DataTable<T extends { id: string }>({
   table, title, columns, searchFields = [], renderForm, defaultValues = {},
   orderBy = "created_at", ascending = false, filter, toolbar, emptyHint,
-  pageSize = 50,
+  pageSize = 50, extraRowActions,
 }: DataTableProps<T>) {
   const qc = useQueryClient();
   const { canEdit, isAdmin } = useAuth();
@@ -200,6 +201,7 @@ export function DataTable<T extends { id: string }>({
                   {canEdit && (
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {extraRowActions?.(row)}
                         <Button size="icon" variant="ghost" onClick={() => openEdit(row)}>
                           <Pencil className="size-3.5" />
                         </Button>
