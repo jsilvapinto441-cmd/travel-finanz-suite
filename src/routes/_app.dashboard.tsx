@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, formatMonth } from "@/lib/format";
 import {
   ArrowDownLeft, ArrowUpRight, TrendingUp, AlertTriangle, Wallet, Building2,
@@ -22,6 +25,8 @@ export const Route = createFileRoute("/_app/dashboard")({
 
 function Dashboard() {
   const [empresaId, setEmpresaId] = useState<string>("all");
+  const [dataIni, setDataIni] = useState<string>("");
+  const [dataFim, setDataFim] = useState<string>("");
 
   // Auto-marca itens vencidos como atrasados ao abrir o dashboard
   useQuery({
@@ -61,8 +66,20 @@ function Dashboard() {
   });
 
   const aggregates = useMemo(() => {
-    const recs = recebiveis ?? [];
-    const desps = despesas ?? [];
+    const inDateRange = (dateStr?: string | null) => {
+      if (!dataIni && !dataFim) return true;
+      if (!dateStr) return false;
+      const d = dateStr.slice(0, 10);
+      if (dataIni && d < dataIni) return false;
+      if (dataFim && d > dataFim) return false;
+      return true;
+    };
+
+    const recsAll = recebiveis ?? [];
+    const despsAll = despesas ?? [];
+    const recs = recsAll.filter((r) => inDateRange(r.data_recebimento ?? r.data_vencimento));
+    const desps = despsAll.filter((d) => inDateRange(d.data_pagamento ?? d.data_vencimento));
+
     const totalReceber = recs.filter((r) => r.status !== "cancelado").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
     const recebido = recs.filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
     const totalDespesa = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
@@ -100,7 +117,7 @@ function Dashboard() {
     const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
 
     return { totalReceber, recebido, totalDespesa, pago, lucro: recebido - pago, atrasados, months, catData };
-  }, [recebiveis, despesas]);
+  }, [recebiveis, despesas, dataIni, dataFim]);
 
   const { totalReceber, recebido, totalDespesa, pago, lucro, atrasados, months, catData } = aggregates;
   const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
@@ -125,6 +142,22 @@ function Dashboard() {
           </Select>
         }
       />
+
+      <Card className="p-4 mb-6 flex flex-wrap items-end gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Período inicial</Label>
+          <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} className="w-[170px]" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Período final</Label>
+          <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-[170px]" />
+        </div>
+        {(dataIni || dataFim) && (
+          <Button variant="outline" size="sm" onClick={() => { setDataIni(""); setDataFim(""); }}>
+            Limpar período
+          </Button>
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard label="Total a Receber" value={formatCurrency(totalReceber)}
