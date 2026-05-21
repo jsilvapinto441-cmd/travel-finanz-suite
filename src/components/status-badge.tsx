@@ -1,9 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 
 const map: Record<string, { label: string; cls: string }> = {
-  em_aberto: { label: "Em aberto", cls: "bg-warning/15 text-warning-foreground border-warning/30" },
+  em_aberto: { label: "Em aberto", cls: "bg-primary/15 text-primary border-primary/30" },
   pago: { label: "Pago", cls: "bg-success/15 text-success border-success/30" },
-  atrasado: { label: "Atrasado", cls: "bg-destructive/12 text-destructive border-destructive/30" },
+  atrasado: { label: "Atrasado", cls: "bg-destructive/15 text-destructive border-destructive/40" },
+  parcial: { label: "Parcial", cls: "bg-yellow-500/15 text-yellow-500 border-yellow-500/30" },
   cancelado: { label: "Cancelado", cls: "bg-muted text-muted-foreground border-border" },
   ativo: { label: "Ativo", cls: "bg-success/15 text-success border-success/30" },
   inativo: { label: "Inativo", cls: "bg-muted text-muted-foreground border-border" },
