@@ -46,9 +46,20 @@ function Dashboard() {
     queryFn: async () => {
       let q = supabase
         .from("recebiveis")
-        .select("id,pagador,empresa_id,valor_total,status,data_vencimento,data_recebimento");
+        .select("id,pagador,empresa_id,contrato_id,valor_total,valor_parcela,valor_pago,status,data_vencimento,data_recebimento");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
       return (await q).data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const { data: pagamentos } = useQuery({
+    queryKey: ["dash-pagamentos", empresaId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("registros_pagamento" as any)
+        .select("id,data_pagamento,valor,recebivel_id");
+      return (data ?? []) as { id: string; data_pagamento: string; valor: number; recebivel_id: string }[];
     },
     staleTime: 60_000,
   });
