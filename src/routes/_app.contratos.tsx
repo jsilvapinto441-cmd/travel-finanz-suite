@@ -46,6 +46,7 @@ const FREQS = [
   { value: "mensal", label: "Mensal" },
   { value: "quinzenal", label: "Quinzenal" },
   { value: "semanal", label: "Semanal" },
+  { value: "unico", label: "Único" },
 ];
 const STATUS = [
   { value: "rascunho", label: "Rascunho" },
@@ -61,9 +62,24 @@ function lastDayOfMonth(y: number, m: number) { return new Date(y, m + 1, 0).get
 function addToDate(base: string, freq: string, n: number): string {
   const [y, m, d] = base.split("-").map(Number);
   const dt = new Date(y, m - 1, d);
+  if (freq === "unico") return base;
   if (freq === "semanal") dt.setDate(dt.getDate() + n * 7);
   else if (freq === "quinzenal") dt.setDate(dt.getDate() + n * 15);
   else dt.setMonth(dt.getMonth() + n);
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+}
+
+function diffDays(a: string, b: string): number {
+  const [ya, ma, da] = a.split("-").map(Number);
+  const [yb, mb, db] = b.split("-").map(Number);
+  const ms = new Date(yb, mb - 1, db).getTime() - new Date(ya, ma - 1, da).getTime();
+  return Math.round(ms / 86400000);
+}
+
+function addDays(base: string, days: number): string {
+  const [y, m, d] = base.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + days);
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 }
 
@@ -90,14 +106,25 @@ function ContratoForm({
     const per = Math.floor(cents / parcelas);
     const rem = cents - per * parcelas;
     const [y, m] = inicio.split("-").map(Number);
-    const dayClamped = Math.min(dia, lastDayOfMonth(y, m - 1));
-    const base = `${y}-${pad(m)}-${pad(dayClamped)}`;
-    return Array.from({ length: parcelas }, (_, i) => ({
+    let base: string;
+    if (freq === "mensal") {
+      const dayClamped = Math.min(dia, lastDayOfMonth(y, m - 1));
+      base = `${y}-${pad(m)}-${pad(dayClamped)}`;
+    } else {
+      base = inicio;
+    }
+    const n = freq === "unico" ? 1 : parcelas;
+    return Array.from({ length: n }, (_, i) => ({
       i: i + 1,
-      valor: (i === parcelas - 1 ? per + rem : per) / 100,
-      venc: addToDate(base, freq, i),
+      valor: (i === n - 1 ? per + rem : per) / 100,
+      venc: addToDate(base, freq, i + 1),
     }));
   }, [saldo, parcelas, freq, dia, inicio]);
+
+  // Quantidade de dias da viagem (calcula data_retorno automaticamente)
+  const qtdDias = values.data_embarque && values.data_retorno
+    ? Math.max(1, diffDays(values.data_embarque, values.data_retorno))
+    : null;
 
   return (
     <div className="space-y-6">
@@ -109,8 +136,39 @@ function ContratoForm({
         <div className="grid grid-cols-2 gap-4">
           <TextField label="Cliente" value={values.cliente} onChange={(v) => setValues({ ...values, cliente: v })} required />
           <TextField label="Destino" value={values.destino} onChange={(v) => setValues({ ...values, destino: v })} />
-          <TextField label="Data de embarque" type="date" value={values.data_embarque} onChange={(v) => setValues({ ...values, data_embarque: v })} />
-          <TextField label="Data de retorno" type="date" value={values.data_retorno} onChange={(v) => setValues({ ...values, data_retorno: v })} />
+          <TextField
+            label="Data de embarque"
+            type="date"
+            value={values.data_embarque}
+            onChange={(v) => {
+              const dias = qtdDias ?? null;
+              const novo: Partial<T> = { ...values, data_embarque: v };
+              if (v && dias && dias >= 1) novo.data_retorno = addDays(v, dias);
+              setValues(novo);
+            }}
+          />
+          <Field label="Quantidade de dias">
+            <Input
+              type="number"
+              min={1}
+              value={qtdDias ?? ""}
+              placeholder="Ex: 7"
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === "") {
+                  setValues({ ...values, data_retorno: null });
+                  return;
+                }
+                const d = Math.max(1, Math.floor(Number(raw) || 1));
+                if (values.data_embarque) {
+                  setValues({ ...values, data_retorno: addDays(values.data_embarque, d) });
+                }
+              }}
+            />
+          </Field>
+          <Field label="Data de retorno (calculada)">
+            <Input type="date" value={values.data_retorno ?? ""} readOnly className="bg-muted/40 cursor-not-allowed" />
+          </Field>
           <Field label="Nº de passageiros">
             <div className="relative">
               <Users className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
