@@ -19,6 +19,15 @@ type Recebivel = {
   parcelas: number;
 };
 
+type Despesa = {
+  id: string;
+  descricao: string;
+  valor: number;
+  valor_pago: number;
+  numero_parcela: number;
+  parcelas: number;
+};
+
 type Pagamento = {
   id: string;
   data_pagamento: string;
@@ -41,18 +50,25 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function PagamentoDialog({
-  recebivel, open, onOpenChange,
-}: {
-  recebivel: Recebivel | null;
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-}) {
+type Props =
+  | { recebivel: Recebivel | null; despesa?: undefined; open: boolean; onOpenChange: (v: boolean) => void }
+  | { despesa: Despesa | null; recebivel?: undefined; open: boolean; onOpenChange: (v: boolean) => void };
+
+export function PagamentoDialog(props: Props) {
+  const { open, onOpenChange } = props;
   const qc = useQueryClient();
   const { isAdmin } = useAuth();
-  const valorParcela = Number(recebivel?.valor_parcela ?? recebivel?.valor_total ?? 0);
-  const valorPago = Number(recebivel?.valor_pago ?? 0);
-  const restante = Math.max(valorParcela - valorPago, 0);
+
+  const mode: "recebivel" | "despesa" = "despesa" in props && props.despesa !== undefined ? "despesa" : "recebivel";
+  const target = mode === "despesa" ? (props as any).despesa : (props as any).recebivel;
+
+  const titulo = mode === "despesa" ? "Registrar pagamento da despesa" : "Registrar pagamento";
+  const nome = mode === "despesa" ? target?.descricao : target?.pagador;
+  const valorAlvo = mode === "despesa"
+    ? Number(target?.valor ?? 0)
+    : Number(target?.valor_parcela ?? target?.valor_total ?? 0);
+  const valorPago = Number(target?.valor_pago ?? 0);
+  const restante = Math.max(valorAlvo - valorPago, 0);
 
   const [data, setData] = useState(todayISO());
   const [valor, setValor] = useState<number>(restante);
@@ -60,22 +76,24 @@ export function PagamentoDialog({
   const [obs, setObs] = useState<string>("");
 
   useEffect(() => {
-    if (open && recebivel) {
+    if (open && target) {
       setData(todayISO());
-      setValor(restante > 0 ? restante : valorParcela);
+      setValor(restante > 0 ? restante : valorAlvo);
       setForma("pix");
       setObs("");
     }
-  }, [open, recebivel?.id]); // eslint-disable-line
+  }, [open, target?.id]); // eslint-disable-line
+
+  const filterCol = mode === "despesa" ? "despesa_id" : "recebivel_id";
 
   const { data: pagamentos } = useQuery({
-    queryKey: ["pagamentos", recebivel?.id],
-    enabled: !!recebivel?.id,
+    queryKey: ["pagamentos", mode, target?.id],
+    enabled: !!target?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("registros_pagamento" as any)
         .select("*")
-        .eq("recebivel_id", recebivel!.id)
+        .eq(filterCol, target!.id)
         .order("data_pagamento", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Pagamento[];
@@ -84,23 +102,26 @@ export function PagamentoDialog({
 
   const createPagamento = useMutation({
     mutationFn: async () => {
-      if (!recebivel) return;
+      if (!target) return;
       if (!valor || valor <= 0) throw new Error("Valor inválido");
       const { data: auth } = await supabase.auth.getUser();
-      const { error } = await supabase.from("registros_pagamento" as any).insert({
-        recebivel_id: recebivel.id,
+      const payload: any = {
         data_pagamento: data,
         valor,
         forma_pagamento: forma,
         observacao: obs || null,
         user_id: auth.user?.id ?? null,
-      });
+      };
+      if (mode === "despesa") payload.despesa_id = target.id;
+      else payload.recebivel_id = target.id;
+      const { error } = await supabase.from("registros_pagamento" as any).insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Pagamento registrado");
-      qc.invalidateQueries({ queryKey: ["pagamentos", recebivel?.id] });
+      qc.invalidateQueries({ queryKey: ["pagamentos", mode, target?.id] });
       qc.invalidateQueries({ queryKey: ["recebiveis"] });
+      qc.invalidateQueries({ queryKey: ["despesas"] });
       qc.invalidateQueries({ queryKey: ["contratos"] });
       qc.invalidateQueries({ queryKey: ["dash-recebiveis"] });
       qc.invalidateQueries({ queryKey: ["dash-pagamentos"] });
@@ -117,8 +138,9 @@ export function PagamentoDialog({
     },
     onSuccess: () => {
       toast.success("Pagamento removido");
-      qc.invalidateQueries({ queryKey: ["pagamentos", recebivel?.id] });
+      qc.invalidateQueries({ queryKey: ["pagamentos", mode, target?.id] });
       qc.invalidateQueries({ queryKey: ["recebiveis"] });
+      qc.invalidateQueries({ queryKey: ["despesas"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -127,12 +149,12 @@ export function PagamentoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Registrar pagamento</DialogTitle>
+          <DialogTitle>{titulo}</DialogTitle>
           <DialogDescription>
-            {recebivel && (
+            {target && (
               <>
-                <span className="font-medium">{recebivel.pagador}</span>
-                {recebivel.parcelas > 1 && <> — Parcela {recebivel.numero_parcela}/{recebivel.parcelas}</>}
+                <span className="font-medium">{nome}</span>
+                {target.parcelas > 1 && <> — Parcela {target.numero_parcela}/{target.parcelas}</>}
               </>
             )}
           </DialogDescription>
@@ -140,11 +162,11 @@ export function PagamentoDialog({
 
         <div className="grid grid-cols-3 gap-3 rounded-lg border border-border bg-muted/30 p-3 text-sm">
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Valor parcela</div>
-            <div className="font-semibold tabular-nums">{formatCurrency(valorParcela)}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Valor</div>
+            <div className="font-semibold tabular-nums">{formatCurrency(valorAlvo)}</div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Já pago</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Já {mode === "despesa" ? "pago" : "recebido"}</div>
             <div className="font-semibold tabular-nums text-success">{formatCurrency(valorPago)}</div>
           </div>
           <div>
@@ -158,7 +180,7 @@ export function PagamentoDialog({
           className="grid grid-cols-2 gap-3"
         >
           <TextField label="Data do pagamento" type="date" value={data} onChange={setData} required />
-          <CurrencyField label="Valor recebido" value={valor} onChange={setValor} required />
+          <CurrencyField label={mode === "despesa" ? "Valor pago" : "Valor recebido"} value={valor} onChange={setValor} required />
           <SelectField label="Forma de pagamento" value={forma} onChange={setForma} options={FORMAS} />
           <div className="col-span-2">
             <TextAreaField label="Observação" value={obs} onChange={setObs} />
