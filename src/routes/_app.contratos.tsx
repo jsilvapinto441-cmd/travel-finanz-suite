@@ -40,7 +40,7 @@ function Page() {
               options={(empresas ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
             <SelectField label="Missão" value={values.missao_id ?? ""} onChange={(v) => setValues({ ...values, missao_id: v })}
               options={(missoes ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
-            <NumberField label="Valor" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
+            <CurrencyField label="Valor" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
             <SelectField label="Status" value={values.status} onChange={(v) => setValues({ ...values, status: v })}
               options={[
                 { value: "rascunho", label: "Rascunho" }, { value: "ativo", label: "Ativo" },
