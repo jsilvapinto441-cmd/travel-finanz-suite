@@ -91,11 +91,12 @@ function Dashboard() {
     const recs = recsAll.filter((r) => inDateRange(r.data_recebimento ?? r.data_vencimento));
     const desps = despsAll.filter((d) => inDateRange(d.data_pagamento ?? d.data_vencimento));
 
+    const st = (r: any) => String(r.status ?? "");
     const totalReceber = recs
-      .filter((r) => r.status === "em_aberto" || r.status === "parcial" || r.status === "pago_parcial")
+      .filter((r) => ["em_aberto", "parcial", "pago_parcial"].includes(st(r)))
       .reduce((s, r) => s + Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0), 0), 0);
     const totalVencido = recs
-      .filter((r) => r.status === "atrasado" || r.status === "vencido")
+      .filter((r) => ["atrasado", "vencido"].includes(st(r)))
       .reduce((s, r) => s + Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0), 0), 0);
 
     const now = new Date();
@@ -105,7 +106,7 @@ function Dashboard() {
       .reduce((s, p) => s + Number(p.valor ?? 0), 0);
 
     const contratosComVencidos = new Set(
-      recsAll.filter((r) => (r.status === "atrasado" || r.status === "vencido") && r.contrato_id).map((r) => r.contrato_id),
+      recsAll.filter((r) => ["atrasado", "vencido"].includes(st(r)) && r.contrato_id).map((r) => r.contrato_id),
     );
     const contratosTotal = new Set(recsAll.filter((r) => r.contrato_id).map((r) => r.contrato_id));
     const inadimplencia = contratosTotal.size > 0
@@ -115,7 +116,7 @@ function Dashboard() {
     const totalDespesa = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
     const pago = desps.filter((d) => d.status === "pago").reduce((s, d) => s + Number(d.valor ?? 0), 0);
     const atrasados = [
-      ...recs.filter((r) => r.status === "atrasado" || r.status === "vencido"),
+      ...recs.filter((r) => ["atrasado", "vencido"].includes(st(r))),
       ...desps.filter((d) => d.status === "atrasado"),
     ];
 
