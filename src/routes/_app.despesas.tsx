@@ -78,8 +78,12 @@ function Page() {
                 { value: "atrasado", label: "Atrasado" }, { value: "cancelado", label: "Cancelado" },
               ]} />
             <div className="col-span-2">
+              <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} required />
+            </div>
+            <div className="col-span-2">
               <TextAreaField label="Observações" value={values.observacoes} onChange={(v) => setValues({ ...values, observacoes: v })} />
             </div>
+
           </div>
         )}
       />
