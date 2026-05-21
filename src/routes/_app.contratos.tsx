@@ -62,9 +62,24 @@ function lastDayOfMonth(y: number, m: number) { return new Date(y, m + 1, 0).get
 function addToDate(base: string, freq: string, n: number): string {
   const [y, m, d] = base.split("-").map(Number);
   const dt = new Date(y, m - 1, d);
+  if (freq === "unico") return base;
   if (freq === "semanal") dt.setDate(dt.getDate() + n * 7);
   else if (freq === "quinzenal") dt.setDate(dt.getDate() + n * 15);
   else dt.setMonth(dt.getMonth() + n);
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+}
+
+function diffDays(a: string, b: string): number {
+  const [ya, ma, da] = a.split("-").map(Number);
+  const [yb, mb, db] = b.split("-").map(Number);
+  const ms = new Date(yb, mb - 1, db).getTime() - new Date(ya, ma - 1, da).getTime();
+  return Math.round(ms / 86400000);
+}
+
+function addDays(base: string, days: number): string {
+  const [y, m, d] = base.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + days);
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 }
 
