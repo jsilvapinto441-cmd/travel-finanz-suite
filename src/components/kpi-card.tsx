@@ -35,12 +35,21 @@ export function KpiCard({
             {label}
           </div>
           <div
-            className="font-display font-bold mt-2 leading-tight break-words tabular-nums text-[clamp(1.125rem,2.2vw,1.5rem)]"
-            style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+            className="font-display font-bold mt-2 leading-none tabular-nums whitespace-nowrap overflow-hidden"
+            style={{
+              fontSize: (() => {
+                const len = String(value ?? "").length;
+                if (len <= 10) return "clamp(1.375rem, 2.4vw, 1.75rem)";
+                if (len <= 13) return "clamp(1.125rem, 2vw, 1.5rem)";
+                if (len <= 16) return "clamp(1rem, 1.7vw, 1.25rem)";
+                if (len <= 20) return "clamp(0.875rem, 1.4vw, 1.05rem)";
+                return "clamp(0.75rem, 1.2vw, 0.95rem)";
+              })(),
+            }}
           >
             {value}
           </div>
-          {hint && <div className="text-xs text-muted-foreground mt-1 break-words">{hint}</div>}
+          {hint && <div className="text-xs text-muted-foreground mt-1.5 break-words">{hint}</div>}
         </div>
         {icon && (
           <div className={cn("size-10 rounded-lg flex items-center justify-center shrink-0", iconTone)}>
