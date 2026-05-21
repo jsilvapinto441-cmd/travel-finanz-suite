@@ -246,10 +246,12 @@ function RecebivelForm({
         <TextField label="Banco" value={values.banco} onChange={(v) => setValues({ ...values, banco: v })} />
         <TextField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} />
         <TextField label="Recebimento (opcional)" value={values.data_recebimento} onChange={(v) => setValues({ ...values, data_recebimento: v })} type="date" />
-        <SelectField label="Status" value={values.status ?? "em_aberto"} onChange={(v) => setValues({ ...values, status: v })}
+        <CurrencyField label="Valor já pago" value={(values as any).valor_pago ?? 0} onChange={(v) => setValues({ ...values, ...( { valor_pago: v } as any) })} />
+        <SelectField label="Status (automático)" value={values.status ?? "em_aberto"} onChange={(v) => setValues({ ...values, status: v })}
           options={[
             { value: "em_aberto", label: "Em aberto" },
             { value: "pago", label: "Pago" },
+            { value: "parcial", label: "Parcial" },
             { value: "atrasado", label: "Atrasado" },
             { value: "cancelado", label: "Cancelado" },
           ]} />
