@@ -613,30 +613,33 @@ export type Database = {
         Row: {
           created_at: string
           data_pagamento: string
+          despesa_id: string | null
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
           id: string
           observacao: string | null
-          recebivel_id: string
+          recebivel_id: string | null
           user_id: string | null
           valor: number
         }
         Insert: {
           created_at?: string
           data_pagamento?: string
+          despesa_id?: string | null
           forma_pagamento?: Database["public"]["Enums"]["forma_pagamento"]
           id?: string
           observacao?: string | null
-          recebivel_id: string
+          recebivel_id?: string | null
           user_id?: string | null
           valor: number
         }
         Update: {
           created_at?: string
           data_pagamento?: string
+          despesa_id?: string | null
           forma_pagamento?: Database["public"]["Enums"]["forma_pagamento"]
           id?: string
           observacao?: string | null
-          recebivel_id?: string
+          recebivel_id?: string | null
           user_id?: string | null
           valor?: number
         }
