@@ -47,15 +47,26 @@ function LoginPage() {
 
       if (mode === "login") {
         passwordSchema.parse(password);
+        const gate = checkLoginAllowed(safeEmail);
+        if (!gate.allowed) {
+          toast.error(`Muitas tentativas. Tente novamente em ${formatSeconds(gate.secondsLeft)}.`);
+          return;
+        }
         const { error } = await supabase.auth.signInWithPassword({ email: safeEmail, password });
         if (error) {
-          // Auditoria de falha (registra antes do throw para registrar mesmo sem sessão)
+          const r = registerLoginFailure(safeEmail);
           await supabase.from("activity_logs").insert({
             acao: "login_failed", entidade: "auth",
-            detalhes: { email: safeEmail, motivo: error.message },
+            detalhes: { email: safeEmail, motivo: error.message, restantes: r.remaining },
           }).then(() => {}, () => {});
-          throw error;
+          if (r.lockUntil) {
+            toast.error("Conta bloqueada temporariamente por 15 min após múltiplas tentativas.");
+          } else {
+            toast.error(`${error.message} — ${r.remaining} tentativa(s) restante(s).`);
+          }
+          return;
         }
+        registerLoginSuccess(safeEmail);
         await audit("login", "auth");
         toast.success("Bem-vindo de volta");
         navigate({ to: "/" });
@@ -75,10 +86,19 @@ function LoginPage() {
         setMode("login");
       } else {
         // forgot
+        const gate = checkResetAllowed(safeEmail);
+        if (!gate.allowed) {
+          const msg = gate.reason === "cooldown"
+            ? `Aguarde ${formatSeconds(gate.secondsLeft)} antes de solicitar novamente.`
+            : `Limite diário atingido. Tente novamente em ${formatSeconds(gate.secondsLeft)}.`;
+          toast.error(msg);
+          return;
+        }
         const { error } = await supabase.auth.resetPasswordForEmail(safeEmail, {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         if (error) throw error;
+        registerResetSent(safeEmail);
         await audit("password_reset_request", "auth", null, { email: safeEmail });
         toast.success("Se o email existir, enviaremos as instruções.");
         setMode("login");
