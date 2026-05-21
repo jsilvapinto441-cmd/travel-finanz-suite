@@ -168,6 +168,7 @@ export type Database = {
           status: Database["public"]["Enums"]["status_financeiro"]
           updated_at: string
           valor: number
+          valor_pago: number
         }
         Insert: {
           banco?: string | null
@@ -189,6 +190,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
           valor?: number
+          valor_pago?: number
         }
         Update: {
           banco?: string | null
@@ -210,6 +212,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
           valor?: number
+          valor_pago?: number
         }
         Relationships: [
           {
@@ -475,6 +478,7 @@ export type Database = {
           parent_id: string | null
           status: Database["public"]["Enums"]["status_financeiro"]
           updated_at: string
+          valor_pago: number
           valor_parcela: number
           valor_total: number
         }
@@ -497,6 +501,7 @@ export type Database = {
           parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
+          valor_pago?: number
           valor_parcela?: number
           valor_total?: number
         }
@@ -519,6 +524,7 @@ export type Database = {
           parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
+          valor_pago?: number
           valor_parcela?: number
           valor_total?: number
         }
@@ -676,7 +682,12 @@ export type Database = {
         | "fornecedor"
         | "outros"
       status_contrato: "rascunho" | "ativo" | "concluido" | "cancelado"
-      status_financeiro: "em_aberto" | "pago" | "atrasado" | "cancelado"
+      status_financeiro:
+        | "em_aberto"
+        | "pago"
+        | "atrasado"
+        | "cancelado"
+        | "parcial"
       status_generico: "ativo" | "inativo"
     }
     CompositeTypes: {
@@ -819,7 +830,13 @@ export const Constants = {
         "outros",
       ],
       status_contrato: ["rascunho", "ativo", "concluido", "cancelado"],
-      status_financeiro: ["em_aberto", "pago", "atrasado", "cancelado"],
+      status_financeiro: [
+        "em_aberto",
+        "pago",
+        "atrasado",
+        "cancelado",
+        "parcial",
+      ],
       status_generico: ["ativo", "inativo"],
     },
   },
