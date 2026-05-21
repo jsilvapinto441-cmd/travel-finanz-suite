@@ -191,16 +191,16 @@ function RecebivelForm({
 
           {/* Nº Fatura — aparece somente após definir parcelas, dentro do detalhamento */}
           <div className="px-4 pt-4">
-            <Field label={
-              <span className="inline-flex items-center gap-1.5">
-                <Receipt className="size-3" /> Nº Fatura (base)
-              </span> as unknown as string
-            }>
-              <Input
-                value={values.numero_fatura ?? ""}
-                onChange={(e) => setValues({ ...values, numero_fatura: e.target.value })}
-                placeholder="Ex: NF-2026-001"
-              />
+            <Field label="Nº Fatura (base)">
+              <div className="relative">
+                <Receipt className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-9"
+                  value={values.numero_fatura ?? ""}
+                  onChange={(e) => setValues({ ...values, numero_fatura: e.target.value })}
+                  placeholder="Ex: NF-2026-001"
+                />
+              </div>
             </Field>
           </div>
 
