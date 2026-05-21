@@ -201,6 +201,7 @@ export function DataTable<T extends { id: string }>({
                   {canEdit && (
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {extraRowActions?.(row)}
                         <Button size="icon" variant="ghost" onClick={() => openEdit(row)}>
                           <Pencil className="size-3.5" />
                         </Button>
