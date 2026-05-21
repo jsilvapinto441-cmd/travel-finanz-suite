@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
-import { TextField, NumberField, SelectField } from "@/components/form-fields";
+import { TextField, CurrencyField, SelectField } from "@/components/form-fields";
 import { useEmpresas, nomeById } from "@/lib/lookups";
 import { formatCurrency } from "@/lib/format";
 
