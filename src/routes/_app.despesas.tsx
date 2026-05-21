@@ -56,7 +56,7 @@ function Page() {
               <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} required />
             </div>
             <SelectField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} options={CATEGORIAS} />
-            <NumberField label="Valor (total)" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
+            <CurrencyField label="Valor (total)" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
             <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
             <SelectField label="Frequência" value={values.frequencia ?? "mensal"} onChange={(v) => setValues({ ...values, frequencia: v })}
               options={[
