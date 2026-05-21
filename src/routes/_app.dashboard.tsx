@@ -197,7 +197,7 @@ function Dashboard() {
         <KpiCard label="Inadimplência" value={`${inadimplencia}%`}
           hint={`${atrasados.length} itens em atraso`} icon={<AlertTriangle className="size-5" />} tone="warning" />
       </div>
-      {void lucro}
+      
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <Card className="lg:col-span-2 p-6">
