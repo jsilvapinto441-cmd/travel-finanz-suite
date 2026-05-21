@@ -91,16 +91,34 @@ function Dashboard() {
     const recs = recsAll.filter((r) => inDateRange(r.data_recebimento ?? r.data_vencimento));
     const desps = despsAll.filter((d) => inDateRange(d.data_pagamento ?? d.data_vencimento));
 
-    const totalReceber = recs.filter((r) => r.status !== "cancelado").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
-    const recebido = recs.filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor_total ?? 0), 0);
+    const totalReceber = recs
+      .filter((r) => r.status === "em_aberto" || r.status === "parcial" || r.status === "pago_parcial")
+      .reduce((s, r) => s + Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0), 0), 0);
+    const totalVencido = recs
+      .filter((r) => r.status === "atrasado" || r.status === "vencido")
+      .reduce((s, r) => s + Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0), 0), 0);
+
+    const now = new Date();
+    const ymNow = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const recebidoMes = (pagamentos ?? [])
+      .filter((p) => (p.data_pagamento ?? "").slice(0, 7) === ymNow)
+      .reduce((s, p) => s + Number(p.valor ?? 0), 0);
+
+    const contratosComVencidos = new Set(
+      recsAll.filter((r) => (r.status === "atrasado" || r.status === "vencido") && r.contrato_id).map((r) => r.contrato_id),
+    );
+    const contratosTotal = new Set(recsAll.filter((r) => r.contrato_id).map((r) => r.contrato_id));
+    const inadimplencia = contratosTotal.size > 0
+      ? Math.round((contratosComVencidos.size / contratosTotal.size) * 100)
+      : 0;
+
     const totalDespesa = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
     const pago = desps.filter((d) => d.status === "pago").reduce((s, d) => s + Number(d.valor ?? 0), 0);
     const atrasados = [
-      ...recs.filter((r) => r.status === "atrasado"),
+      ...recs.filter((r) => r.status === "atrasado" || r.status === "vencido"),
       ...desps.filter((d) => d.status === "atrasado"),
     ];
 
-    const now = new Date();
     const months: { key: string; label: string; entradas: number; saidas: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -108,11 +126,9 @@ function Dashboard() {
       months.push({ key, label: formatMonth(d), entradas: 0, saidas: 0 });
     }
     const monthIdx = new Map(months.map((m, i) => [m.key, i]));
-    for (const r of recs) {
-      const dateStr = r.data_recebimento ?? r.data_vencimento;
-      if (!dateStr) continue;
-      const idx = monthIdx.get(dateStr.slice(0, 7));
-      if (idx !== undefined) months[idx].entradas += Number(r.valor_total ?? 0);
+    for (const p of pagamentos ?? []) {
+      const idx = monthIdx.get((p.data_pagamento ?? "").slice(0, 7));
+      if (idx !== undefined) months[idx].entradas += Number(p.valor ?? 0);
     }
     for (const d of desps) {
       const dateStr = d.data_pagamento ?? d.data_vencimento;
@@ -127,10 +143,10 @@ function Dashboard() {
     }
     const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
 
-    return { totalReceber, recebido, totalDespesa, pago, lucro: recebido - pago, atrasados, months, catData };
-  }, [recebiveis, despesas, dataIni, dataFim]);
+    return { totalReceber, totalVencido, recebidoMes, inadimplencia, totalDespesa, pago, lucro: recebidoMes - pago, atrasados, months, catData };
+  }, [recebiveis, despesas, pagamentos, dataIni, dataFim]);
 
-  const { totalReceber, recebido, totalDespesa, pago, lucro, atrasados, months, catData } = aggregates;
+  const { totalReceber, totalVencido, recebidoMes, inadimplencia, totalDespesa, pago, lucro, atrasados, months, catData } = aggregates;
   const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
 
   return (
