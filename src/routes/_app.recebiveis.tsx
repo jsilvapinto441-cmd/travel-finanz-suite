@@ -211,6 +211,8 @@ function RecebivelForm({
                   <th className="text-left px-2 py-2 font-medium">#</th>
                   <th className="text-left px-2 py-2 font-medium">Nº Fatura</th>
                   <th className="text-right px-2 py-2 font-medium">Valor</th>
+                  <th className="text-right px-2 py-2 font-medium">Pago</th>
+                  <th className="text-right px-2 py-2 font-medium">Restante</th>
                   <th className="text-left px-2 py-2 font-medium">Vencimento</th>
                   <th className="text-left px-2 py-2 font-medium">Status</th>
                   <th className="text-left px-2 py-2 font-medium">Banco</th>
@@ -225,8 +227,10 @@ function RecebivelForm({
                       {values.numero_fatura ? `${values.numero_fatura}-${pad(i + 1)}` : "—"}
                     </td>
                     <td className="px-2 py-2 text-right font-medium tabular-nums">{formatCurrency(v)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">{formatCurrency(0)}</td>
+                    <td className="px-2 py-2 text-right tabular-nums">{formatCurrency(v)}</td>
                     <td className="px-2 py-2 tabular-nums">{formatDate(parcelaDatas[i])}</td>
-                    <td className="px-2 py-2"><StatusBadge status={i === 0 ? (values.status ?? "em_aberto") : "em_aberto"} /></td>
+                    <td className="px-2 py-2"><StatusBadge status="em_aberto" /></td>
                     <td className="px-2 py-2 text-muted-foreground">{values.banco || "—"}</td>
                     <td className="px-2 py-2 text-muted-foreground">{values.categoria || "—"}</td>
                   </tr>
@@ -242,10 +246,12 @@ function RecebivelForm({
         <TextField label="Banco" value={values.banco} onChange={(v) => setValues({ ...values, banco: v })} />
         <TextField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} />
         <TextField label="Recebimento (opcional)" value={values.data_recebimento} onChange={(v) => setValues({ ...values, data_recebimento: v })} type="date" />
-        <SelectField label="Status" value={values.status ?? "em_aberto"} onChange={(v) => setValues({ ...values, status: v })}
+        <CurrencyField label="Valor já pago" value={(values as any).valor_pago ?? 0} onChange={(v) => setValues({ ...values, ...( { valor_pago: v } as any) })} />
+        <SelectField label="Status (automático)" value={values.status ?? "em_aberto"} onChange={(v) => setValues({ ...values, status: v })}
           options={[
             { value: "em_aberto", label: "Em aberto" },
             { value: "pago", label: "Pago" },
+            { value: "parcial", label: "Parcial" },
             { value: "atrasado", label: "Atrasado" },
             { value: "cancelado", label: "Cancelado" },
           ]} />
