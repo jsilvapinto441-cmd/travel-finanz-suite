@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
-import { TextField, NumberField, SelectField, TextAreaField } from "@/components/form-fields";
+import { TextField, CurrencyField, SelectField, TextAreaField } from "@/components/form-fields";
 import { useEmpresas, useMissoes, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
@@ -40,7 +40,7 @@ function Page() {
               options={(empresas ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
             <SelectField label="Missão" value={values.missao_id ?? ""} onChange={(v) => setValues({ ...values, missao_id: v })}
               options={(missoes ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
-            <NumberField label="Valor" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
+            <CurrencyField label="Valor" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
             <SelectField label="Status" value={values.status} onChange={(v) => setValues({ ...values, status: v })}
               options={[
                 { value: "rascunho", label: "Rascunho" }, { value: "ativo", label: "Ativo" },

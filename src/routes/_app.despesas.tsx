@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
-import { TextField, NumberField, SelectField, TextAreaField } from "@/components/form-fields";
+import { TextField, NumberField, CurrencyField, SelectField, TextAreaField } from "@/components/form-fields";
 import { useEmpresas, useMissoes, useContratos, useFornecedores, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
@@ -56,7 +56,7 @@ function Page() {
               <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} required />
             </div>
             <SelectField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} options={CATEGORIAS} />
-            <NumberField label="Valor (total)" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
+            <CurrencyField label="Valor (total)" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
             <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
             <SelectField label="Frequência" value={values.frequencia ?? "mensal"} onChange={(v) => setValues({ ...values, frequencia: v })}
               options={[

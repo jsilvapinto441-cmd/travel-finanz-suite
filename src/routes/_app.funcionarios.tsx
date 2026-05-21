@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
-import { TextField, NumberField, SelectField } from "@/components/form-fields";
+import { TextField, CurrencyField, SelectField } from "@/components/form-fields";
 import { useEmpresas, nomeById } from "@/lib/lookups";
 import { formatCurrency } from "@/lib/format";
 
@@ -37,12 +37,12 @@ function Page() {
             <TextField label="Cargo" value={values.cargo} onChange={(v) => setValues({ ...values, cargo: v })} />
             <SelectField label="Empresa" value={values.empresa_id ?? ""} onChange={(v) => setValues({ ...values, empresa_id: v })}
               options={(empresas ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
-            <NumberField label="Salário" value={values.salario} onChange={(v) => setValues({ ...values, salario: v })} />
-            <NumberField label="Vale Transporte" value={values.vale_transporte} onChange={(v) => setValues({ ...values, vale_transporte: v })} />
-            <NumberField label="Alimentação" value={values.alimentacao} onChange={(v) => setValues({ ...values, alimentacao: v })} />
-            <NumberField label="FGTS" value={values.fgts} onChange={(v) => setValues({ ...values, fgts: v })} />
-            <NumberField label="INSS" value={values.inss} onChange={(v) => setValues({ ...values, inss: v })} />
-            <NumberField label="Custos Adicionais" value={values.custos_adicionais} onChange={(v) => setValues({ ...values, custos_adicionais: v })} />
+            <CurrencyField label="Salário" value={values.salario} onChange={(v) => setValues({ ...values, salario: v })} />
+            <CurrencyField label="Vale Transporte" value={values.vale_transporte} onChange={(v) => setValues({ ...values, vale_transporte: v })} />
+            <CurrencyField label="Alimentação" value={values.alimentacao} onChange={(v) => setValues({ ...values, alimentacao: v })} />
+            <CurrencyField label="FGTS" value={values.fgts} onChange={(v) => setValues({ ...values, fgts: v })} />
+            <CurrencyField label="INSS" value={values.inss} onChange={(v) => setValues({ ...values, inss: v })} />
+            <CurrencyField label="Custos Adicionais" value={values.custos_adicionais} onChange={(v) => setValues({ ...values, custos_adicionais: v })} />
           </div>
         )}
       />
