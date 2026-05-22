@@ -133,11 +133,18 @@ function Dashboard() {
       ? Math.round((contratosComVencidos.size / contratosTotal.size) * 100)
       : 0;
 
-    // 5. TOTAL DESPESAS — soma de despesas (exceto canceladas)
-    const totalDespesa = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
+    // 5a. DESPESAS OPERACIONAIS — soma de despesas manuais (exceto canceladas)
+    const totalOperacional = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
     const despesasPagas = desps.reduce((s, d) => s + Number(d.valor_pago ?? 0), 0);
 
-    // 6. LUCRO LÍQUIDO = Total Recebido - Total Despesas
+    // 5b. CUSTOS COM FUNCIONÁRIOS — folha mensal dos ativos (recorrente)
+    const funcAtivos = (funcionarios ?? []).filter((f: any) => f.ativo);
+    const folhaMensal = funcAtivos.reduce((s, f: any) => s + custoTotalFuncionario(f), 0);
+
+    // 5c. TOTAL GERAL DE DESPESAS = Operacionais + Folha
+    const totalDespesa = totalOperacional + folhaMensal;
+
+    // 6. LUCRO LÍQUIDO = Total Recebido - Total de Despesas
     const lucro = totalRecebido - totalDespesa;
 
     const atrasados = [
@@ -165,17 +172,20 @@ function Dashboard() {
       const idx = monthIdx.get(dateStr.slice(0, 7));
       if (idx !== undefined) months[idx].saidas += Number(d.valor ?? 0);
     }
+    // Folha mensal recorrente entra em todos os meses do fluxo
+    for (const m of months) m.saidas += folhaMensal;
 
     const catMap = new Map<string, number>();
     for (const d of desps) {
       catMap.set(d.categoria, (catMap.get(d.categoria) ?? 0) + Number(d.valor ?? 0));
     }
+    if (folhaMensal > 0) catMap.set("folha_pagamento", (catMap.get("folha_pagamento") ?? 0) + folhaMensal);
     const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
 
-    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalDespesa, despesasPagas, lucro, atrasados, months, catData };
-  }, [recebiveis, despesas, pagamentos, dataIni, dataFim]);
+    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData };
+  }, [recebiveis, despesas, pagamentos, funcionarios, dataIni, dataFim]);
 
-  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalDespesa, despesasPagas, lucro, atrasados, months, catData } = aggregates;
+  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData } = aggregates;
 
   const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
 
