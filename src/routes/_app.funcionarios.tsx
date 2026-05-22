@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Users, Wallet, UserCheck, UserX } from "lucide-react";
 import { calcFGTS, calcINSS, custoTotalFuncionario, folhaTotal } from "@/lib/folha";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { EmpresaFilter } from "@/components/empresa-filter";
 
 export const Route = createFileRoute("/_app/funcionarios")({ component: Page });
 
@@ -33,20 +34,25 @@ type T = {
 
 function Page() {
   const { data: empresas } = useEmpresas();
+  const [empresaFilter, setEmpresaFilter] = useState("");
 
   const { data: todos } = useQuery({
     queryKey: ["funcionarios-resumo"],
     queryFn: async () =>
       (await supabase
         .from("funcionarios")
-        .select("id,ativo,salario,vale_transporte,alimentacao,fgts,inss,custos_adicionais")
+        .select("id,ativo,salario,vale_transporte,alimentacao,fgts,inss,custos_adicionais,empresa_id")
       ).data ?? [],
     staleTime: 30_000,
   });
 
-  const ativos = (todos ?? []).filter((f: any) => f.ativo);
-  const inativos = (todos ?? []).filter((f: any) => !f.ativo);
-  const folha = folhaTotal(todos as any);
+  const filteredTodos = (todos ?? []).filter((f: any) =>
+    !empresaFilter || f.empresa_id === empresaFilter
+  );
+
+  const ativos = filteredTodos.filter((f: any) => f.ativo);
+  const inativos = filteredTodos.filter((f: any) => !f.ativo);
+  const folha = folhaTotal(filteredTodos as any);
 
   return (
     <PageContainer>
@@ -91,6 +97,10 @@ function Page() {
         searchFields={["nome", "cargo"]}
         orderBy="nome"
         ascending
+        filter={(row) => !empresaFilter || row.empresa_id === empresaFilter}
+        toolbar={
+          <EmpresaFilter value={empresaFilter} onChange={(v) => setEmpresaFilter(v)} />
+        }
         defaultValues={{
           ativo: true,
           encargos_auto: true,
