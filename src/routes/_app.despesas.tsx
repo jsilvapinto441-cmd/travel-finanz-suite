@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
 import { CircleDollarSign } from "lucide-react";
+import { EmpresaFilter } from "@/components/empresa-filter";
 
 export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
@@ -35,6 +36,7 @@ function Page() {
   const { data: missoes } = useMissoes();
   const { data: contratos } = useContratos();
   const { data: fornecedores } = useFornecedores();
+  const [empresaFilter, setEmpresaFilter] = useState("");
 
   const [payOpen, setPayOpen] = useState(false);
   const [payTarget, setPayTarget] = useState<T | null>(null);
@@ -45,6 +47,10 @@ function Page() {
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
         defaultValues={{ status: "em_aberto", categoria: "outros", parcelas: 1, frequencia: "mensal" }}
+        filter={(row) => !empresaFilter || row.empresa_id === empresaFilter}
+        toolbar={
+          <EmpresaFilter value={empresaFilter} onChange={(v) => setEmpresaFilter(v)} />
+        }
         extraRowActions={(row) => (
           <Button size="sm" variant="ghost"
             className="text-primary hover:bg-primary/10 h-8 px-2"
