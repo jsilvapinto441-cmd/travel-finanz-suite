@@ -375,22 +375,61 @@ function Dashboard() {
         </Card>
       </div>
 
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-semibold">Evolução Mensal — Lucro</h3>
-        </div>
-        <div className="h-64">
-          <ResponsiveContainer>
-            <LineChart data={months.map((m) => ({ ...m, lucro: m.entradas - m.saidas }))}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
-              <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
-              <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
-              <Line type="monotone" dataKey="lucro" stroke="var(--color-primary)" strokeWidth={3} dot={{ r: 5, fill: "var(--color-gold)" }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-semibold">Evolução Mensal — Lucro por Empresa</h3>
+            <TrendingUp className="size-4 text-muted-foreground" />
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer>
+              <LineChart data={lucroPorEmpresa}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <Tooltip
+                  formatter={(v: number, name: string) => [formatCurrency(v), name === "__total" ? "Consolidado" : (empresasList.find((e) => e.id === name)?.nome ?? name)]}
+                  contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => v === "__total" ? "Consolidado" : (empresasList.find((e) => e.id === v)?.nome ?? v)} />
+                {empresasList.map((e) => (
+                  <Line key={e.id} type="monotone" dataKey={e.id} stroke={e.cor || "#f97316"} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+                ))}
+                {empresaId === "all" && empresasList.length > 1 && (
+                  <Line type="monotone" dataKey="__total" name="__total" stroke="var(--color-muted-foreground)" strokeWidth={3.5} strokeDasharray="6 4" dot={{ r: 4 }} isAnimationActive={false} />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-semibold">Lucro × Despesas por Empresa</h3>
+            <Building2 className="size-4 text-muted-foreground" />
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer>
+              <BarChart data={lucroVsDespesas}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="nome" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <Tooltip
+                  formatter={(v: number, name: string) => [formatCurrency(v), name]}
+                  contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="lucro" name="Lucro" radius={[6, 6, 0, 0]}>
+                  {lucroVsDespesas.map((e) => <Cell key={`l-${e.id}`} fill={e.cor} fillOpacity={0.9} />)}
+                </Bar>
+                <Bar dataKey="despesas" name="Despesas" radius={[6, 6, 0, 0]}>
+                  {lucroVsDespesas.map((e) => <Cell key={`d-${e.id}`} fill={e.cor} fillOpacity={0.4} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
 
       {atrasados.length > 0 && (
         <Card className="p-6 mt-6 border-destructive/30">
