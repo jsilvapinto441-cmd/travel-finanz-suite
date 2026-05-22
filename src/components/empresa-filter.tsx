@@ -17,10 +17,10 @@ export function EmpresaFilter({
       <Building2 className="size-4 text-muted-foreground shrink-0" />
       <SelectField
         label=""
-        value={value}
-        onChange={onChange}
+        value={value === "" ? "__all__" : value}
+        onChange={(v) => onChange(v === "__all__" ? "" : v)}
         options={[
-          { value: "", label: "Todas as empresas" },
+          { value: "__all__", label: "Todas as empresas" },
           ...(empresas ?? []).map((e) => ({ value: e.id, label: e.nome })),
         ]}
       />
