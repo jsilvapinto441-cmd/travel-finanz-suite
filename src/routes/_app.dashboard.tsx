@@ -182,10 +182,79 @@ function Dashboard() {
     if (folhaMensal > 0) catMap.set("folha_pagamento", (catMap.get("folha_pagamento") ?? 0) + folhaMensal);
     const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
 
-    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData };
-  }, [recebiveis, despesas, pagamentos, funcionarios, dataIni, dataFim]);
+    // ===== Por empresa: evolução mensal de lucro + comparativo lucro x despesas =====
+    const empresasList = (empresas ?? []).filter((e) => empresaId === "all" || e.id === empresaId);
+    const recById = new Map((recsAll).map((r) => [r.id, r]));
 
-  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData } = aggregates;
+    // Inicializa estrutura mensal por empresa
+    const monthsPorEmpresa = months.map((m) => {
+      const row: any = { key: m.key, label: m.label };
+      for (const e of empresasList) {
+        row[`in_${e.id}`] = 0;
+        row[`out_${e.id}`] = 0;
+      }
+      return row;
+    });
+
+    // Entradas (pagamentos de clientes) por empresa via recebivel
+    for (const p of pagsAll) {
+      if (!p.recebivel_id) continue;
+      const rec = recById.get(p.recebivel_id);
+      if (!rec?.empresa_id) continue;
+      if (empresaId !== "all" && rec.empresa_id !== empresaId) continue;
+      const idx = monthIdx.get((p.data_pagamento ?? "").slice(0, 7));
+      if (idx === undefined) continue;
+      monthsPorEmpresa[idx][`in_${rec.empresa_id}`] += Number(p.valor ?? 0);
+    }
+    // Saídas (despesas operacionais) por empresa
+    for (const d of desps) {
+      if (!d.empresa_id) continue;
+      const dateStr = d.data_pagamento ?? d.data_vencimento;
+      if (!dateStr) continue;
+      const idx = monthIdx.get(dateStr.slice(0, 7));
+      if (idx === undefined) continue;
+      monthsPorEmpresa[idx][`out_${d.empresa_id}`] += Number(d.valor ?? 0);
+    }
+    // Folha mensal recorrente por empresa em todos os meses
+    const folhaPorEmpresa = new Map<string, number>();
+    for (const f of (funcionarios ?? []) as any[]) {
+      if (!f.ativo || !f.empresa_id) continue;
+      folhaPorEmpresa.set(f.empresa_id, (folhaPorEmpresa.get(f.empresa_id) ?? 0) + custoTotalFuncionario(f));
+    }
+    for (const m of monthsPorEmpresa) {
+      for (const e of empresasList) {
+        m[`out_${e.id}`] += folhaPorEmpresa.get(e.id) ?? 0;
+      }
+    }
+
+    // Lucro mensal por empresa + linha consolidada
+    const lucroPorEmpresa = monthsPorEmpresa.map((m) => {
+      const row: any = { label: m.label };
+      let total = 0;
+      for (const e of empresasList) {
+        const v = (m[`in_${e.id}`] ?? 0) - (m[`out_${e.id}`] ?? 0);
+        row[e.id] = v;
+        total += v;
+      }
+      row.__total = total;
+      return row;
+    });
+
+    // Comparativo Lucro x Despesas por empresa (acumulado no período visível)
+    const lucroVsDespesas = empresasList.map((e) => {
+      let recebido = 0;
+      let despesa = 0;
+      for (const m of monthsPorEmpresa) {
+        recebido += m[`in_${e.id}`] ?? 0;
+        despesa += m[`out_${e.id}`] ?? 0;
+      }
+      return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", lucro: recebido - despesa, despesas: despesa };
+    });
+
+    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, lucroPorEmpresa, lucroVsDespesas };
+  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, empresaId, dataIni, dataFim]);
+
+  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, lucroPorEmpresa, lucroVsDespesas } = aggregates;
 
   const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
 
@@ -306,22 +375,61 @@ function Dashboard() {
         </Card>
       </div>
 
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-semibold">Evolução Mensal — Lucro</h3>
-        </div>
-        <div className="h-64">
-          <ResponsiveContainer>
-            <LineChart data={months.map((m) => ({ ...m, lucro: m.entradas - m.saidas }))}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
-              <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
-              <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
-              <Line type="monotone" dataKey="lucro" stroke="var(--color-primary)" strokeWidth={3} dot={{ r: 5, fill: "var(--color-gold)" }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-semibold">Evolução Mensal — Lucro por Empresa</h3>
+            <TrendingUp className="size-4 text-muted-foreground" />
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer>
+              <LineChart data={lucroPorEmpresa}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <Tooltip
+                  formatter={(v: number, name: string) => [formatCurrency(v), name === "__total" ? "Consolidado" : (empresasList.find((e) => e.id === name)?.nome ?? name)]}
+                  contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => v === "__total" ? "Consolidado" : (empresasList.find((e) => e.id === v)?.nome ?? v)} />
+                {empresasList.map((e) => (
+                  <Line key={e.id} type="monotone" dataKey={e.id} stroke={e.cor || "#f97316"} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+                ))}
+                {empresaId === "all" && empresasList.length > 1 && (
+                  <Line type="monotone" dataKey="__total" name="__total" stroke="var(--color-muted-foreground)" strokeWidth={3.5} strokeDasharray="6 4" dot={{ r: 4 }} isAnimationActive={false} />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-semibold">Lucro × Despesas por Empresa</h3>
+            <Building2 className="size-4 text-muted-foreground" />
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer>
+              <BarChart data={lucroVsDespesas}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="nome" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <Tooltip
+                  formatter={(v: number, name: string) => [formatCurrency(v), name]}
+                  contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="lucro" name="Lucro" radius={[6, 6, 0, 0]}>
+                  {lucroVsDespesas.map((e) => <Cell key={`l-${e.id}`} fill={e.cor} fillOpacity={0.9} />)}
+                </Bar>
+                <Bar dataKey="despesas" name="Despesas" radius={[6, 6, 0, 0]}>
+                  {lucroVsDespesas.map((e) => <Cell key={`d-${e.id}`} fill={e.cor} fillOpacity={0.4} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
 
       {atrasados.length > 0 && (
         <Card className="p-6 mt-6 border-destructive/30">
