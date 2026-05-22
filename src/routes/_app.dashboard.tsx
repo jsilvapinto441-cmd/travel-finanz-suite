@@ -238,12 +238,20 @@ function Dashboard() {
           hint={`Contas vencidas · ${formatCurrency(totalVencido)}`} icon={<AlertTriangle className="size-5" />} tone="warning" />
       </div>
 
-      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Resultado</div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <KpiCard label="Total Despesas" value={formatCurrency(totalDespesa)}
+      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Despesas</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <KpiCard label="Despesas Operacionais" value={formatCurrency(totalOperacional)}
           hint={`Pago: ${formatCurrency(despesasPagas)}`} icon={<ArrowUpRight className="size-5" />} tone="destructive" />
+        <KpiCard label="Custos com Funcionários" value={formatCurrency(folhaMensal)}
+          hint="Folha mensal (ativos)" icon={<Users className="size-5" />} tone="warning" />
+        <KpiCard label="Total Geral de Despesas" value={formatCurrency(totalDespesa)}
+          hint="Operacionais + Folha" icon={<Wallet className="size-5" />} tone="default" />
+      </div>
+
+      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Resultado</div>
+      <div className="grid grid-cols-1 gap-4 mb-6">
         <KpiCard label="Lucro Líquido" value={formatCurrency(lucro)}
-          hint="Recebido − Despesas" icon={<TrendingUp className="size-5" />} tone="gold" />
+          hint="Recebido − (Operacionais + Folha)" icon={<TrendingUp className="size-5" />} tone="gold" />
       </div>
 
       
