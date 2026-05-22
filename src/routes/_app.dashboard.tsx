@@ -77,6 +77,18 @@ function Dashboard() {
     staleTime: 60_000,
   });
 
+  const { data: funcionarios } = useQuery({
+    queryKey: ["dash-funcionarios", empresaId],
+    queryFn: async () => {
+      let q = supabase
+        .from("funcionarios")
+        .select("id,empresa_id,ativo,salario,vale_transporte,alimentacao,fgts,inss,custos_adicionais");
+      if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+      return (await q).data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
   const aggregates = useMemo(() => {
     const inDateRange = (dateStr?: string | null) => {
       if (!dataIni && !dataFim) return true;
