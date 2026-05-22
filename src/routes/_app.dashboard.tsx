@@ -203,16 +203,26 @@ function Dashboard() {
         )}
       </Card>
 
+      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Financeiro</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <KpiCard label="Total a Receber" value={formatCurrency(totalReceber)}
-          hint={`Recebido: ${formatCurrency(recebidoMes)}`} icon={<ArrowDownLeft className="size-5" />} tone="success" />
-        <KpiCard label="Total Despesas" value={formatCurrency(totalDespesa)}
-          hint={`Pago: ${formatCurrency(pago)}`} icon={<ArrowUpRight className="size-5" />} tone="destructive" />
-        <KpiCard label="Lucro Líquido" value={formatCurrency(lucro)}
-          hint="Recebido - Pago" icon={<TrendingUp className="size-5" />} tone="gold" />
+        <KpiCard label="Total Contratado" value={formatCurrency(totalContratado)}
+          hint="Soma dos contratos e parcelas" icon={<Wallet className="size-5" />} tone="default" />
+        <KpiCard label="Total Recebido" value={formatCurrency(totalRecebido)}
+          hint="Pagamentos de clientes" icon={<ArrowDownLeft className="size-5" />} tone="success" />
+        <KpiCard label="Total em Aberto" value={formatCurrency(totalEmAberto)}
+          hint="Contratado − Recebido" icon={<ArrowDownLeft className="size-5" />} tone="gold" />
         <KpiCard label="Em Atraso" value={String(atrasados.length)}
           hint={`Contas vencidas · ${formatCurrency(totalVencido)}`} icon={<AlertTriangle className="size-5" />} tone="warning" />
       </div>
+
+      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Resultado</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <KpiCard label="Total Despesas" value={formatCurrency(totalDespesa)}
+          hint={`Pago: ${formatCurrency(despesasPagas)}`} icon={<ArrowUpRight className="size-5" />} tone="destructive" />
+        <KpiCard label="Lucro Líquido" value={formatCurrency(lucro)}
+          hint="Recebido − Despesas" icon={<TrendingUp className="size-5" />} tone="gold" />
+      </div>
+
       
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
