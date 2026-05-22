@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatMonth } from "@/lib/format";
 import {
-  ArrowDownLeft, ArrowUpRight, AlertTriangle, Wallet, Building2, TrendingUp,
+  ArrowDownLeft, ArrowUpRight, AlertTriangle, Wallet, Building2, TrendingUp, Users,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -18,6 +18,7 @@ import {
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
+import { custoTotalFuncionario } from "@/lib/folha";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -76,6 +77,18 @@ function Dashboard() {
     staleTime: 60_000,
   });
 
+  const { data: funcionarios } = useQuery({
+    queryKey: ["dash-funcionarios", empresaId],
+    queryFn: async () => {
+      let q = supabase
+        .from("funcionarios")
+        .select("id,empresa_id,ativo,salario,vale_transporte,alimentacao,fgts,inss,custos_adicionais");
+      if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+      return (await q).data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
   const aggregates = useMemo(() => {
     const inDateRange = (dateStr?: string | null) => {
       if (!dataIni && !dataFim) return true;
@@ -120,11 +133,18 @@ function Dashboard() {
       ? Math.round((contratosComVencidos.size / contratosTotal.size) * 100)
       : 0;
 
-    // 5. TOTAL DESPESAS — soma de despesas (exceto canceladas)
-    const totalDespesa = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
+    // 5a. DESPESAS OPERACIONAIS — soma de despesas manuais (exceto canceladas)
+    const totalOperacional = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
     const despesasPagas = desps.reduce((s, d) => s + Number(d.valor_pago ?? 0), 0);
 
-    // 6. LUCRO LÍQUIDO = Total Recebido - Total Despesas
+    // 5b. CUSTOS COM FUNCIONÁRIOS — folha mensal dos ativos (recorrente)
+    const funcAtivos = (funcionarios ?? []).filter((f: any) => f.ativo);
+    const folhaMensal = funcAtivos.reduce((s, f: any) => s + custoTotalFuncionario(f), 0);
+
+    // 5c. TOTAL GERAL DE DESPESAS = Operacionais + Folha
+    const totalDespesa = totalOperacional + folhaMensal;
+
+    // 6. LUCRO LÍQUIDO = Total Recebido - Total de Despesas
     const lucro = totalRecebido - totalDespesa;
 
     const atrasados = [
@@ -152,17 +172,20 @@ function Dashboard() {
       const idx = monthIdx.get(dateStr.slice(0, 7));
       if (idx !== undefined) months[idx].saidas += Number(d.valor ?? 0);
     }
+    // Folha mensal recorrente entra em todos os meses do fluxo
+    for (const m of months) m.saidas += folhaMensal;
 
     const catMap = new Map<string, number>();
     for (const d of desps) {
       catMap.set(d.categoria, (catMap.get(d.categoria) ?? 0) + Number(d.valor ?? 0));
     }
+    if (folhaMensal > 0) catMap.set("folha_pagamento", (catMap.get("folha_pagamento") ?? 0) + folhaMensal);
     const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
 
-    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalDespesa, despesasPagas, lucro, atrasados, months, catData };
-  }, [recebiveis, despesas, pagamentos, dataIni, dataFim]);
+    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData };
+  }, [recebiveis, despesas, pagamentos, funcionarios, dataIni, dataFim]);
 
-  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalDespesa, despesasPagas, lucro, atrasados, months, catData } = aggregates;
+  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData } = aggregates;
 
   const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
 
@@ -215,12 +238,20 @@ function Dashboard() {
           hint={`Contas vencidas · ${formatCurrency(totalVencido)}`} icon={<AlertTriangle className="size-5" />} tone="warning" />
       </div>
 
-      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Resultado</div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <KpiCard label="Total Despesas" value={formatCurrency(totalDespesa)}
+      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Despesas</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <KpiCard label="Despesas Operacionais" value={formatCurrency(totalOperacional)}
           hint={`Pago: ${formatCurrency(despesasPagas)}`} icon={<ArrowUpRight className="size-5" />} tone="destructive" />
+        <KpiCard label="Custos com Funcionários" value={formatCurrency(folhaMensal)}
+          hint="Folha mensal (ativos)" icon={<Users className="size-5" />} tone="warning" />
+        <KpiCard label="Total Geral de Despesas" value={formatCurrency(totalDespesa)}
+          hint="Operacionais + Folha" icon={<Wallet className="size-5" />} tone="default" />
+      </div>
+
+      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Resultado</div>
+      <div className="grid grid-cols-1 gap-4 mb-6">
         <KpiCard label="Lucro Líquido" value={formatCurrency(lucro)}
-          hint="Recebido − Despesas" icon={<TrendingUp className="size-5" />} tone="gold" />
+          hint="Recebido − (Operacionais + Folha)" icon={<TrendingUp className="size-5" />} tone="gold" />
       </div>
 
       
