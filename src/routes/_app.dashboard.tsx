@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatMonth } from "@/lib/format";
 import {
-  ArrowDownLeft, ArrowUpRight, AlertTriangle, Wallet, Building2, TrendingUp,
+  ArrowDownLeft, ArrowUpRight, AlertTriangle, Wallet, Building2, TrendingUp, Users,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -18,6 +18,7 @@ import {
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
+import { custoTotalFuncionario } from "@/lib/folha";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
