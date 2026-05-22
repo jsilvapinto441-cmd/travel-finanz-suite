@@ -381,7 +381,9 @@ export type Database = {
           cargo: string | null
           created_at: string
           custos_adicionais: number
+          data_admissao: string | null
           empresa_id: string | null
+          encargos_auto: boolean
           fgts: number
           id: string
           inss: number
@@ -396,7 +398,9 @@ export type Database = {
           cargo?: string | null
           created_at?: string
           custos_adicionais?: number
+          data_admissao?: string | null
           empresa_id?: string | null
+          encargos_auto?: boolean
           fgts?: number
           id?: string
           inss?: number
@@ -411,7 +415,9 @@ export type Database = {
           cargo?: string | null
           created_at?: string
           custos_adicionais?: number
+          data_admissao?: string | null
           empresa_id?: string | null
+          encargos_auto?: boolean
           fgts?: number
           id?: string
           inss?: number
