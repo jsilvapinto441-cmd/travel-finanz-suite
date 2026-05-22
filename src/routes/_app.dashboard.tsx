@@ -182,10 +182,79 @@ function Dashboard() {
     if (folhaMensal > 0) catMap.set("folha_pagamento", (catMap.get("folha_pagamento") ?? 0) + folhaMensal);
     const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
 
-    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData };
-  }, [recebiveis, despesas, pagamentos, funcionarios, dataIni, dataFim]);
+    // ===== Por empresa: evolução mensal de lucro + comparativo lucro x despesas =====
+    const empresasList = (empresas ?? []).filter((e) => empresaId === "all" || e.id === empresaId);
+    const recById = new Map((recsAll).map((r) => [r.id, r]));
 
-  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData } = aggregates;
+    // Inicializa estrutura mensal por empresa
+    const monthsPorEmpresa = months.map((m) => {
+      const row: any = { key: m.key, label: m.label };
+      for (const e of empresasList) {
+        row[`in_${e.id}`] = 0;
+        row[`out_${e.id}`] = 0;
+      }
+      return row;
+    });
+
+    // Entradas (pagamentos de clientes) por empresa via recebivel
+    for (const p of pagsAll) {
+      if (!p.recebivel_id) continue;
+      const rec = recById.get(p.recebivel_id);
+      if (!rec?.empresa_id) continue;
+      if (empresaId !== "all" && rec.empresa_id !== empresaId) continue;
+      const idx = monthIdx.get((p.data_pagamento ?? "").slice(0, 7));
+      if (idx === undefined) continue;
+      monthsPorEmpresa[idx][`in_${rec.empresa_id}`] += Number(p.valor ?? 0);
+    }
+    // Saídas (despesas operacionais) por empresa
+    for (const d of desps) {
+      if (!d.empresa_id) continue;
+      const dateStr = d.data_pagamento ?? d.data_vencimento;
+      if (!dateStr) continue;
+      const idx = monthIdx.get(dateStr.slice(0, 7));
+      if (idx === undefined) continue;
+      monthsPorEmpresa[idx][`out_${d.empresa_id}`] += Number(d.valor ?? 0);
+    }
+    // Folha mensal recorrente por empresa em todos os meses
+    const folhaPorEmpresa = new Map<string, number>();
+    for (const f of (funcionarios ?? []) as any[]) {
+      if (!f.ativo || !f.empresa_id) continue;
+      folhaPorEmpresa.set(f.empresa_id, (folhaPorEmpresa.get(f.empresa_id) ?? 0) + custoTotalFuncionario(f));
+    }
+    for (const m of monthsPorEmpresa) {
+      for (const e of empresasList) {
+        m[`out_${e.id}`] += folhaPorEmpresa.get(e.id) ?? 0;
+      }
+    }
+
+    // Lucro mensal por empresa + linha consolidada
+    const lucroPorEmpresa = monthsPorEmpresa.map((m) => {
+      const row: any = { label: m.label };
+      let total = 0;
+      for (const e of empresasList) {
+        const v = (m[`in_${e.id}`] ?? 0) - (m[`out_${e.id}`] ?? 0);
+        row[e.id] = v;
+        total += v;
+      }
+      row.__total = total;
+      return row;
+    });
+
+    // Comparativo Lucro x Despesas por empresa (acumulado no período visível)
+    const lucroVsDespesas = empresasList.map((e) => {
+      let recebido = 0;
+      let despesa = 0;
+      for (const m of monthsPorEmpresa) {
+        recebido += m[`in_${e.id}`] ?? 0;
+        despesa += m[`out_${e.id}`] ?? 0;
+      }
+      return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", lucro: recebido - despesa, despesas: despesa };
+    });
+
+    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, lucroPorEmpresa, lucroVsDespesas };
+  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, empresaId, dataIni, dataFim]);
+
+  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, lucroPorEmpresa, lucroVsDespesas } = aggregates;
 
   const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
 
