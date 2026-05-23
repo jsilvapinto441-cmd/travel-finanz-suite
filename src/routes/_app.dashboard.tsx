@@ -240,14 +240,11 @@ function Dashboard() {
       return row;
     });
 
-    // Entrada x Saída por empresa (acumulado no período)
+    // Entrada x Saída por empresa (mês atual — consistente com KPIs)
+    const mesAtual = monthsPorEmpresa[monthsPorEmpresa.length - 1];
     const entradaSaidaPorEmpresa = empresasList.map((e) => {
-      let entrada = 0;
-      let saida = 0;
-      for (const m of monthsPorEmpresa) {
-        entrada += m[`in_${e.id}`] ?? 0;
-        saida += m[`out_${e.id}`] ?? 0;
-      }
+      const entrada = mesAtual?.[`in_${e.id}`] ?? 0;
+      const saida = mesAtual?.[`out_${e.id}`] ?? 0;
       return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", entrada, saida };
     });
 
