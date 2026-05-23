@@ -402,7 +402,7 @@ function Dashboard() {
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold">Entrada × Saída</h3>
+            <h3 className="font-display font-semibold">Entrada × Saída (mês atual)</h3>
             <Building2 className="size-4 text-muted-foreground" />
           </div>
           <div className="h-72">
