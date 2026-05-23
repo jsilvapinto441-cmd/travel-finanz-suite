@@ -16,7 +16,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRecebiveisRouteImport } from './routes/_app.recebiveis'
 import { Route as AppMissoesRouteImport } from './routes/_app.missoes'
 import { Route as AppLucroRouteImport } from './routes/_app.lucro'
-import { Route as AppLogsRouteImport } from './routes/_app.logs'
 import { Route as AppFuncionariosRouteImport } from './routes/_app.funcionarios'
 import { Route as AppFornecedoresRouteImport } from './routes/_app.fornecedores'
 import { Route as AppEmpresasRouteImport } from './routes/_app.empresas'
@@ -24,6 +23,7 @@ import { Route as AppDespesasRouteImport } from './routes/_app.despesas'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppContratosRouteImport } from './routes/_app.contratos'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app.configuracoes'
+import { Route as AppAdminRouteImport } from './routes/_app.admin'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -57,11 +57,6 @@ const AppMissoesRoute = AppMissoesRouteImport.update({
 const AppLucroRoute = AppLucroRouteImport.update({
   id: '/lucro',
   path: '/lucro',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLogsRoute = AppLogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFuncionariosRoute = AppFuncionariosRouteImport.update({
@@ -99,11 +94,17 @@ const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AppAdminRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/contratos': typeof AppContratosRoute
   '/dashboard': typeof AppDashboardRoute
@@ -111,7 +112,6 @@ export interface FileRoutesByFullPath {
   '/empresas': typeof AppEmpresasRoute
   '/fornecedores': typeof AppFornecedoresRoute
   '/funcionarios': typeof AppFuncionariosRoute
-  '/logs': typeof AppLogsRoute
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
   '/recebiveis': typeof AppRecebiveisRoute
@@ -120,6 +120,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AppAdminRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/contratos': typeof AppContratosRoute
   '/dashboard': typeof AppDashboardRoute
@@ -127,7 +128,6 @@ export interface FileRoutesByTo {
   '/empresas': typeof AppEmpresasRoute
   '/fornecedores': typeof AppFornecedoresRoute
   '/funcionarios': typeof AppFuncionariosRoute
-  '/logs': typeof AppLogsRoute
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
   '/recebiveis': typeof AppRecebiveisRoute
@@ -138,6 +138,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_app/admin': typeof AppAdminRoute
   '/_app/configuracoes': typeof AppConfiguracoesRoute
   '/_app/contratos': typeof AppContratosRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -145,7 +146,6 @@ export interface FileRoutesById {
   '/_app/empresas': typeof AppEmpresasRoute
   '/_app/fornecedores': typeof AppFornecedoresRoute
   '/_app/funcionarios': typeof AppFuncionariosRoute
-  '/_app/logs': typeof AppLogsRoute
   '/_app/lucro': typeof AppLucroRoute
   '/_app/missoes': typeof AppMissoesRoute
   '/_app/recebiveis': typeof AppRecebiveisRoute
@@ -156,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/reset-password'
+    | '/admin'
     | '/configuracoes'
     | '/contratos'
     | '/dashboard'
@@ -163,7 +164,6 @@ export interface FileRouteTypes {
     | '/empresas'
     | '/fornecedores'
     | '/funcionarios'
-    | '/logs'
     | '/lucro'
     | '/missoes'
     | '/recebiveis'
@@ -172,6 +172,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/reset-password'
+    | '/admin'
     | '/configuracoes'
     | '/contratos'
     | '/dashboard'
@@ -179,7 +180,6 @@ export interface FileRouteTypes {
     | '/empresas'
     | '/fornecedores'
     | '/funcionarios'
-    | '/logs'
     | '/lucro'
     | '/missoes'
     | '/recebiveis'
@@ -189,6 +189,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/reset-password'
+    | '/_app/admin'
     | '/_app/configuracoes'
     | '/_app/contratos'
     | '/_app/dashboard'
@@ -196,7 +197,6 @@ export interface FileRouteTypes {
     | '/_app/empresas'
     | '/_app/fornecedores'
     | '/_app/funcionarios'
-    | '/_app/logs'
     | '/_app/lucro'
     | '/_app/missoes'
     | '/_app/recebiveis'
@@ -260,13 +260,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLucroRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/logs': {
-      id: '/_app/logs'
-      path: '/logs'
-      fullPath: '/logs'
-      preLoaderRoute: typeof AppLogsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/funcionarios': {
       id: '/_app/funcionarios'
       path: '/funcionarios'
@@ -316,10 +309,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfiguracoesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
   AppContratosRoute: typeof AppContratosRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -327,13 +328,13 @@ interface AppRouteChildren {
   AppEmpresasRoute: typeof AppEmpresasRoute
   AppFornecedoresRoute: typeof AppFornecedoresRoute
   AppFuncionariosRoute: typeof AppFuncionariosRoute
-  AppLogsRoute: typeof AppLogsRoute
   AppLucroRoute: typeof AppLucroRoute
   AppMissoesRoute: typeof AppMissoesRoute
   AppRecebiveisRoute: typeof AppRecebiveisRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
   AppContratosRoute: AppContratosRoute,
   AppDashboardRoute: AppDashboardRoute,
@@ -341,7 +342,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppEmpresasRoute: AppEmpresasRoute,
   AppFornecedoresRoute: AppFornecedoresRoute,
   AppFuncionariosRoute: AppFuncionariosRoute,
-  AppLogsRoute: AppLogsRoute,
   AppLucroRoute: AppLucroRoute,
   AppMissoesRoute: AppMissoesRoute,
   AppRecebiveisRoute: AppRecebiveisRoute,
