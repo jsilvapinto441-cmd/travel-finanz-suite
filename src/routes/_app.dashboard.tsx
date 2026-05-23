@@ -227,12 +227,12 @@ function Dashboard() {
       }
     }
 
-    // Lucro mensal por empresa + linha consolidada
-    const lucroPorEmpresa = monthsPorEmpresa.map((m) => {
+    // Receita mensal por empresa + linha "Soma total"
+    const receitaPorEmpresa = monthsPorEmpresa.map((m) => {
       const row: any = { label: m.label };
       let total = 0;
       for (const e of empresasList) {
-        const v = (m[`in_${e.id}`] ?? 0) - (m[`out_${e.id}`] ?? 0);
+        const v = m[`in_${e.id}`] ?? 0;
         row[e.id] = v;
         total += v;
       }
@@ -240,21 +240,21 @@ function Dashboard() {
       return row;
     });
 
-    // Comparativo Lucro x Despesas por empresa (acumulado no período visível)
-    const lucroVsDespesas = empresasList.map((e) => {
-      let recebido = 0;
-      let despesa = 0;
+    // Entrada x Saída por empresa (acumulado no período)
+    const entradaSaidaPorEmpresa = empresasList.map((e) => {
+      let entrada = 0;
+      let saida = 0;
       for (const m of monthsPorEmpresa) {
-        recebido += m[`in_${e.id}`] ?? 0;
-        despesa += m[`out_${e.id}`] ?? 0;
+        entrada += m[`in_${e.id}`] ?? 0;
+        saida += m[`out_${e.id}`] ?? 0;
       }
-      return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", lucro: recebido - despesa, despesas: despesa };
+      return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", entrada, saida };
     });
 
-    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, lucroPorEmpresa, lucroVsDespesas };
+    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa };
   }, [recebiveis, despesas, pagamentos, funcionarios, empresas, empresaId, dataIni, dataFim]);
 
-  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, lucroPorEmpresa, lucroVsDespesas } = aggregates;
+  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa } = aggregates;
 
   const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
 
@@ -378,25 +378,25 @@ function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold">Evolução Mensal — Lucro por Empresa</h3>
+            <h3 className="font-display font-semibold">Comparativo de Receita das Empresas</h3>
             <TrendingUp className="size-4 text-muted-foreground" />
           </div>
           <div className="h-72">
             <ResponsiveContainer>
-              <LineChart data={lucroPorEmpresa}>
+              <LineChart data={receitaPorEmpresa}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
                 <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
                 <Tooltip
-                  formatter={(v: number, name: string) => [formatCurrency(v), name === "__total" ? "Consolidado" : (empresasList.find((e) => e.id === name)?.nome ?? name)]}
+                  formatter={(v: number, name: string) => [formatCurrency(v), name === "__total" ? "Soma total" : (empresasList.find((e) => e.id === name)?.nome ?? name)]}
                   contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }}
                 />
-                <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => v === "__total" ? "Consolidado" : (empresasList.find((e) => e.id === v)?.nome ?? v)} />
+                <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => v === "__total" ? "Soma total" : (empresasList.find((e) => e.id === v)?.nome ?? v)} />
                 {empresasList.map((e) => (
                   <Line key={e.id} type="monotone" dataKey={e.id} stroke={e.cor || "#f97316"} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} isAnimationActive={false} />
                 ))}
                 {empresaId === "all" && empresasList.length > 1 && (
-                  <Line type="monotone" dataKey="__total" name="__total" stroke="var(--color-muted-foreground)" strokeWidth={3.5} strokeDasharray="6 4" dot={{ r: 4 }} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="__total" name="__total" stroke="var(--color-muted-foreground)" strokeWidth={3.5} dot={{ r: 4 }} isAnimationActive={false} />
                 )}
               </LineChart>
             </ResponsiveContainer>
@@ -405,26 +405,22 @@ function Dashboard() {
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold">Lucro × Despesas por Empresa</h3>
+            <h3 className="font-display font-semibold">Entrada × Saída</h3>
             <Building2 className="size-4 text-muted-foreground" />
           </div>
           <div className="h-72">
             <ResponsiveContainer>
-              <BarChart data={lucroVsDespesas}>
+              <BarChart data={entradaSaidaPorEmpresa}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="nome" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+                <XAxis dataKey="nome" tick={{ fontSize: 11 }} stroke="var(--color-muted-foreground)" angle={-20} textAnchor="end" height={60} />
                 <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
                 <Tooltip
                   formatter={(v: number, name: string) => [formatCurrency(v), name]}
                   contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="lucro" name="Lucro" radius={[6, 6, 0, 0]}>
-                  {lucroVsDespesas.map((e) => <Cell key={`l-${e.id}`} fill={e.cor} fillOpacity={0.9} />)}
-                </Bar>
-                <Bar dataKey="despesas" name="Despesas" radius={[6, 6, 0, 0]}>
-                  {lucroVsDespesas.map((e) => <Cell key={`d-${e.id}`} fill={e.cor} fillOpacity={0.4} />)}
-                </Bar>
+                <Bar dataKey="entrada" name="Entrada" fill="var(--color-primary)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="saida" name="Saída" fill="var(--color-gold)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
