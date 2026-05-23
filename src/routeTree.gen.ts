@@ -16,7 +16,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRecebiveisRouteImport } from './routes/_app.recebiveis'
 import { Route as AppMissoesRouteImport } from './routes/_app.missoes'
 import { Route as AppLucroRouteImport } from './routes/_app.lucro'
-import { Route as AppLogsRouteImport } from './routes/_app.logs'
 import { Route as AppFuncionariosRouteImport } from './routes/_app.funcionarios'
 import { Route as AppFornecedoresRouteImport } from './routes/_app.fornecedores'
 import { Route as AppEmpresasRouteImport } from './routes/_app.empresas'
@@ -58,11 +57,6 @@ const AppMissoesRoute = AppMissoesRouteImport.update({
 const AppLucroRoute = AppLucroRouteImport.update({
   id: '/lucro',
   path: '/lucro',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLogsRoute = AppLogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFuncionariosRoute = AppFuncionariosRouteImport.update({
@@ -118,7 +112,6 @@ export interface FileRoutesByFullPath {
   '/empresas': typeof AppEmpresasRoute
   '/fornecedores': typeof AppFornecedoresRoute
   '/funcionarios': typeof AppFuncionariosRoute
-  '/logs': typeof AppLogsRoute
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
   '/recebiveis': typeof AppRecebiveisRoute
@@ -135,7 +128,6 @@ export interface FileRoutesByTo {
   '/empresas': typeof AppEmpresasRoute
   '/fornecedores': typeof AppFornecedoresRoute
   '/funcionarios': typeof AppFuncionariosRoute
-  '/logs': typeof AppLogsRoute
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
   '/recebiveis': typeof AppRecebiveisRoute
@@ -154,7 +146,6 @@ export interface FileRoutesById {
   '/_app/empresas': typeof AppEmpresasRoute
   '/_app/fornecedores': typeof AppFornecedoresRoute
   '/_app/funcionarios': typeof AppFuncionariosRoute
-  '/_app/logs': typeof AppLogsRoute
   '/_app/lucro': typeof AppLucroRoute
   '/_app/missoes': typeof AppMissoesRoute
   '/_app/recebiveis': typeof AppRecebiveisRoute
@@ -173,7 +164,6 @@ export interface FileRouteTypes {
     | '/empresas'
     | '/fornecedores'
     | '/funcionarios'
-    | '/logs'
     | '/lucro'
     | '/missoes'
     | '/recebiveis'
@@ -190,7 +180,6 @@ export interface FileRouteTypes {
     | '/empresas'
     | '/fornecedores'
     | '/funcionarios'
-    | '/logs'
     | '/lucro'
     | '/missoes'
     | '/recebiveis'
@@ -208,7 +197,6 @@ export interface FileRouteTypes {
     | '/_app/empresas'
     | '/_app/fornecedores'
     | '/_app/funcionarios'
-    | '/_app/logs'
     | '/_app/lucro'
     | '/_app/missoes'
     | '/_app/recebiveis'
@@ -270,13 +258,6 @@ declare module '@tanstack/react-router' {
       path: '/lucro'
       fullPath: '/lucro'
       preLoaderRoute: typeof AppLucroRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/logs': {
-      id: '/_app/logs'
-      path: '/logs'
-      fullPath: '/logs'
-      preLoaderRoute: typeof AppLogsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/funcionarios': {
@@ -347,7 +328,6 @@ interface AppRouteChildren {
   AppEmpresasRoute: typeof AppEmpresasRoute
   AppFornecedoresRoute: typeof AppFornecedoresRoute
   AppFuncionariosRoute: typeof AppFuncionariosRoute
-  AppLogsRoute: typeof AppLogsRoute
   AppLucroRoute: typeof AppLucroRoute
   AppMissoesRoute: typeof AppMissoesRoute
   AppRecebiveisRoute: typeof AppRecebiveisRoute
@@ -362,7 +342,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppEmpresasRoute: AppEmpresasRoute,
   AppFornecedoresRoute: AppFornecedoresRoute,
   AppFuncionariosRoute: AppFuncionariosRoute,
-  AppLogsRoute: AppLogsRoute,
   AppLucroRoute: AppLucroRoute,
   AppMissoesRoute: AppMissoesRoute,
   AppRecebiveisRoute: AppRecebiveisRoute,
@@ -379,3 +358,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
