@@ -24,6 +24,7 @@ import { Route as AppDespesasRouteImport } from './routes/_app.despesas'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppContratosRouteImport } from './routes/_app.contratos'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app.configuracoes'
+import { Route as AppAdminRouteImport } from './routes/_app.admin'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -99,11 +100,17 @@ const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AppAdminRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/contratos': typeof AppContratosRoute
   '/dashboard': typeof AppDashboardRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/admin': typeof AppAdminRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/contratos': typeof AppContratosRoute
   '/dashboard': typeof AppDashboardRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_app/admin': typeof AppAdminRoute
   '/_app/configuracoes': typeof AppConfiguracoesRoute
   '/_app/contratos': typeof AppContratosRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/reset-password'
+    | '/admin'
     | '/configuracoes'
     | '/contratos'
     | '/dashboard'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/reset-password'
+    | '/admin'
     | '/configuracoes'
     | '/contratos'
     | '/dashboard'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/reset-password'
+    | '/_app/admin'
     | '/_app/configuracoes'
     | '/_app/contratos'
     | '/_app/dashboard'
@@ -316,10 +328,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfiguracoesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
   AppContratosRoute: typeof AppContratosRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -334,6 +354,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
   AppContratosRoute: AppContratosRoute,
   AppDashboardRoute: AppDashboardRoute,
@@ -358,3 +379,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
