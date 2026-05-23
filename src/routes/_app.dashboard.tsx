@@ -227,12 +227,12 @@ function Dashboard() {
       }
     }
 
-    // Lucro mensal por empresa + linha consolidada
-    const lucroPorEmpresa = monthsPorEmpresa.map((m) => {
+    // Receita mensal por empresa + linha "Soma total"
+    const receitaPorEmpresa = monthsPorEmpresa.map((m) => {
       const row: any = { label: m.label };
       let total = 0;
       for (const e of empresasList) {
-        const v = (m[`in_${e.id}`] ?? 0) - (m[`out_${e.id}`] ?? 0);
+        const v = m[`in_${e.id}`] ?? 0;
         row[e.id] = v;
         total += v;
       }
@@ -240,18 +240,18 @@ function Dashboard() {
       return row;
     });
 
-    // Comparativo Lucro x Despesas por empresa (acumulado no período visível)
-    const lucroVsDespesas = empresasList.map((e) => {
-      let recebido = 0;
-      let despesa = 0;
+    // Entrada x Saída por empresa (acumulado no período)
+    const entradaSaidaPorEmpresa = empresasList.map((e) => {
+      let entrada = 0;
+      let saida = 0;
       for (const m of monthsPorEmpresa) {
-        recebido += m[`in_${e.id}`] ?? 0;
-        despesa += m[`out_${e.id}`] ?? 0;
+        entrada += m[`in_${e.id}`] ?? 0;
+        saida += m[`out_${e.id}`] ?? 0;
       }
-      return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", lucro: recebido - despesa, despesas: despesa };
+      return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", entrada, saida };
     });
 
-    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, lucroPorEmpresa, lucroVsDespesas };
+    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa };
   }, [recebiveis, despesas, pagamentos, funcionarios, empresas, empresaId, dataIni, dataFim]);
 
   const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, lucroPorEmpresa, lucroVsDespesas } = aggregates;
