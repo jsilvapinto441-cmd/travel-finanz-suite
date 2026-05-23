@@ -47,7 +47,7 @@ export function AppShell() {
           <img src={logo} alt="PRODUZ" className="h-9 w-auto" />
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {nav.map((item) => {
+          {nav.filter((i) => !("adminOnly" in i && i.adminOnly) || isAdmin).map((item) => {
             const active =
               item.to === "/"
                 ? location.pathname === "/"
