@@ -64,7 +64,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#0F0F0F" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "PRODUZ" },
+      { name: "application-name", content: "PRODUZ Hub" },
       { title: "PRODUZ — Gestão Administrativa e Financeira" },
       { name: "description", content: "Sistema interno de gestão financeira e operacional da agência PRODUZ." },
       { property: "og:title", content: "PRODUZ — Gestão Administrativa e Financeira" },
