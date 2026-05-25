@@ -125,6 +125,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Outlet />
+        <PWAInstallPrompt />
         <Toaster richColors position="top-right" />
       </AuthProvider>
     </QueryClientProvider>
