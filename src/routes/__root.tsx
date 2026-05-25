@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { AuthProvider } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 import appCss from "../styles.css?url";
 
@@ -64,7 +65,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#0F0F0F" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "PRODUZ" },
+      { name: "application-name", content: "PRODUZ Hub" },
       { title: "PRODUZ — Gestão Administrativa e Financeira" },
       { name: "description", content: "Sistema interno de gestão financeira e operacional da agência PRODUZ." },
       { property: "og:title", content: "PRODUZ — Gestão Administrativa e Financeira" },
@@ -78,6 +85,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" },
@@ -114,6 +125,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Outlet />
+        <PWAInstallPrompt />
         <Toaster richColors position="top-right" />
       </AuthProvider>
     </QueryClientProvider>
