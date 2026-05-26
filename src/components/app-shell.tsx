@@ -110,15 +110,15 @@ export function AppShell() {
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar desktop */}
-      <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Sidebar desktop - fixa, não acompanha o scroll do conteúdo */}
+      <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border h-screen sticky top-0 shrink-0">
         {SidebarContent}
       </aside>
 
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         {/* Top bar mobile */}
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground">
+        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent">
@@ -139,7 +139,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 overflow-y-auto">
           <Outlet />
         </main>
       </div>
