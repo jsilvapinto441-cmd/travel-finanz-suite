@@ -32,7 +32,7 @@ export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
-  const roleLabel = isAdmin ? "Administrador" : roles[0] ?? "—";
+  const roleLabel = isAdmin ? "Administrador" : "Usuário";
 
   const handleIdle = useCallback(async () => {
     toast.info("Sessão encerrada por inatividade");
