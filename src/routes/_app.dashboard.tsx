@@ -253,6 +253,12 @@ function Dashboard() {
 
   const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa } = aggregates;
 
+  const semDados =
+    (recebiveis?.length ?? 0) === 0 &&
+    (despesas?.length ?? 0) === 0 &&
+    (funcionarios?.length ?? 0) === 0 &&
+    (pagamentos?.length ?? 0) === 0;
+
   const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
 
   return (
