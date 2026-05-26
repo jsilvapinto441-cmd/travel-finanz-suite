@@ -52,6 +52,7 @@ export type Database = {
           id: string
           mime: string | null
           nome: string
+          owner_id: string
           path: string
           tamanho: number | null
           user_id: string | null
@@ -63,6 +64,7 @@ export type Database = {
           id?: string
           mime?: string | null
           nome: string
+          owner_id?: string
           path: string
           tamanho?: number | null
           user_id?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           id?: string
           mime?: string | null
           nome?: string
+          owner_id?: string
           path?: string
           tamanho?: number | null
           user_id?: string | null
@@ -97,6 +100,7 @@ export type Database = {
           num_passageiros: number | null
           numero: string | null
           observacoes: string | null
+          owner_id: string
           parcelas: number
           status: Database["public"]["Enums"]["status_contrato"]
           tipo_servico:
@@ -123,6 +127,7 @@ export type Database = {
           num_passageiros?: number | null
           numero?: string | null
           observacoes?: string | null
+          owner_id?: string
           parcelas?: number
           status?: Database["public"]["Enums"]["status_contrato"]
           tipo_servico?:
@@ -149,6 +154,7 @@ export type Database = {
           num_passageiros?: number | null
           numero?: string | null
           observacoes?: string | null
+          owner_id?: string
           parcelas?: number
           status?: Database["public"]["Enums"]["status_contrato"]
           tipo_servico?:
@@ -199,6 +205,7 @@ export type Database = {
           missao_id: string | null
           numero_parcela: number
           observacoes: string | null
+          owner_id: string
           parcelas: number
           parent_id: string | null
           status: Database["public"]["Enums"]["status_financeiro"]
@@ -221,6 +228,7 @@ export type Database = {
           missao_id?: string | null
           numero_parcela?: number
           observacoes?: string | null
+          owner_id?: string
           parcelas?: number
           parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
@@ -243,6 +251,7 @@ export type Database = {
           missao_id?: string | null
           numero_parcela?: number
           observacoes?: string | null
+          owner_id?: string
           parcelas?: number
           parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
@@ -310,6 +319,7 @@ export type Database = {
           created_at: string
           id: string
           nome: string
+          owner_id: string
           razao_social: string | null
           updated_at: string
         }
@@ -320,6 +330,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome: string
+          owner_id?: string
           razao_social?: string | null
           updated_at?: string
         }
@@ -330,6 +341,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+          owner_id?: string
           razao_social?: string | null
           updated_at?: string
         }
@@ -344,6 +356,7 @@ export type Database = {
           id: string
           nome: string
           observacoes: string | null
+          owner_id: string
           responsavel: string | null
           telefone: string | null
           updated_at: string
@@ -356,6 +369,7 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
+          owner_id?: string
           responsavel?: string | null
           telefone?: string | null
           updated_at?: string
@@ -368,6 +382,7 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
+          owner_id?: string
           responsavel?: string | null
           telefone?: string | null
           updated_at?: string
@@ -388,6 +403,7 @@ export type Database = {
           id: string
           inss: number
           nome: string
+          owner_id: string
           salario: number
           updated_at: string
           vale_transporte: number
@@ -405,6 +421,7 @@ export type Database = {
           id?: string
           inss?: number
           nome: string
+          owner_id?: string
           salario?: number
           updated_at?: string
           vale_transporte?: number
@@ -422,6 +439,7 @@ export type Database = {
           id?: string
           inss?: number
           nome?: string
+          owner_id?: string
           salario?: number
           updated_at?: string
           vale_transporte?: number
@@ -450,6 +468,7 @@ export type Database = {
           id: string
           nome: string
           observacoes: string | null
+          owner_id: string
           status: Database["public"]["Enums"]["status_generico"]
           updated_at: string
         }
@@ -459,6 +478,7 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
+          owner_id?: string
           status?: Database["public"]["Enums"]["status_generico"]
           updated_at?: string
         }
@@ -468,6 +488,7 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
+          owner_id?: string
           status?: Database["public"]["Enums"]["status_generico"]
           updated_at?: string
         }
@@ -515,6 +536,7 @@ export type Database = {
           numero_fatura: string | null
           numero_parcela: number
           observacoes: string | null
+          owner_id: string
           pagador: string
           parcelas: number
           parent_id: string | null
@@ -538,6 +560,7 @@ export type Database = {
           numero_fatura?: string | null
           numero_parcela?: number
           observacoes?: string | null
+          owner_id?: string
           pagador: string
           parcelas?: number
           parent_id?: string | null
@@ -561,6 +584,7 @@ export type Database = {
           numero_fatura?: string | null
           numero_parcela?: number
           observacoes?: string | null
+          owner_id?: string
           pagador?: string
           parcelas?: number
           parent_id?: string | null
@@ -623,6 +647,7 @@ export type Database = {
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
           id: string
           observacao: string | null
+          owner_id: string
           recebivel_id: string | null
           user_id: string | null
           valor: number
@@ -634,6 +659,7 @@ export type Database = {
           forma_pagamento?: Database["public"]["Enums"]["forma_pagamento"]
           id?: string
           observacao?: string | null
+          owner_id?: string
           recebivel_id?: string | null
           user_id?: string | null
           valor: number
@@ -645,6 +671,7 @@ export type Database = {
           forma_pagamento?: Database["public"]["Enums"]["forma_pagamento"]
           id?: string
           observacao?: string | null
+          owner_id?: string
           recebivel_id?: string | null
           user_id?: string | null
           valor?: number

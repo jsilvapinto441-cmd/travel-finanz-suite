@@ -253,6 +253,12 @@ function Dashboard() {
 
   const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa } = aggregates;
 
+  const semDados =
+    (recebiveis?.length ?? 0) === 0 &&
+    (despesas?.length ?? 0) === 0 &&
+    (funcionarios?.length ?? 0) === 0 &&
+    (pagamentos?.length ?? 0) === 0;
+
   const colors = ["#f97316", "#fb923c", "#c2410c", "#facc15", "#0d7a5f", "#7c3aed", "#dc2626", "#0891b2", "#65a30d", "#a16207"];
 
   return (
@@ -275,6 +281,20 @@ function Dashboard() {
           </Select>
         }
       />
+
+      {semDados && (
+        <Card className="p-6 mb-6 border-dashed border-primary/30 bg-primary/5">
+          <div className="flex items-start gap-3">
+            <Wallet className="size-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-display font-semibold mb-1">Bem-vindo ao PRODUZ Hub!</h3>
+              <p className="text-sm text-muted-foreground">
+                Você ainda não cadastrou nenhum dado. Comece adicionando uma <strong>empresa</strong>, um <strong>contrato</strong> ou uma <strong>despesa</strong> para ver seus indicadores e gráficos ganharem vida.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4 mb-6 flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">

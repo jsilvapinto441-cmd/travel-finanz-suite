@@ -32,7 +32,7 @@ export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
-  const roleLabel = isAdmin ? "Administrador" : roles[0] ?? "—";
+  const roleLabel = isAdmin ? "Administrador" : "Usuário";
 
   const handleIdle = useCallback(async () => {
     toast.info("Sessão encerrada por inatividade");
@@ -88,16 +88,14 @@ export function AppShell() {
           </div>
         </div>
         <div className="flex gap-2">
-          {isAdmin && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              onClick={() => navigate({ to: "/configuracoes" })}
-            >
-              <Settings className="size-3.5" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-1 h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            onClick={() => navigate({ to: "/configuracoes" })}
+          >
+            <Settings className="size-3.5" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
