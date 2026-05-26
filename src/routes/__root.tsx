@@ -122,6 +122,8 @@ function RootComponent() {
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
 
+  useAutoUpdate();
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
