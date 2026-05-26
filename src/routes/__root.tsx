@@ -12,6 +12,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { useAutoUpdate } from "@/lib/use-auto-update";
 
 import appCss from "../styles.css?url";
 
