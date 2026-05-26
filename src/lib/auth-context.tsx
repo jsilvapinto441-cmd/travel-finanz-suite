@@ -49,7 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isAdmin = roles.includes("admin");
-  const canEdit = isAdmin || roles.includes("financeiro");
+  // Em modo SaaS isolado por owner_id, qualquer usuário autenticado pode editar SEUS próprios dados.
+  // `isAdmin` agora representa apenas o super-admin (visibilidade do painel de Administração).
+  const canEdit = !!session?.user;
 
   return (
     <Ctx.Provider
