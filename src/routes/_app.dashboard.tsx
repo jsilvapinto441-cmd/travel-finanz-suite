@@ -282,6 +282,20 @@ function Dashboard() {
         }
       />
 
+      {semDados && (
+        <Card className="p-6 mb-6 border-dashed border-primary/30 bg-primary/5">
+          <div className="flex items-start gap-3">
+            <Wallet className="size-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-display font-semibold mb-1">Bem-vindo ao PRODUZ Hub!</h3>
+              <p className="text-sm text-muted-foreground">
+                Você ainda não cadastrou nenhum dado. Comece adicionando uma <strong>empresa</strong>, um <strong>contrato</strong> ou uma <strong>despesa</strong> para ver seus indicadores e gráficos ganharem vida.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <Card className="p-4 mb-6 flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Período inicial</Label>
