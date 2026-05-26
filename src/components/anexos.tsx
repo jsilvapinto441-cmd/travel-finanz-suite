@@ -94,9 +94,10 @@ export function AnexosManager({
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
+      if (!user?.id) throw new Error("Usuário não autenticado");
       const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
-      // Nome renomeado automaticamente — não usamos o nome original no path
-      const path = `${entidade}/${entidade_id}/${crypto.randomUUID()}.${ext}`;
+      // Path SEMPRE começa com o uid — exigido pela política de Storage (isolamento por usuário)
+      const path = `${user.id}/${entidade}/${entidade_id}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("anexos")
         .upload(path, file, { contentType: file.type, upsert: false });
       if (upErr) throw upErr;
