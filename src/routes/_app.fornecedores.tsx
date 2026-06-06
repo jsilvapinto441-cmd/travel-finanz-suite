@@ -19,10 +19,10 @@ function Page() {
 
   const { data: rows = [] } = useQuery({
     queryKey: ["fornecedores-export"],
-    queryFn: async () => (await supabase.from("fornecedores").select("id,nome,cnpj,responsavel,telefone,email,empresa_id").order("nome")).data ?? [],
+    queryFn: async () => (await supabase.from("fornecedores").select("*").order("nome")).data ?? [],
     staleTime: 30_000,
   });
-  const exportRows = (rows as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
+  const exportRows = (rows as unknown as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
 
   return (
     <PageContainer>
