@@ -19,6 +19,8 @@ import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
 import { custoTotalFuncionario } from "@/lib/folha";
+import { exportRelatorioGerencial } from "@/lib/relatorio-gerencial";
+import { FileText } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -267,18 +269,68 @@ function Dashboard() {
         title="Dashboard Financeiro"
         description="Visão consolidada de receitas, despesas e lucro."
         actions={
-          <Select value={empresaId} onValueChange={setEmpresaId}>
-            <SelectTrigger className="w-[220px]">
-              <Building2 className="size-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Filtrar empresa" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as empresas</SelectItem>
-              {empresas?.map((e) => (
-                <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap gap-2 items-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const empresaNome =
+                  empresaId === "all"
+                    ? "Todas as empresas"
+                    : empresas?.find((e) => e.id === empresaId)?.nome ?? "—";
+                exportRelatorioGerencial({
+                  empresaNome,
+                  periodo: { from: dataIni, to: dataFim },
+                  kpis: {
+                    totalContratado,
+                    totalRecebido,
+                    totalEmAberto,
+                    totalVencido,
+                    inadimplencia: aggregates.inadimplencia,
+                    totalOperacional,
+                    folhaMensal,
+                    totalDespesa,
+                    despesasPagas,
+                    lucro,
+                    qtdAtrasados: atrasados.length,
+                  },
+                  fluxoMensal: months.map((m) => ({
+                    label: m.label,
+                    entradas: m.entradas,
+                    saidas: m.saidas,
+                  })),
+                  despesasCategoria: catData,
+                  empresasLucro: empresasList.map((e) => {
+                    const mesAtual = aggregates.receitaPorEmpresa[aggregates.receitaPorEmpresa.length - 1];
+                    const receita = Number(mesAtual?.[e.id] ?? 0);
+                    const linha = entradaSaidaPorEmpresa.find((x) => x.id === e.id);
+                    const despesa = linha?.saida ?? 0;
+                    return {
+                      nome: e.nome,
+                      receita_realizada: receita,
+                      despesa_realizada: despesa,
+                      lucro_realizado: receita - despesa,
+                      lucro_projetado: receita - despesa,
+                    };
+                  }),
+                });
+              }}
+            >
+              <FileText className="size-4 mr-2" />
+              Relatório Gerencial (PDF)
+            </Button>
+            <Select value={empresaId} onValueChange={setEmpresaId}>
+              <SelectTrigger className="w-[220px]">
+                <Building2 className="size-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Filtrar empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as empresas</SelectItem>
+                {empresas?.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         }
       />
 
