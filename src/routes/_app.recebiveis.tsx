@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import {
   CircleDollarSign, ExternalLink, Plus, Pencil, Trash2, Search, Loader2,
 } from "lucide-react";
+import { ExportButton } from "@/components/export-button";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
@@ -275,7 +276,29 @@ function Page() {
 
   return (
     <PageContainer>
-      <PageHeader title="Recebíveis" description="Parcelas geradas pelos contratos + recebíveis avulsos." />
+      <PageHeader
+        title="Recebíveis"
+        description="Parcelas geradas pelos contratos + recebíveis avulsos."
+        actions={
+          <ExportButton<T>
+            title="Recebíveis"
+            filename="recebiveis"
+            rows={(data ?? []) as T[]}
+            columns={[
+              { header: "Cliente", accessor: "pagador" },
+              { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
+              { header: "Fatura", accessor: "numero_fatura" },
+              { header: "Parcela", accessor: (r) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
+              { header: "Valor", accessor: (r) => formatCurrency(Number(r.valor_parcela ?? r.valor_total)) },
+              { header: "Pago", accessor: (r) => formatCurrency(Number(r.valor_pago ?? 0)) },
+              { header: "Vencimento", accessor: (r) => formatDate(r.data_vencimento) },
+              { header: "Recebimento", accessor: (r) => formatDate(r.data_recebimento) },
+              { header: "Categoria", accessor: "categoria" },
+              { header: "Status", accessor: "status" },
+            ]}
+          />
+        }
+      />
 
       <Card className="overflow-hidden">
         <div className="p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between border-b">
