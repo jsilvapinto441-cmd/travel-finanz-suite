@@ -18,11 +18,13 @@ import { Route as AppMissoesRouteImport } from './routes/_app.missoes'
 import { Route as AppLucroRouteImport } from './routes/_app.lucro'
 import { Route as AppFuncionariosRouteImport } from './routes/_app.funcionarios'
 import { Route as AppFornecedoresRouteImport } from './routes/_app.fornecedores'
+import { Route as AppFluxoCaixaRouteImport } from './routes/_app.fluxo-caixa'
 import { Route as AppEmpresasRouteImport } from './routes/_app.empresas'
 import { Route as AppDespesasRouteImport } from './routes/_app.despesas'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppContratosRouteImport } from './routes/_app.contratos'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app.configuracoes'
+import { Route as AppBancosRouteImport } from './routes/_app.bancos'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 
@@ -70,6 +72,11 @@ const AppFornecedoresRoute = AppFornecedoresRouteImport.update({
   path: '/fornecedores',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFluxoCaixaRoute = AppFluxoCaixaRouteImport.update({
+  id: '/fluxo-caixa',
+  path: '/fluxo-caixa',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppEmpresasRoute = AppEmpresasRouteImport.update({
   id: '/empresas',
   path: '/empresas',
@@ -95,6 +102,11 @@ const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBancosRoute = AppBancosRouteImport.update({
+  id: '/bancos',
+  path: '/bancos',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminRoute = AppAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -111,11 +123,13 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AppAdminRoute
+  '/bancos': typeof AppBancosRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/contratos': typeof AppContratosRoute
   '/dashboard': typeof AppDashboardRoute
   '/despesas': typeof AppDespesasRoute
   '/empresas': typeof AppEmpresasRoute
+  '/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/fornecedores': typeof AppFornecedoresRoute
   '/funcionarios': typeof AppFuncionariosRoute
   '/lucro': typeof AppLucroRoute
@@ -128,11 +142,13 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AppAdminRoute
+  '/bancos': typeof AppBancosRoute
   '/configuracoes': typeof AppConfiguracoesRoute
   '/contratos': typeof AppContratosRoute
   '/dashboard': typeof AppDashboardRoute
   '/despesas': typeof AppDespesasRoute
   '/empresas': typeof AppEmpresasRoute
+  '/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/fornecedores': typeof AppFornecedoresRoute
   '/funcionarios': typeof AppFuncionariosRoute
   '/lucro': typeof AppLucroRoute
@@ -147,11 +163,13 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/admin': typeof AppAdminRoute
+  '/_app/bancos': typeof AppBancosRoute
   '/_app/configuracoes': typeof AppConfiguracoesRoute
   '/_app/contratos': typeof AppContratosRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/despesas': typeof AppDespesasRoute
   '/_app/empresas': typeof AppEmpresasRoute
+  '/_app/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/_app/fornecedores': typeof AppFornecedoresRoute
   '/_app/funcionarios': typeof AppFuncionariosRoute
   '/_app/lucro': typeof AppLucroRoute
@@ -166,11 +184,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/admin'
+    | '/bancos'
     | '/configuracoes'
     | '/contratos'
     | '/dashboard'
     | '/despesas'
     | '/empresas'
+    | '/fluxo-caixa'
     | '/fornecedores'
     | '/funcionarios'
     | '/lucro'
@@ -183,11 +203,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/admin'
+    | '/bancos'
     | '/configuracoes'
     | '/contratos'
     | '/dashboard'
     | '/despesas'
     | '/empresas'
+    | '/fluxo-caixa'
     | '/fornecedores'
     | '/funcionarios'
     | '/lucro'
@@ -201,11 +223,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/_app/admin'
+    | '/_app/bancos'
     | '/_app/configuracoes'
     | '/_app/contratos'
     | '/_app/dashboard'
     | '/_app/despesas'
     | '/_app/empresas'
+    | '/_app/fluxo-caixa'
     | '/_app/fornecedores'
     | '/_app/funcionarios'
     | '/_app/lucro'
@@ -287,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFornecedoresRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/fluxo-caixa': {
+      id: '/_app/fluxo-caixa'
+      path: '/fluxo-caixa'
+      fullPath: '/fluxo-caixa'
+      preLoaderRoute: typeof AppFluxoCaixaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/empresas': {
       id: '/_app/empresas'
       path: '/empresas'
@@ -322,6 +353,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfiguracoesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/bancos': {
+      id: '/_app/bancos'
+      path: '/bancos'
+      fullPath: '/bancos'
+      preLoaderRoute: typeof AppBancosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/admin': {
       id: '/_app/admin'
       path: '/admin'
@@ -341,11 +379,13 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
+  AppBancosRoute: typeof AppBancosRoute
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
   AppContratosRoute: typeof AppContratosRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDespesasRoute: typeof AppDespesasRoute
   AppEmpresasRoute: typeof AppEmpresasRoute
+  AppFluxoCaixaRoute: typeof AppFluxoCaixaRoute
   AppFornecedoresRoute: typeof AppFornecedoresRoute
   AppFuncionariosRoute: typeof AppFuncionariosRoute
   AppLucroRoute: typeof AppLucroRoute
@@ -355,11 +395,13 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
+  AppBancosRoute: AppBancosRoute,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
   AppContratosRoute: AppContratosRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDespesasRoute: AppDespesasRoute,
   AppEmpresasRoute: AppEmpresasRoute,
+  AppFluxoCaixaRoute: AppFluxoCaixaRoute,
   AppFornecedoresRoute: AppFornecedoresRoute,
   AppFuncionariosRoute: AppFuncionariosRoute,
   AppLucroRoute: AppLucroRoute,
@@ -379,13 +421,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
