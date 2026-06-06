@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import {
   LayoutDashboard, Building2, Target, FileText, ArrowDownLeft, ArrowUpRight,
-  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu,
+  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ const nav = [
   { to: "/contratos", label: "Contratos", icon: FileText },
   { to: "/recebiveis", label: "Recebíveis", icon: ArrowDownLeft },
   { to: "/despesas", label: "Despesas", icon: ArrowUpRight },
+  { to: "/bancos", label: "Bancos", icon: Landmark },
+  { to: "/fluxo-caixa", label: "Fluxo de Caixa", icon: Wallet },
   { to: "/funcionarios", label: "Funcionários", icon: Users },
   { to: "/fornecedores", label: "Fornecedores", icon: Truck },
   { to: "/lucro", label: "Lucros", icon: TrendingUp },
