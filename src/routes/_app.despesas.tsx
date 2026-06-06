@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
 import { TextField, NumberField, CurrencyField, SelectField, TextAreaField } from "@/components/form-fields";
@@ -11,6 +13,7 @@ import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
 import { CircleDollarSign } from "lucide-react";
 import { EmpresaFilter } from "@/components/empresa-filter";
+import { ExportButton } from "@/components/export-button";
 
 export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
@@ -41,9 +44,38 @@ function Page() {
   const [payOpen, setPayOpen] = useState(false);
   const [payTarget, setPayTarget] = useState<T | null>(null);
 
+  const { data: allDespesas = [] } = useQuery({
+    queryKey: ["despesas-export"],
+    queryFn: async () => (await supabase.from("despesas").select("*").order("data_vencimento", { ascending: false })).data ?? [],
+    staleTime: 30_000,
+  });
+  const exportRows = (allDespesas as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
+
   return (
     <PageContainer>
-      <PageHeader title="Despesas" description="Contas a pagar. O status é calculado automaticamente a partir dos pagamentos registrados." />
+      <PageHeader
+        title="Despesas"
+        description="Contas a pagar. O status é calculado automaticamente a partir dos pagamentos registrados."
+        actions={
+          <ExportButton<T>
+            title="Despesas"
+            filename="despesas"
+            rows={exportRows}
+            columns={[
+              { header: "Descrição", accessor: "descricao" },
+              { header: "Categoria", accessor: (r) => r.categoria.replace(/_/g, " ") },
+              { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
+              { header: "Fornecedor", accessor: (r) => nomeById(fornecedores, r.fornecedor_id) },
+              { header: "Valor", accessor: (r) => formatCurrency(Number(r.valor)) },
+              { header: "Valor pago", accessor: (r) => formatCurrency(Number(r.valor_pago ?? 0)) },
+              { header: "Vencimento", accessor: (r) => formatDate(r.data_vencimento) },
+              { header: "Pagamento", accessor: (r) => formatDate(r.data_pagamento) },
+              { header: "Parcela", accessor: (r) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
+              { header: "Status", accessor: "status" },
+            ]}
+          />
+        }
+      />
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
         defaultValues={{ status: "em_aberto", categoria: "outros", parcelas: 1, frequencia: "mensal" }}

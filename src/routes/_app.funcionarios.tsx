@@ -13,6 +13,7 @@ import { Users, Wallet, UserCheck, UserX } from "lucide-react";
 import { calcFGTS, calcINSS, custoTotalFuncionario, folhaTotal } from "@/lib/folha";
 import { useEffect, useState } from "react";
 import { EmpresaFilter } from "@/components/empresa-filter";
+import { ExportButton } from "@/components/export-button";
 
 export const Route = createFileRoute("/_app/funcionarios")({ component: Page });
 
@@ -54,11 +55,39 @@ function Page() {
   const inativos = filteredTodos.filter((f: any) => !f.ativo);
   const folha = folhaTotal(filteredTodos as any);
 
+  const { data: funcCompleto = [] } = useQuery({
+    queryKey: ["funcionarios-export"],
+    queryFn: async () => (await supabase.from("funcionarios").select("*").order("nome")).data ?? [],
+    staleTime: 30_000,
+  });
+  const exportRows = (funcCompleto as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
+
   return (
     <PageContainer>
       <PageHeader
         title="Funcionários"
         description="Folha de pagamento — cálculo automático de encargos e integração com o Financeiro."
+        actions={
+          <ExportButton<T>
+            title="Funcionários"
+            filename="funcionarios"
+            rows={exportRows}
+            columns={[
+              { header: "Nome", accessor: "nome" },
+              { header: "Cargo", accessor: "cargo" },
+              { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
+              { header: "Admissão", accessor: "data_admissao" },
+              { header: "Salário", accessor: (r) => formatCurrency(Number(r.salario)) },
+              { header: "Vale Alim.", accessor: (r) => formatCurrency(Number(r.alimentacao)) },
+              { header: "Vale Transp.", accessor: (r) => formatCurrency(Number(r.vale_transporte)) },
+              { header: "FGTS", accessor: (r) => formatCurrency(Number(r.fgts)) },
+              { header: "INSS", accessor: (r) => formatCurrency(Number(r.inss)) },
+              { header: "Custos adicionais", accessor: (r) => formatCurrency(Number(r.custos_adicionais)) },
+              { header: "Custo total", accessor: (r) => formatCurrency(custoTotalFuncionario(r as any)) },
+              { header: "Status", accessor: (r) => (r.ativo ? "Ativo" : "Inativo") },
+            ]}
+          />
+        }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

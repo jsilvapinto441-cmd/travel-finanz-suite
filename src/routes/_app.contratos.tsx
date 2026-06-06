@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useEmpresas, useMissoes, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
+import { ExportButton } from "@/components/export-button";
 import { CalendarDays, Plane, Sparkles, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_app/contratos")({ component: Page });
@@ -281,9 +282,39 @@ function Page() {
     return map;
   }, [recebiveis]);
 
+  const { data: allContratos = [] } = useQuery({
+    queryKey: ["contratos-export"],
+    queryFn: async () => (await supabase.from("contratos").select("*").order("created_at", { ascending: false })).data ?? [],
+    staleTime: 30_000,
+  });
+
   return (
     <PageContainer>
-      <PageHeader title="Contratos" description="Contratos com clientes — geram recebíveis automaticamente." />
+      <PageHeader
+        title="Contratos"
+        description="Contratos com clientes — geram recebíveis automaticamente."
+        actions={
+          <ExportButton<T>
+            title="Contratos"
+            filename="contratos"
+            rows={allContratos as T[]}
+            columns={[
+              { header: "Nº", accessor: "numero" },
+              { header: "Cliente", accessor: "cliente" },
+              { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
+              { header: "Destino", accessor: "destino" },
+              { header: "Embarque", accessor: (r) => formatDate(r.data_embarque) },
+              { header: "Retorno", accessor: (r) => formatDate(r.data_retorno) },
+              { header: "Passageiros", accessor: "num_passageiros" },
+              { header: "Valor total", accessor: (r) => formatCurrency(Number(r.valor)) },
+              { header: "Entrada", accessor: (r) => formatCurrency(Number(r.valor_entrada)) },
+              { header: "Parcelas", accessor: "parcelas" },
+              { header: "Início", accessor: (r) => formatDate(r.data_inicio) },
+              { header: "Status", accessor: "status" },
+            ]}
+          />
+        }
+      />
       <DataTable<T>
         table="contratos"
         title="Contrato"
