@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
 import { TextField, SelectField } from "@/components/form-fields";
 import { useEmpresas, nomeById } from "@/lib/lookups";
 import { EmpresaFilter } from "@/components/empresa-filter";
+import { ExportButton } from "@/components/export-button";
 
 export const Route = createFileRoute("/_app/fornecedores")({ component: Page });
 
@@ -14,9 +17,34 @@ function Page() {
   const { data: empresas } = useEmpresas();
   const [empresaFilter, setEmpresaFilter] = useState("");
 
+  const { data: rows = [] } = useQuery({
+    queryKey: ["fornecedores-export"],
+    queryFn: async () => (await supabase.from("fornecedores").select("id,nome,cnpj,responsavel,telefone,email,empresa_id").order("nome")).data ?? [],
+    staleTime: 30_000,
+  });
+  const exportRows = (rows as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
+
   return (
     <PageContainer>
-      <PageHeader title="Fornecedores" description="Empresas consolidadoras e parceiros." />
+      <PageHeader
+        title="Fornecedores"
+        description="Empresas consolidadoras e parceiros."
+        actions={
+          <ExportButton<T>
+            title="Fornecedores"
+            filename="fornecedores"
+            rows={exportRows}
+            columns={[
+              { header: "Nome", accessor: "nome" },
+              { header: "CNPJ", accessor: "cnpj" },
+              { header: "Responsável", accessor: "responsavel" },
+              { header: "Telefone", accessor: "telefone" },
+              { header: "Email", accessor: "email" },
+              { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
+            ]}
+          />
+        }
+      />
       <DataTable<T>
         table="fornecedores" title="Fornecedor" searchFields={["nome", "cnpj", "responsavel"]} orderBy="nome" ascending
         filter={(row) => !empresaFilter || row.empresa_id === empresaFilter}
