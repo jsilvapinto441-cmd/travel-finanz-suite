@@ -83,6 +83,60 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_bancarias: {
+        Row: {
+          agencia: string | null
+          ativo: boolean
+          banco: string
+          chave_pix: string | null
+          conta: string | null
+          created_at: string
+          digito: string | null
+          documento: string | null
+          id: string
+          observacoes: string | null
+          owner_id: string
+          saldo_inicial: number
+          tipo: string
+          titular: string | null
+          updated_at: string
+        }
+        Insert: {
+          agencia?: string | null
+          ativo?: boolean
+          banco: string
+          chave_pix?: string | null
+          conta?: string | null
+          created_at?: string
+          digito?: string | null
+          documento?: string | null
+          id?: string
+          observacoes?: string | null
+          owner_id?: string
+          saldo_inicial?: number
+          tipo?: string
+          titular?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agencia?: string | null
+          ativo?: boolean
+          banco?: string
+          chave_pix?: string | null
+          conta?: string | null
+          created_at?: string
+          digito?: string | null
+          documento?: string | null
+          id?: string
+          observacoes?: string | null
+          owner_id?: string
+          saldo_inicial?: number
+          tipo?: string
+          titular?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contratos: {
         Row: {
           cliente: string
@@ -494,6 +548,89 @@ export type Database = {
         }
         Relationships: []
       }
+      movimentacoes_financeiras: {
+        Row: {
+          comprovante_path: string | null
+          conta_bancaria_id: string
+          created_at: string
+          data_movimentacao: string
+          descricao: string | null
+          despesa_id: string | null
+          forma_pagamento: string | null
+          id: string
+          observacao: string | null
+          origem: string
+          owner_id: string
+          recebivel_id: string | null
+          registro_pagamento_id: string | null
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          comprovante_path?: string | null
+          conta_bancaria_id: string
+          created_at?: string
+          data_movimentacao?: string
+          descricao?: string | null
+          despesa_id?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string
+          owner_id?: string
+          recebivel_id?: string | null
+          registro_pagamento_id?: string | null
+          tipo: string
+          valor: number
+        }
+        Update: {
+          comprovante_path?: string | null
+          conta_bancaria_id?: string
+          created_at?: string
+          data_movimentacao?: string
+          descricao?: string | null
+          despesa_id?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string
+          owner_id?: string
+          recebivel_id?: string | null
+          registro_pagamento_id?: string | null
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_financeiras_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_despesa_id_fkey"
+            columns: ["despesa_id"]
+            isOneToOne: false
+            referencedRelation: "despesas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_recebivel_id_fkey"
+            columns: ["recebivel_id"]
+            isOneToOne: false
+            referencedRelation: "recebiveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_registro_pagamento_id_fkey"
+            columns: ["registro_pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "registros_pagamento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ativo: boolean
@@ -641,6 +778,8 @@ export type Database = {
       }
       registros_pagamento: {
         Row: {
+          comprovante_path: string | null
+          conta_bancaria_id: string | null
           created_at: string
           data_pagamento: string
           despesa_id: string | null
@@ -653,6 +792,8 @@ export type Database = {
           valor: number
         }
         Insert: {
+          comprovante_path?: string | null
+          conta_bancaria_id?: string | null
           created_at?: string
           data_pagamento?: string
           despesa_id?: string | null
@@ -665,6 +806,8 @@ export type Database = {
           valor: number
         }
         Update: {
+          comprovante_path?: string | null
+          conta_bancaria_id?: string | null
           created_at?: string
           data_pagamento?: string
           despesa_id?: string | null
@@ -677,6 +820,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "registros_pagamento_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "registros_pagamento_recebivel_id_fkey"
             columns: ["recebivel_id"]
@@ -780,6 +930,7 @@ export type Database = {
       }
       is_authenticated_user: { Args: never; Returns: boolean }
       marcar_atrasados: { Args: never; Returns: undefined }
+      saldo_conta_bancaria: { Args: { _conta_id: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "financeiro" | "viewer"
