@@ -23,6 +23,8 @@ import { formatCurrency } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Loader2, Landmark } from "lucide-react";
+import { ExportButton } from "@/components/export-button";
+import { formatCurrency as fc2 } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/bancos")({ component: Page });
 
@@ -104,11 +106,30 @@ function Page() {
         title="Bancos e Contas"
         description="Cadastre suas contas bancárias para vincular pagamentos e recebimentos."
         actions={
-          canEdit && (
-            <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="size-4 mr-1" /> Nova conta
-            </Button>
-          )
+          <div className="flex gap-2">
+            <ExportButton<ContaBancaria>
+              title="Contas Bancárias"
+              filename="contas_bancarias"
+              rows={data ?? []}
+              columns={[
+                { header: "Banco", accessor: "banco" },
+                { header: "Tipo", accessor: "tipo" },
+                { header: "Agência", accessor: "agencia" },
+                { header: "Conta", accessor: (r) => r.conta ? `${r.conta}${r.digito ? "-" + r.digito : ""}` : "" },
+                { header: "Titular", accessor: "titular" },
+                { header: "Documento", accessor: "documento" },
+                { header: "PIX", accessor: "chave_pix" },
+                { header: "Saldo inicial", accessor: (r) => formatCurrency(Number(r.saldo_inicial)) },
+                { header: "Saldo atual", accessor: (r) => formatCurrency(saldos?.get(r.id) ?? Number(r.saldo_inicial ?? 0)) },
+                { header: "Status", accessor: (r) => (r.ativo ? "Ativa" : "Inativa") },
+              ]}
+            />
+            {canEdit && (
+              <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="size-4 mr-1" /> Nova conta
+              </Button>
+            )}
+          </div>
         }
       />
 

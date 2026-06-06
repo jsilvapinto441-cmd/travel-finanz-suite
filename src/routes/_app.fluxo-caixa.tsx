@@ -10,6 +10,7 @@ import { SelectField, TextField } from "@/components/form-fields";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useContasBancarias } from "@/lib/bancos";
 import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
+import { ExportButton } from "@/components/export-button";
 
 export const Route = createFileRoute("/_app/fluxo-caixa")({ component: Page });
 
@@ -82,6 +83,23 @@ function Page() {
       <PageHeader
         title="Fluxo de Caixa"
         description="Todas as entradas e saídas dos seus bancos, atualizadas automaticamente a cada baixa."
+        actions={
+          <ExportButton<Mov>
+            title="Fluxo de Caixa"
+            subtitle={`Período: ${from} a ${to}`}
+            filename="fluxo_caixa"
+            rows={data ?? []}
+            columns={[
+              { header: "Data", accessor: (r) => formatDate(r.data_movimentacao) },
+              { header: "Descrição", accessor: "descricao" },
+              { header: "Conta", accessor: (r) => contaNome(r.conta_bancaria_id) },
+              { header: "Origem", accessor: (r) => origemLabel[r.origem] ?? r.origem },
+              { header: "Tipo", accessor: (r) => (r.tipo === "entrada" ? "Entrada" : "Saída") },
+              { header: "Valor", accessor: (r) => `${r.tipo === "entrada" ? "+" : "-"} ${formatCurrency(Number(r.valor))}` },
+              { header: "Observação", accessor: "observacao" },
+            ]}
+          />
+        }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">

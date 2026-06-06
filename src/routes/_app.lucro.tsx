@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { ExportButton } from "@/components/export-button";
 
 export const Route = createFileRoute("/_app/lucro")({ component: Page });
 
@@ -49,7 +50,42 @@ function Page() {
 
   return (
     <PageContainer>
-      <PageHeader title="Lucros" description="Lucro realizado (pago/recebido) e projetado (incluindo previstos) por empresa e contrato." />
+      <PageHeader
+        title="Lucros"
+        description="Lucro realizado (pago/recebido) e projetado (incluindo previstos) por empresa e contrato."
+        actions={
+          <div className="flex gap-2">
+            <ExportButton<LucroEmpresa>
+              title="Lucro por Empresa"
+              filename="lucro_por_empresa"
+              rows={empresas}
+              columns={[
+                { header: "Empresa", accessor: "nome" },
+                { header: "Receita realizada", accessor: (r) => formatCurrency(r.receita_realizada) },
+                { header: "Receita prevista", accessor: (r) => formatCurrency(r.receita_prevista) },
+                { header: "Despesa realizada", accessor: (r) => formatCurrency(r.despesa_realizada) },
+                { header: "Despesa prevista", accessor: (r) => formatCurrency(r.despesa_prevista) },
+                { header: "Lucro realizado", accessor: (r) => formatCurrency(r.lucro_realizado) },
+                { header: "Lucro projetado", accessor: (r) => formatCurrency(r.lucro_projetado) },
+              ]}
+            />
+            <ExportButton<LucroContrato>
+              title="Lucro por Contrato"
+              filename="lucro_por_contrato"
+              rows={contratos}
+              columns={[
+                { header: "Nº", accessor: "numero" },
+                { header: "Cliente", accessor: "cliente" },
+                { header: "Valor contrato", accessor: (r) => formatCurrency(r.valor_contrato) },
+                { header: "Receita realizada", accessor: (r) => formatCurrency(r.receita_realizada) },
+                { header: "Despesa realizada", accessor: (r) => formatCurrency(r.despesa_realizada) },
+                { header: "Lucro realizado", accessor: (r) => formatCurrency(r.lucro_realizado) },
+                { header: "Lucro projetado", accessor: (r) => formatCurrency(r.lucro_projetado) },
+              ]}
+            />
+          </div>
+        }
+      />
       <Tabs defaultValue="empresas">
         <TabsList>
           <TabsTrigger value="empresas">Por Empresa</TabsTrigger>
