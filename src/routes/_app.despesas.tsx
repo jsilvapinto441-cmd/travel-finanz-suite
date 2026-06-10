@@ -19,7 +19,8 @@ export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
 type T = {
   id: string; empresa_id: string | null; missao_id: string | null; contrato_id: string | null;
-  fornecedor_id: string | null; descricao: string; categoria: string; valor: number;
+  fornecedor_id: string | null; descricao: string; categoria: string; categoria_personalizada: string | null;
+  valor: number;
   valor_pago: number;
   data_vencimento: string | null; data_pagamento: string | null; banco: string | null;
   status: string; observacoes: string | null;
