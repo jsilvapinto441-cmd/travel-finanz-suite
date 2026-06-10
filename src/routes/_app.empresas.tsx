@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
-import { TextField } from "@/components/form-fields";
+import { TextField, SelectField } from "@/components/form-fields";
 import { ExportButton } from "@/components/export-button";
+import { useContasBancarias, contaLabel } from "@/lib/bancos";
 
 export const Route = createFileRoute("/_app/empresas")({ component: Page });
 
-type Empresa = { id: string; nome: string; razao_social: string | null; cnpj: string | null; cor: string | null; ativo: boolean };
+type Empresa = { id: string; nome: string; razao_social: string | null; cnpj: string | null; cor: string | null; ativo: boolean; conta_bancaria_id: string | null };
 
 function Page() {
   const { data: empresas = [] } = useQuery({
