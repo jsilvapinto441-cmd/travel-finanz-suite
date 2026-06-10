@@ -1,0 +1,1 @@
+ALTER TABLE public.despesas ADD COLUMN categoria_personalizada text;
