@@ -72,11 +72,44 @@ export const setUserRole = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    // Substitui todas as roles do usuário pela nova
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
     const { error } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: data.userId, role: data.role });
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const inviteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      nome: z.string().trim().min(1, "Nome obrigatório").max(120),
+      email: z.string().trim().email("Email inválido").max(255),
+      role: z.enum(["admin", "financeiro", "viewer"]),
+      redirectTo: z.string().url().optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      data.email,
+      { data: { nome: data.nome }, redirectTo: data.redirectTo },
+    );
+    if (error) throw new Error(error.message);
+    const newUserId = invited.user?.id;
+    if (!newUserId) throw new Error("Falha ao criar usuário.");
+
+    await supabaseAdmin
+      .from("profiles")
+      .upsert({ id: newUserId, nome: data.nome, email: data.email }, { onConflict: "id" });
+
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", newUserId);
+    const { error: roleErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: newUserId, role: data.role });
+    if (roleErr) throw new Error(roleErr.message);
+
+    return { ok: true, userId: newUserId, email: data.email };
   });
