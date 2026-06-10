@@ -26,11 +26,6 @@ function Page() {
     ...contas.map((c) => ({ value: c.id, label: contaLabel(c) })),
   ];
 
-  const contaValue = values.conta_bancaria_id ?? "__none__";
-  const handleContaChange = (v: string) => {
-    setValues({ ...values, conta_bancaria_id: v === "__none__" ? null : v });
-  };
-
   return (
     <PageContainer>
       <PageHeader
