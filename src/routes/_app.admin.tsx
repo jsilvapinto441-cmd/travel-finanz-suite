@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Shield, Trash2, UserCog } from "lucide-react";
+import { Shield, Trash2, UserCog, UserPlus } from "lucide-react";
 
 import { useAuth } from "@/lib/auth-context";
-import { listUsers, deleteUser, setUserRole } from "@/lib/admin-users.functions";
+import { listUsers, deleteUser, setUserRole, inviteUser } from "@/lib/admin-users.functions";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import {
@@ -21,6 +21,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { TextField, SelectField } from "@/components/form-fields";
 import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/admin")({ component: Page });
@@ -33,8 +37,13 @@ function Page() {
   const fetchUsers = useServerFn(listUsers);
   const removeUser = useServerFn(deleteUser);
   const changeRole = useServerFn(setUserRole);
+  const invite = useServerFn(inviteUser);
 
   const [toDelete, setToDelete] = useState<{ id: string; email: string } | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState<{ nome: string; email: string; role: "admin" | "financeiro" | "viewer" }>({
+    nome: "", email: "", role: "viewer",
+  });
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -69,6 +78,18 @@ function Page() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const inviteMutation = useMutation({
+    mutationFn: (v: { nome: string; email: string; role: "admin" | "financeiro" | "viewer" }) =>
+      invite({ data: { ...v, redirectTo: `${window.location.origin}/reset-password` } }),
+    onSuccess: (r: any) => {
+      toast.success(`Convite enviado para ${r?.email ?? "o email informado"}.`);
+      qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      setInviteOpen(false);
+      setInviteForm({ nome: "", email: "", role: "viewer" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (loading || !isAdmin) return null;
 
   const users = data ?? [];
@@ -79,6 +100,12 @@ function Page() {
       <PageHeader
         title="Administração"
         description="Gerencie usuários, permissões e acessos ao sistema."
+        actions={
+          <Button onClick={() => setInviteOpen(true)} className="gap-2">
+            <UserPlus className="size-4" />
+            Adicionar usuário
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -204,6 +231,49 @@ function Page() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={inviteOpen} onOpenChange={(o) => { if (!inviteMutation.isPending) setInviteOpen(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar usuário</DialogTitle>
+            <DialogDescription>
+              Um email de convite será enviado para que a pessoa defina a própria senha e acesse o sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!inviteForm.nome.trim() || !inviteForm.email.trim()) {
+                toast.error("Preencha nome e email.");
+                return;
+              }
+              inviteMutation.mutate(inviteForm);
+            }}
+            className="space-y-4"
+          >
+            <TextField label="Nome" value={inviteForm.nome} onChange={(v) => setInviteForm((s) => ({ ...s, nome: v }))} required />
+            <TextField label="Email" value={inviteForm.email} onChange={(v) => setInviteForm((s) => ({ ...s, email: v }))} type="email" required />
+            <SelectField
+              label="Permissão"
+              value={inviteForm.role}
+              onChange={(v) => setInviteForm((s) => ({ ...s, role: v as any }))}
+              options={[
+                { value: "viewer", label: "Visualizador" },
+                { value: "financeiro", label: "Financeiro" },
+                { value: "admin", label: "Administrador" },
+              ]}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setInviteOpen(false)} disabled={inviteMutation.isPending}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={inviteMutation.isPending}>
+                {inviteMutation.isPending ? "Enviando…" : "Enviar convite"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }
