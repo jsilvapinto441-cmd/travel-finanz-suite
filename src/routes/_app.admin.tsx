@@ -231,6 +231,49 @@ function Page() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={inviteOpen} onOpenChange={(o) => { if (!inviteMutation.isPending) setInviteOpen(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar usuário</DialogTitle>
+            <DialogDescription>
+              Um email de convite será enviado para que a pessoa defina a própria senha e acesse o sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!inviteForm.nome.trim() || !inviteForm.email.trim()) {
+                toast.error("Preencha nome e email.");
+                return;
+              }
+              inviteMutation.mutate(inviteForm);
+            }}
+            className="space-y-4"
+          >
+            <TextField label="Nome" value={inviteForm.nome} onChange={(v) => setInviteForm((s) => ({ ...s, nome: v }))} required />
+            <TextField label="Email" value={inviteForm.email} onChange={(v) => setInviteForm((s) => ({ ...s, email: v }))} type="email" required />
+            <SelectField
+              label="Permissão"
+              value={inviteForm.role}
+              onChange={(v) => setInviteForm((s) => ({ ...s, role: v as any }))}
+              options={[
+                { value: "viewer", label: "Visualizador" },
+                { value: "financeiro", label: "Financeiro" },
+                { value: "admin", label: "Administrador" },
+              ]}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setInviteOpen(false)} disabled={inviteMutation.isPending}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={inviteMutation.isPending}>
+                {inviteMutation.isPending ? "Enviando…" : "Enviar convite"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }
