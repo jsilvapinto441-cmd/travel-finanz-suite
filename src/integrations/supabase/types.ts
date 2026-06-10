@@ -369,6 +369,7 @@ export type Database = {
         Row: {
           ativo: boolean
           cnpj: string | null
+          conta_bancaria_id: string | null
           cor: string | null
           created_at: string
           id: string
@@ -380,6 +381,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           cnpj?: string | null
+          conta_bancaria_id?: string | null
           cor?: string | null
           created_at?: string
           id?: string
@@ -391,6 +393,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           cnpj?: string | null
+          conta_bancaria_id?: string | null
           cor?: string | null
           created_at?: string
           id?: string
@@ -399,7 +402,15 @@ export type Database = {
           razao_social?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "empresas_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fornecedores: {
         Row: {
