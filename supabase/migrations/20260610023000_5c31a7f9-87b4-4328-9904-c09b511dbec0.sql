@@ -1,0 +1,1 @@
+ALTER TABLE public.empresas ADD COLUMN conta_bancaria_id uuid REFERENCES public.contas_bancarias(id) ON DELETE SET NULL;
