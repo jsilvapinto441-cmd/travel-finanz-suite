@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Shield, Trash2, UserCog } from "lucide-react";
+import { Shield, Trash2, UserCog, UserPlus } from "lucide-react";
 
 import { useAuth } from "@/lib/auth-context";
-import { listUsers, deleteUser, setUserRole } from "@/lib/admin-users.functions";
+import { listUsers, deleteUser, setUserRole, inviteUser } from "@/lib/admin-users.functions";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import {
