@@ -22,9 +22,14 @@ function Page() {
   const contaMap = new Map(contas.map((c) => [c.id, contaLabel(c)]));
 
   const contaOptions = [
-    { value: "", label: "Nenhuma conta" },
+    { value: "__none__", label: "Nenhuma conta" },
     ...contas.map((c) => ({ value: c.id, label: contaLabel(c) })),
   ];
+
+  const contaValue = values.conta_bancaria_id ?? "__none__";
+  const handleContaChange = (v: string) => {
+    setValues({ ...values, conta_bancaria_id: v === "__none__" ? null : v });
+  };
 
   return (
     <PageContainer>
