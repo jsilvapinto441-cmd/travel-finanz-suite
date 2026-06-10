@@ -247,6 +247,7 @@ export type Database = {
         Row: {
           banco: string | null
           categoria: Database["public"]["Enums"]["categoria_despesa"]
+          categoria_personalizada: string | null
           contrato_id: string | null
           created_at: string
           data_pagamento: string | null
@@ -270,6 +271,7 @@ export type Database = {
         Insert: {
           banco?: string | null
           categoria?: Database["public"]["Enums"]["categoria_despesa"]
+          categoria_personalizada?: string | null
           contrato_id?: string | null
           created_at?: string
           data_pagamento?: string | null
@@ -293,6 +295,7 @@ export type Database = {
         Update: {
           banco?: string | null
           categoria?: Database["public"]["Enums"]["categoria_despesa"]
+          categoria_personalizada?: string | null
           contrato_id?: string | null
           created_at?: string
           data_pagamento?: string | null
