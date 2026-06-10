@@ -64,8 +64,8 @@ function Page() {
             <div className="col-span-2">
               <SelectField
                 label="Conta Bancária Principal"
-                value={values.conta_bancaria_id ?? ""}
-                onChange={(v) => setValues({ ...values, conta_bancaria_id: v || null })}
+                value={values.conta_bancaria_id ?? "__none__"}
+                onChange={(v) => setValues({ ...values, conta_bancaria_id: v === "__none__" ? null : v })}
                 options={contaOptions}
               />
             </div>
