@@ -28,13 +28,77 @@ export function TextField({
 }
 
 export function NumberField({
-  label, value, onChange, step = "0.01", required,
-}: { label: string; value: any; onChange: (v: number) => void; step?: string; required?: boolean }) {
+  label, value, onChange, step = "0.01", required, min, max,
+}: { label: string; value: any; onChange: (v: number) => void; step?: string; required?: boolean; min?: number; max?: number }) {
+  const [text, setText] = useState<string>(() => (value === null || value === undefined || value === "" ? "" : String(value)));
+
+  useEffect(() => {
+    const incoming = value === null || value === undefined || value === "" ? "" : String(value);
+    const currentNum = text === "" || text === "-" ? NaN : Number(text);
+    const incomingNum = incoming === "" ? NaN : Number(incoming);
+    if (incoming !== text && !(Number.isFinite(currentNum) && Number.isFinite(incomingNum) && currentNum === incomingNum)) {
+      setText(incoming);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  function sanitize(raw: string): string {
+    if (raw === "" || raw === "-") return raw;
+    // Allow only digits, one optional leading minus, and one decimal separator
+    let s = raw.replace(",", ".");
+    const negative = s.startsWith("-");
+    s = s.replace(/-/g, "");
+    const firstDot = s.indexOf(".");
+    if (firstDot !== -1) {
+      s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, "");
+    }
+    s = s.replace(/[^\d.]/g, "");
+    // Strip leading zeros from integer part (but keep "0." for decimals)
+    const [intPart, decPart] = s.split(".");
+    let cleanedInt = intPart.replace(/^0+/, "");
+    if (cleanedInt === "" && (decPart !== undefined || intPart !== "")) cleanedInt = decPart !== undefined ? "0" : "";
+    s = decPart !== undefined ? `${cleanedInt}.${decPart}` : cleanedInt;
+    return (negative ? "-" : "") + s;
+  }
+
+  function handleChange(raw: string) {
+    const clean = sanitize(raw);
+    setText(clean);
+    if (clean === "" || clean === "-" || clean === "." || clean === "-.") {
+      onChange(required ? 0 : (NaN as unknown as number));
+      return;
+    }
+    const n = Number(clean);
+    if (Number.isFinite(n)) onChange(n);
+  }
+
+  function handleBlur() {
+    if (text === "" || text === "-" || text === "." || text === "-.") {
+      if (required) { setText("0"); onChange(0); }
+      return;
+    }
+    const n = Number(text);
+    if (!Number.isFinite(n)) { if (required) { setText("0"); onChange(0); } return; }
+    let v = n;
+    if (typeof min === "number" && v < min) v = min;
+    if (typeof max === "number" && v > max) v = max;
+    setText(String(v));
+    onChange(v);
+  }
+
   return (
     <Field label={label}>
-      <Input type="number" step={step} value={value ?? ""}
-        onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
-        required={required} />
+      <Input
+        type="number"
+        step={step}
+        value={text}
+        onChange={(e) => handleChange(e.target.value)}
+        onBlur={handleBlur}
+        onFocus={(e) => { if (text === "0") { setText(""); } e.target.select(); }}
+        required={required}
+        min={min}
+        max={max}
+      />
     </Field>
   );
 }
