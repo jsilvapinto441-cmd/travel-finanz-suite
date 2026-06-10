@@ -37,8 +37,13 @@ function Page() {
   const fetchUsers = useServerFn(listUsers);
   const removeUser = useServerFn(deleteUser);
   const changeRole = useServerFn(setUserRole);
+  const invite = useServerFn(inviteUser);
 
   const [toDelete, setToDelete] = useState<{ id: string; email: string } | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState<{ nome: string; email: string; role: "admin" | "financeiro" | "viewer" }>({
+    nome: "", email: "", role: "viewer",
+  });
 
   useEffect(() => {
     if (!loading && !isAdmin) {
