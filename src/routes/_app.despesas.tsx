@@ -50,7 +50,7 @@ function Page() {
     queryFn: async () => (await supabase.from("despesas").select("*").order("data_vencimento", { ascending: false })).data ?? [],
     staleTime: 30_000,
   });
-  const exportRows = (allDespesas as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
+  const exportRows = (allDespesas as unknown as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
 
   return (
     <PageContainer>
