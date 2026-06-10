@@ -78,6 +78,18 @@ function Page() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const inviteMutation = useMutation({
+    mutationFn: (v: { nome: string; email: string; role: "admin" | "financeiro" | "viewer" }) =>
+      invite({ data: { ...v, redirectTo: `${window.location.origin}/reset-password` } }),
+    onSuccess: (r: any) => {
+      toast.success(`Convite enviado para ${r?.email ?? "o email informado"}.`);
+      qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      setInviteOpen(false);
+      setInviteForm({ nome: "", email: "", role: "viewer" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (loading || !isAdmin) return null;
 
   const users = data ?? [];
