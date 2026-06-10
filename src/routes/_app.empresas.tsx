@@ -22,7 +22,7 @@ function Page() {
   const contaMap = new Map(contas.map((c) => [c.id, contaLabel(c)]));
 
   const contaOptions = [
-    { value: "", label: "Nenhuma conta" },
+    { value: "__none__", label: "Nenhuma conta" },
     ...contas.map((c) => ({ value: c.id, label: contaLabel(c) })),
   ];
 
@@ -64,8 +64,8 @@ function Page() {
             <div className="col-span-2">
               <SelectField
                 label="Conta Bancária Principal"
-                value={values.conta_bancaria_id ?? ""}
-                onChange={(v) => setValues({ ...values, conta_bancaria_id: v || null })}
+                value={values.conta_bancaria_id ?? "__none__"}
+                onChange={(v) => setValues({ ...values, conta_bancaria_id: v === "__none__" ? null : v })}
                 options={contaOptions}
               />
             </div>
