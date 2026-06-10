@@ -64,7 +64,10 @@ function Page() {
             rows={exportRows}
             columns={[
               { header: "Descrição", accessor: "descricao" },
-              { header: "Categoria", accessor: (r) => r.categoria.replace(/_/g, " ") },
+              { header: "Categoria", accessor: (r) => {
+                const cat = r.categoria_personalizada ?? r.categoria.replace(/_/g, " ");
+                return cat;
+              } },
               { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
               { header: "Fornecedor", accessor: (r) => nomeById(fornecedores, r.fornecedor_id) },
               { header: "Valor", accessor: (r) => formatCurrency(Number(r.valor)) },
@@ -79,7 +82,7 @@ function Page() {
       />
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
-        defaultValues={{ status: "em_aberto", categoria: "outros", parcelas: 1, frequencia: "mensal" }}
+        defaultValues={{ status: "em_aberto", categoria: "outros", categoria_personalizada: null, parcelas: 1, frequencia: "mensal" }}
         filter={(row) => !empresaFilter || row.empresa_id === empresaFilter}
         toolbar={
           <EmpresaFilter value={empresaFilter} onChange={(v) => setEmpresaFilter(v)} />
@@ -99,7 +102,7 @@ function Page() {
               {r.parcelas > 1 && <div className="text-xs text-muted-foreground">Parcela {r.numero_parcela}/{r.parcelas}</div>}
             </div>
           ) },
-          { key: "categoria", label: "Categoria", render: (r) => <span className="capitalize">{r.categoria.replace(/_/g, " ")}</span> },
+          { key: "categoria", label: "Categoria", render: (r) => <span className="capitalize">{r.categoria_personalizada ?? r.categoria.replace(/_/g, " ")}</span> },
           { key: "empresa", label: "Empresa", render: (r) => nomeById(empresas, r.empresa_id) },
           {
             key: "valor", label: "Valor",
@@ -122,7 +125,10 @@ function Page() {
         ]}
         renderForm={({ values, setValues }) => (
           <div className="grid grid-cols-2 gap-4">
-            <SelectField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} options={CATEGORIAS} />
+            <SelectField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v, categoria_personalizada: v === "outros" ? values.categoria_personalizada : null })} options={CATEGORIAS} />
+            {values.categoria === "outros" && (
+              <TextField label="Categoria personalizada" value={values.categoria_personalizada ?? ""} onChange={(v) => setValues({ ...values, categoria_personalizada: v })} />
+            )}
 
             <CurrencyField label="Valor (total)" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
             <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
