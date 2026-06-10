@@ -100,6 +100,12 @@ function Page() {
       <PageHeader
         title="Administração"
         description="Gerencie usuários, permissões e acessos ao sistema."
+        actions={
+          <Button onClick={() => setInviteOpen(true)} className="gap-2">
+            <UserPlus className="size-4" />
+            Adicionar usuário
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
