@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { audit } from "@/lib/audit";
 import {
@@ -30,6 +30,7 @@ function LoginPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [nome, setNome] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -157,9 +158,28 @@ function LoginPage() {
               {mode !== "forgot" && (
                 <div className="space-y-1.5">
                   <Label htmlFor="password">Senha</Label>
-                  <Input id="password" type="password"
-                    autoComplete={mode === "login" ? "current-password" : "new-password"}
-                    value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} maxLength={72} />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete={mode === "login" ? "current-password" : "new-password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      maxLength={72}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      tabIndex={-1}
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    >
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
                   {mode === "signup" && (
                     <p className="text-[11px] text-muted-foreground">
                       Mínimo 8 caracteres. Senhas comprometidas (HIBP) são bloqueadas.
