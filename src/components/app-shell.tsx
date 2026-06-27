@@ -1,12 +1,12 @@
-import { Link, useLocation, useNavigate, Outlet } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import {
   LayoutDashboard, Building2, Target, FileText, ArrowDownLeft, ArrowUpRight,
-  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark,
+  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { useIdleTimeout } from "@/lib/idle-timeout";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ const nav = [
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut, isAdmin, roles } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
@@ -46,6 +46,10 @@ export function AppShell() {
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const navItems = nav.filter((i) => !("adminOnly" in i && i.adminOnly) || isAdmin);
+
+  const currentLabel = navItems.find((i) =>
+    i.to === "/" ? location.pathname === "/" : location.pathname.startsWith(i.to),
+  )?.label ?? "PRODUZ";
 
   const SidebarContent = (
     <>
@@ -64,13 +68,13 @@ export function AppShell() {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-3.5 md:py-2.5 rounded-md text-base md:text-sm font-medium transition-colors",
                 active
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
                   : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               )}
             >
-              <Icon className="size-4" />
+              <Icon className="size-5 md:size-4 shrink-0" />
               {item.label}
             </Link>
           );
@@ -92,18 +96,18 @@ export function AppShell() {
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1 h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="flex-1 h-10 md:h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={() => navigate({ to: "/configuracoes" })}
           >
-            <Settings className="size-3.5" />
+            <Settings className="size-4 md:size-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1 h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="flex-1 h-10 md:h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
           >
-            <LogOut className="size-3.5 mr-1" /> Sair
+            <LogOut className="size-4 md:size-3.5 mr-1" /> Sair
           </Button>
         </div>
       </div>
@@ -119,23 +123,31 @@ export function AppShell() {
 
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         {/* Top bar mobile */}
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0">
+        <header className="md:hidden sticky top-0 z-30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent">
-                <Menu className="size-5" />
+              <Button variant="ghost" size="icon" aria-label="Abrir menu" className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent shrink-0">
+                <Menu className="size-6" />
               </Button>
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-72 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border"
+              className="w-[80vw] max-w-72 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border"
             >
               <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border md:hidden">
+                <span className="text-sm font-semibold">Menu</span>
+                <SheetClose asChild>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent">
+                    <X className="size-5" />
+                  </Button>
+                </SheetClose>
+              </div>
               {SidebarContent}
             </SheetContent>
           </Sheet>
-          <img src={logo} alt="PRODUZ" className="h-7 w-auto" />
-          <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold">
+          <span className="truncate text-sm font-semibold text-center">{currentLabel}</span>
+          <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
             {initials}
           </div>
         </header>
