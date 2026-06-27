@@ -68,13 +68,13 @@ export function AppShell() {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-3.5 md:py-2.5 rounded-md text-base md:text-sm font-medium transition-colors",
                 active
                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
                   : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               )}
             >
-              <Icon className="size-4" />
+              <Icon className="size-5 md:size-4 shrink-0" />
               {item.label}
             </Link>
           );
@@ -96,18 +96,18 @@ export function AppShell() {
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1 h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="flex-1 h-10 md:h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={() => navigate({ to: "/configuracoes" })}
           >
-            <Settings className="size-3.5" />
+            <Settings className="size-4 md:size-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="flex-1 h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="flex-1 h-10 md:h-8 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
           >
-            <LogOut className="size-3.5 mr-1" /> Sair
+            <LogOut className="size-4 md:size-3.5 mr-1" /> Sair
           </Button>
         </div>
       </div>
