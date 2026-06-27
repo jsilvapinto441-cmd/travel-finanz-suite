@@ -1,12 +1,12 @@
-import { Link, useLocation, useNavigate, Outlet } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import {
   LayoutDashboard, Building2, Target, FileText, ArrowDownLeft, ArrowUpRight,
-  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark,
+  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { useIdleTimeout } from "@/lib/idle-timeout";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
