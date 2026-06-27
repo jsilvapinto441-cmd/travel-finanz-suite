@@ -14,13 +14,12 @@ import logo from "@/assets/produz-logo-white.png";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/bancos", label: "Bancos", icon: Landmark },
   { to: "/empresas", label: "Empresas", icon: Building2 },
   { to: "/missoes", label: "Missões", icon: Target },
   { to: "/contratos", label: "Contratos", icon: FileText },
   { to: "/recebiveis", label: "Recebíveis", icon: ArrowDownLeft },
   { to: "/despesas", label: "Despesas", icon: ArrowUpRight },
-  { to: "/bancos", label: "Bancos", icon: Landmark },
-  { to: "/fluxo-caixa", label: "Fluxo de Caixa", icon: Wallet },
   { to: "/funcionarios", label: "Funcionários", icon: Users },
   { to: "/fornecedores", label: "Fornecedores", icon: Truck },
   { to: "/lucro", label: "Lucros", icon: TrendingUp },
