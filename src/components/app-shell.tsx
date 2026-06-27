@@ -123,7 +123,7 @@ export function AppShell() {
 
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         {/* Top bar mobile */}
-        <header className="md:hidden sticky top-0 z-30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0">
+        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Abrir menu" className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent shrink-0">
@@ -146,7 +146,9 @@ export function AppShell() {
               {SidebarContent}
             </SheetContent>
           </Sheet>
-          <span className="truncate text-sm font-semibold text-center">{currentLabel}</span>
+          <span className="absolute left-1/2 -translate-x-1/2 max-w-[50%] truncate text-sm font-semibold text-center pointer-events-none">
+            {currentLabel}
+          </span>
           <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
             {initials}
           </div>
