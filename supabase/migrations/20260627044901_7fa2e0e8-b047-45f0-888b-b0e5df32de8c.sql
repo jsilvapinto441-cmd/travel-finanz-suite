@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS anexos_update_staff ON storage.objects;
