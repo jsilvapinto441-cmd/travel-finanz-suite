@@ -54,7 +54,7 @@ function Page() {
   const exportRows = (allDespesas as unknown as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
 
   const totalHoje = useMemo(() => {
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = new Date().toLocaleDateString("sv-SE");
     return exportRows
       .filter((r) => r.data_vencimento === hoje && r.status !== "pago" && r.status !== "cancelado")
       .reduce((acc, r) => acc + Math.max(0, Number(r.valor) - Number(r.valor_pago ?? 0)), 0);
