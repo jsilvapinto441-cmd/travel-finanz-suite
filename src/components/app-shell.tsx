@@ -29,8 +29,12 @@ const nav = [
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut, isAdmin, roles } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const currentLabel = navItems.find((i) =>
+    i.to === "/" ? location.pathname === "/" : location.pathname.startsWith(i.to),
+  )?.label ?? "PRODUZ";
 
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
   const roleLabel = isAdmin ? "Administrador" : "Usuário";
