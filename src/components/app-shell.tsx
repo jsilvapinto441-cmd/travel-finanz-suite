@@ -32,10 +32,6 @@ export function AppShell() {
   const { user, signOut, isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const currentLabel = navItems.find((i) =>
-    i.to === "/" ? location.pathname === "/" : location.pathname.startsWith(i.to),
-  )?.label ?? "PRODUZ";
-
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
   const roleLabel = isAdmin ? "Administrador" : "Usuário";
 
@@ -50,6 +46,10 @@ export function AppShell() {
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const navItems = nav.filter((i) => !("adminOnly" in i && i.adminOnly) || isAdmin);
+
+  const currentLabel = navItems.find((i) =>
+    i.to === "/" ? location.pathname === "/" : location.pathname.startsWith(i.to),
+  )?.label ?? "PRODUZ";
 
   const SidebarContent = (
     <>
