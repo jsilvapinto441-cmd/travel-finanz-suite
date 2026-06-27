@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
@@ -11,9 +11,10 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
-import { CircleDollarSign } from "lucide-react";
+import { CircleDollarSign, CalendarClock } from "lucide-react";
 import { EmpresaFilter } from "@/components/empresa-filter";
 import { ExportButton } from "@/components/export-button";
+import { KpiCard } from "@/components/kpi-card";
 
 export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
@@ -52,6 +53,13 @@ function Page() {
   });
   const exportRows = (allDespesas as unknown as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
 
+  const totalHoje = useMemo(() => {
+    const hoje = new Date().toLocaleDateString("sv-SE");
+    return exportRows
+      .filter((r) => r.data_vencimento === hoje && r.status !== "pago" && r.status !== "cancelado")
+      .reduce((acc, r) => acc + Math.max(0, Number(r.valor) - Number(r.valor_pago ?? 0)), 0);
+  }, [exportRows]);
+
   return (
     <PageContainer>
       <PageHeader
@@ -79,6 +87,13 @@ function Page() {
             ]}
           />
         }
+      />
+      <KpiCard
+        label="Total a pagar hoje"
+        value={formatCurrency(totalHoje)}
+        hint={empresaFilter ? "Filtrado pela empresa selecionada" : "Todas as empresas"}
+        icon={<CalendarClock className="size-5" />}
+        tone="warning"
       />
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
