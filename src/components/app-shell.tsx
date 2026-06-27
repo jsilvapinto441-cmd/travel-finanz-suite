@@ -123,23 +123,31 @@ export function AppShell() {
 
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         {/* Top bar mobile */}
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0">
+        <header className="md:hidden sticky top-0 z-30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent">
-                <Menu className="size-5" />
+              <Button variant="ghost" size="icon" className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent shrink-0">
+                <Menu className="size-6" />
               </Button>
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-72 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border"
+              className="w-[80vw] max-w-72 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border"
             >
               <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border md:hidden">
+                <span className="text-sm font-semibold">Menu</span>
+                <SheetClose asChild>
+                  <Button variant="ghost" size="icon" className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent">
+                    <X className="size-5" />
+                  </Button>
+                </SheetClose>
+              </div>
               {SidebarContent}
             </SheetContent>
           </Sheet>
-          <img src={logo} alt="PRODUZ" className="h-7 w-auto" />
-          <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold">
+          <span className="truncate text-sm font-semibold text-center">{currentLabel}</span>
+          <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
             {initials}
           </div>
         </header>
