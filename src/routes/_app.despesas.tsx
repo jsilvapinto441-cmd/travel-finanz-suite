@@ -60,7 +60,6 @@ function Page() {
       .reduce((acc, r) => acc + Math.max(0, Number(r.valor) - Number(r.valor_pago ?? 0)), 0);
   }, [exportRows]);
 
-
   return (
     <PageContainer>
       <PageHeader
