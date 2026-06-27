@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import {
   LayoutDashboard, Building2, Target, FileText, ArrowDownLeft, ArrowUpRight,
-  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, Wallet,
+  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
