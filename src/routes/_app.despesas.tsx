@@ -82,7 +82,7 @@ function Page() {
       />
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
-        defaultValues={{ status: "em_aberto", categoria: "outros", categoria_personalizada: null, parcelas: 1, frequencia: "mensal" }}
+        defaultValues={{ status: "em_aberto", descricao: "", categoria: "outros", categoria_personalizada: null, parcelas: 1, frequencia: "mensal" }}
         filter={(row) => !empresaFilter || row.empresa_id === empresaFilter}
         toolbar={
           <EmpresaFilter value={empresaFilter} onChange={(v) => setEmpresaFilter(v)} />
@@ -148,7 +148,7 @@ function Page() {
             <TextField label="Vencimento" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} type="date" />
             <TextField label="Banco" value={values.banco} onChange={(v) => setValues({ ...values, banco: v })} />
             <div className="col-span-2">
-              <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} required />
+              <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} />
             </div>
             <div className="col-span-2">
               <TextAreaField label="Observações" value={values.observacoes} onChange={(v) => setValues({ ...values, observacoes: v })} />
