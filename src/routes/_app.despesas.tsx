@@ -89,6 +89,13 @@ function Page() {
           />
         }
       />
+      <KpiCard
+        label="Total a pagar hoje"
+        value={formatCurrency(totalHoje)}
+        hint={empresaFilter ? "Filtrado pela empresa selecionada" : "Todas as empresas"}
+        icon={<CalendarClock className="size-5" />}
+        tone="warning"
+      />
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
         defaultValues={{ status: "em_aberto", descricao: "", categoria: "outros", categoria_personalizada: null, parcelas: 1, frequencia: "mensal" }}
