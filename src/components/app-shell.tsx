@@ -126,7 +126,7 @@ export function AppShell() {
         <header className="md:hidden sticky top-0 z-30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent shrink-0">
+              <Button variant="ghost" size="icon" aria-label="Abrir menu" className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent shrink-0">
                 <Menu className="size-6" />
               </Button>
             </SheetTrigger>
