@@ -27,6 +27,15 @@ const nav = [
   { to: "/admin", label: "Administração", icon: ShieldCheck, adminOnly: true },
 ] as const;
 
+// Barra inferior mobile — 4 módulos mais usados + botão Menu
+const bottomNav = [
+  { to: "/", label: "Início", icon: LayoutDashboard },
+  { to: "/recebiveis", label: "Receber", icon: ArrowDownLeft },
+  { to: "/despesas", label: "Pagar", icon: ArrowUpRight },
+  { to: "/contratos", label: "Contratos", icon: FileText },
+] as const;
+
+
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
