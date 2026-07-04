@@ -323,21 +323,17 @@ function Dashboard() {
               <FileText className="size-4 mr-2" />
               Relatório Gerencial (PDF)
             </Button>
-            <Select value={empresaId} onValueChange={setEmpresaId}>
-              <SelectTrigger className="w-[220px]">
-                <Building2 className="size-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="Filtrar empresa" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as empresas</SelectItem>
-                {empresas?.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Button
+              variant="outline"
+              onClick={() => {
+                // handled above
+              }}
+              className="hidden"
+            />
           </div>
         }
       />
+
 
       {semDados && (
         <Card className="p-6 mb-6 border-dashed border-primary/30 bg-primary/5">
