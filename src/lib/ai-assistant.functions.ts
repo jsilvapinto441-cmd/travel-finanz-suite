@@ -93,10 +93,18 @@ const ItemSchema = z.object({
   descricao: z.string().min(1),
   valor: z.number().nonnegative(),
   data_vencimento: z.string().nullable().optional(),
-  categoria: z.enum(CATEGORIAS).nullable().optional(),
+  categoria: z.string().nullable().optional(),
   pagador_ou_fornecedor: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
 });
+
+function toCategoriaDespesa(v: string | null | undefined): CategoriaDespesa {
+  if (!v) return "outros";
+  const norm = v.toLowerCase().trim();
+  return (CATEGORIAS_DESPESA as readonly string[]).includes(norm)
+    ? (norm as CategoriaDespesa)
+    : "outros";
+}
 
 export const executeImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -115,21 +123,21 @@ export const executeImport = createServerFn({ method: "POST" })
         empresa_id: data.empresa_id ?? null,
         descricao: i.descricao,
         valor: i.valor,
-        categoria: (i.categoria ?? "outros") as (typeof CATEGORIAS)[number],
-        data_vencimento: i.data_vencimento || null,
-        observacoes: i.observacoes || null,
+        categoria: toCategoriaDespesa(i.categoria ?? null),
+        data_vencimento: i.data_vencimento ?? null,
+        observacoes: i.observacoes ?? null,
       }));
     const recebiveis = data.items
       .filter((i) => i.tipo === "receita")
       .map((i) => ({
         empresa_id: data.empresa_id ?? null,
-        pagador: i.pagador_ou_fornecedor?.trim() || i.descricao,
+        pagador: (i.pagador_ou_fornecedor ?? "").trim() || i.descricao,
         valor_total: i.valor,
         valor_parcela: i.valor,
         parcelas: 1,
-        data_vencimento: i.data_vencimento || null,
+        data_vencimento: i.data_vencimento ?? null,
         categoria: i.categoria ?? null,
-        observacoes: i.observacoes || null,
+        observacoes: i.observacoes ?? null,
       }));
 
     let despesasCount = 0;
@@ -152,3 +160,4 @@ export const executeImport = createServerFn({ method: "POST" })
     }
     return { despesas: despesasCount, recebiveis: recebiveisCount };
   });
+
