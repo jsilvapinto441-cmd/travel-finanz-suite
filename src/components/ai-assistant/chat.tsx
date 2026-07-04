@@ -31,6 +31,7 @@ import {
   ImportPreviewDialog,
   type ImportItem,
 } from "@/components/ai-assistant/import-preview";
+import type { ImportModule } from "@/lib/ai-assistant.functions";
 import {
   fileToBase64,
   parseSpreadsheetToText,
@@ -220,6 +221,7 @@ function ChatThreadView({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewModule, setPreviewModule] = useState<ImportModule>("despesas");
   const [previewItems, setPreviewItems] = useState<ImportItem[]>([]);
   const [previewSummary, setPreviewSummary] = useState<string | undefined>();
 
@@ -399,14 +401,20 @@ function ChatThreadView({
         throw new Error(t || `Erro ${res.status}`);
       }
       const data = (await res.json()) as {
+        module?: ImportModule | "misto";
         summary?: string;
+        questions?: string[];
         items?: ImportItem[];
       };
       const items = Array.isArray(data.items) ? data.items : [];
       if (items.length === 0) {
-        toast.warning("Nenhum lançamento identificado no arquivo.");
+        toast.warning("Nenhum registro identificado no arquivo.");
         return;
       }
+      // "misto" cai como despesas no default e o usuário pode trocar no seletor.
+      const mod: ImportModule =
+        data.module && data.module !== "misto" ? data.module : "despesas";
+      setPreviewModule(mod);
       setPreviewItems(items);
       setPreviewSummary(data.summary);
       setPreviewOpen(true);
@@ -637,12 +645,13 @@ function ChatThreadView({
       <ImportPreviewDialog
         open={previewOpen}
         onOpenChange={setPreviewOpen}
+        module={previewModule}
         items={previewItems}
         summary={previewSummary}
         onConfirmed={(r) => {
           setAttached(null);
           sendMessage(
-            `Importação confirmada: ${r.despesas} despesa(s) e ${r.recebiveis} receita(s) cadastradas.`,
+            `Importação confirmada: ${r.inserted} registro(s) cadastrado(s) em ${r.module}.`,
           );
         }}
       />
