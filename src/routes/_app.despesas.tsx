@@ -103,9 +103,23 @@ function Page() {
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
         defaultValues={{ status: "em_aberto", descricao: "", categoria: "outros", categoria_personalizada: null, parcelas: 1, frequencia: "mensal" }}
-        filter={(row) => !empresaFilter || row.empresa_id === empresaFilter}
+        filter={(row) => (!empresaFilter || row.empresa_id === empresaFilter) && (!missaoFilter || row.missao_id === missaoFilter)}
         toolbar={
-          <EmpresaFilter value={empresaFilter} onChange={(v) => setEmpresaFilter(v)} />
+          <div className="flex flex-wrap items-center gap-2">
+            <EmpresaFilter value={empresaFilter} onChange={(v) => setEmpresaFilter(v)} />
+            <div className="flex items-center gap-2 min-w-[200px]">
+              <Target className="size-4 text-muted-foreground shrink-0" />
+              <SelectField
+                label=""
+                value={missaoFilter === "" ? "__all__" : missaoFilter}
+                onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
+                options={[
+                  { value: "__all__", label: "Todas as missões" },
+                  ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome })),
+                ]}
+              />
+            </div>
+          </div>
         }
         extraRowActions={(row) => (
           <Button size="sm" variant="ghost"
