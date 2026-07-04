@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Zap } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { AssistantChat } from "@/components/ai-assistant/chat";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/produz-logo-white.png";
 
 export function AssistantFAB() {
   const [open, setOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   return (
     <>
@@ -14,25 +14,29 @@ export function AssistantFAB() {
         onClick={() => setOpen(true)}
         aria-label="Abrir Assistente Financeiro IA"
         className={cn(
-          "fixed bottom-5 right-5 z-40 group",
-          "size-14 rounded-full flex items-center justify-center",
-          "bg-gradient-to-br from-primary via-primary to-orange-600",
-          "text-primary-foreground shadow-[0_10px_30px_-5px_rgba(249,115,22,0.55)]",
-          "ring-1 ring-primary/40",
+          "fixed bottom-5 right-5 z-40",
+          "group flex items-center justify-center",
+          "size-14 rounded-full",
+          "bg-transparent",
+          "border border-transparent",
           "transition-all duration-300 ease-out",
-          "hover:scale-110 hover:shadow-[0_15px_45px_-5px_rgba(249,115,22,0.75)]",
-          "animate-in fade-in zoom-in duration-500",
+          "hover:scale-[1.08] hover:border-white/[0.08]",
+          isProcessing && "animate-flash-pulse",
         )}
       >
-        <span className="absolute inset-0 rounded-full bg-primary/30 blur-xl opacity-0 group-hover:opacity-70 transition-opacity" />
-        <img
-          src={logo}
-          alt=""
-          className="relative h-7 w-auto drop-shadow group-hover:scale-105 transition-transform"
+        <span className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <span className="absolute inset-0 rounded-full bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+
+        <Zap
+          className={cn(
+            "relative size-7 text-primary transition-all duration-300",
+            "drop-shadow-[0_0_10px_rgba(249,115,22,0.45)]",
+            "group-hover:drop-shadow-[0_0_18px_rgba(249,115,22,0.85)]",
+            isProcessing && "drop-shadow-[0_0_14px_rgba(249,115,22,0.65)]",
+          )}
+          strokeWidth={2.5}
         />
-        <span className="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-primary-foreground text-primary shadow-sm">
-          <Sparkles className="size-2.5" />
-        </span>
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
@@ -41,9 +45,13 @@ export function AssistantFAB() {
           className="p-0 w-full sm:max-w-[440px] flex flex-col border-l border-border"
         >
           <SheetTitle className="sr-only">Assistente Financeiro IA</SheetTitle>
-          <AssistantChat onClose={() => setOpen(false)} />
+          <AssistantChat
+            onClose={() => setOpen(false)}
+            onProcessingChange={setIsProcessing}
+          />
         </SheetContent>
       </Sheet>
     </>
   );
 }
+
