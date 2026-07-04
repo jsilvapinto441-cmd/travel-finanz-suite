@@ -405,10 +405,15 @@ export const executeImport = createServerFn({ method: "POST" })
             valor: num(i.valor),
             categoria: toCategoriaDespesa(i.categoria),
             data_vencimento: date(i.data_vencimento),
+            frequencia: (str(i.frequencia) as string) ?? "unico",
+            parcelas: Math.max(1, Math.floor(num(i.parcelas, 1))),
             observacoes: str(i.observacoes),
           }))
           .filter((r) => r.valor > 0);
-        await insertMany("despesas", rows);
+        // Inserção linha-a-linha para que os triggers de geração de parcelas,
+        // status, movimentações e sincronização de valor_pago rodem por registro
+        // (mesmo caminho do formulário manual).
+        for (const row of rows) await insertMany("despesas", [row]);
         break;
       }
       case "recebiveis": {
@@ -421,12 +426,14 @@ export const executeImport = createServerFn({ method: "POST" })
             valor_total: valor,
             valor_parcela: parcelas > 1 ? Math.round((valor / parcelas) * 100) / 100 : valor,
             parcelas,
+            frequencia: (str(i.frequencia) as string) ?? "unico",
             data_vencimento: date(i.data_vencimento),
             categoria: str(i.categoria),
+            numero_fatura: str(i.numero_fatura),
             observacoes: str(i.observacoes),
           };
         }).filter((r) => r.valor_total > 0);
-        await insertMany("recebiveis", rows);
+        for (const row of rows) await insertMany("recebiveis", [row]);
         break;
       }
       case "fornecedores": {
@@ -503,16 +510,19 @@ export const executeImport = createServerFn({ method: "POST" })
             valor: num(i.valor),
             valor_entrada: num(i.valor_entrada, 0),
             parcelas: Math.max(1, Math.floor(num(i.parcelas, 1))),
+            frequencia: (str(i.frequencia) as string) ?? "mensal",
             dia_vencimento: Math.max(1, Math.min(31, Math.floor(num(i.dia_vencimento, 10)))),
             data_inicio: date(i.data_inicio),
             destino: str(i.destino),
             observacoes: str(i.observacoes),
           }))
           .filter((r) => r.cliente);
-        await insertMany("contratos", rows);
+        // Contratos disparam geração automática de recebíveis via trigger.
+        for (const row of rows) await insertMany("contratos", [row]);
         break;
       }
     }
+
 
     return {
       inserted,
