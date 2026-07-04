@@ -20,7 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatusBadge } from "@/components/status-badge";
 import { custoTotalFuncionario } from "@/lib/folha";
 import { exportRelatorioGerencial } from "@/lib/relatorio-gerencial";
-import { FileText } from "lucide-react";
+import { FileText, Target } from "lucide-react";
+import { useMissoes } from "@/lib/lookups";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
