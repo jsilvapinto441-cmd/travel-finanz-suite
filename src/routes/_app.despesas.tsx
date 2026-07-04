@@ -11,10 +11,11 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
-import { CircleDollarSign, CalendarClock } from "lucide-react";
+import { CircleDollarSign, CalendarClock, Target } from "lucide-react";
 import { EmpresaFilter } from "@/components/empresa-filter";
 import { ExportButton } from "@/components/export-button";
 import { KpiCard } from "@/components/kpi-card";
+import { useContasBancarias, contaLabel } from "@/lib/bancos";
 
 export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
@@ -42,6 +43,8 @@ function Page() {
   const { data: contratos } = useContratos();
   const { data: fornecedores } = useFornecedores();
   const [empresaFilter, setEmpresaFilter] = useState("");
+  const [missaoFilter, setMissaoFilter] = useState("");
+  const { data: contas } = useContasBancarias({ ativas: true });
 
   const [payOpen, setPayOpen] = useState(false);
   const [payTarget, setPayTarget] = useState<T | null>(null);
@@ -51,7 +54,9 @@ function Page() {
     queryFn: async () => (await supabase.from("despesas").select("*").order("data_vencimento", { ascending: false })).data ?? [],
     staleTime: 30_000,
   });
-  const exportRows = (allDespesas as unknown as T[]).filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
+  const exportRows = (allDespesas as unknown as T[])
+    .filter((r) => !empresaFilter || r.empresa_id === empresaFilter)
+    .filter((r) => !missaoFilter || r.missao_id === missaoFilter);
 
   const totalHoje = useMemo(() => {
     const hoje = new Date().toLocaleDateString("sv-SE");
@@ -98,9 +103,23 @@ function Page() {
       <DataTable<T>
         table="despesas" title="Despesa" searchFields={["descricao"]}
         defaultValues={{ status: "em_aberto", descricao: "", categoria: "outros", categoria_personalizada: null, parcelas: 1, frequencia: "mensal" }}
-        filter={(row) => !empresaFilter || row.empresa_id === empresaFilter}
+        filter={(row) => (!empresaFilter || row.empresa_id === empresaFilter) && (!missaoFilter || row.missao_id === missaoFilter)}
         toolbar={
-          <EmpresaFilter value={empresaFilter} onChange={(v) => setEmpresaFilter(v)} />
+          <div className="flex flex-wrap items-center gap-2">
+            <EmpresaFilter value={empresaFilter} onChange={(v) => setEmpresaFilter(v)} />
+            <div className="flex items-center gap-2 min-w-[200px]">
+              <Target className="size-4 text-muted-foreground shrink-0" />
+              <SelectField
+                label=""
+                value={missaoFilter === "" ? "__all__" : missaoFilter}
+                onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
+                options={[
+                  { value: "__all__", label: "Todas as missões" },
+                  ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome })),
+                ]}
+              />
+            </div>
+          </div>
         }
         extraRowActions={(row) => (
           <Button size="sm" variant="ghost"
@@ -161,7 +180,8 @@ function Page() {
             <SelectField label="Fornecedor" value={values.fornecedor_id ?? ""} onChange={(v) => setValues({ ...values, fornecedor_id: v })}
               options={(fornecedores ?? []).map((f) => ({ value: f.id, label: f.nome }))} />
             <TextField label="Vencimento" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} type="date" />
-            <TextField label="Banco" value={values.banco} onChange={(v) => setValues({ ...values, banco: v })} />
+            <SelectField label="Banco" value={values.banco ?? ""} onChange={(v) => setValues({ ...values, banco: v })}
+              options={(contas ?? []).map((c) => ({ value: contaLabel(c), label: contaLabel(c) }))} />
             <div className="col-span-2">
               <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} />
             </div>
