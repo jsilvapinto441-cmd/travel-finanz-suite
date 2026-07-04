@@ -196,3 +196,24 @@
     0 1px 2px oklch(0 0 0 / 0.4),
     0 12px 32px -12px oklch(0.72 0.19 55 / 0.25);
 }
+
+/* AI assistant flash — slow premium pulse */
+@keyframes flash-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+.animate-flash-pulse {
+  animation: flash-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-flash-pulse svg {
+  filter: drop-shadow(0 0 8px oklch(0.72 0.19 55 / 0.55));
+}
+
