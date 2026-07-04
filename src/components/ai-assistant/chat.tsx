@@ -212,9 +212,11 @@ export function AssistantChat({
 function ChatThreadView({
   threadId,
   getMessages,
+  onProcessingChange,
 }: {
   threadId: string;
   getMessages: (id: string) => Promise<Array<{ id: string; role: string; content: string }>>;
+  onProcessingChange?: (processing: boolean) => void;
 }) {
   const [messages, setMessages] = useState<UIMsg[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
@@ -224,10 +226,20 @@ function ChatThreadView({
   const [attached, setAttached] = useState<File | null>(null);
   const [recording, setRecording] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null); // status label
+  const isProcessingInternal = busy || streaming || !!processing;
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const recorderRef = useRef<AudioRecorderHandle | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    onProcessingChange?.(isProcessingInternal);
+  }, [isProcessingInternal, onProcessingChange]);
+
+  useEffect(() => {
+    return () => onProcessingChange?.(false);
+  }, [onProcessingChange]);
+
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewModule, setPreviewModule] = useState<ImportModule>("despesas");
