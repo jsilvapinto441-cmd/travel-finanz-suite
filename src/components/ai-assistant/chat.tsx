@@ -123,17 +123,7 @@ export function AssistantChat({
         >
           <MessageSquarePlus className="size-4" />
         </Button>
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
-            onClick={onClose}
-            aria-label="Fechar"
-          >
-            <X className="size-4" />
-          </Button>
-        )}
+        {onClose && null}
       </div>
 
       {/* Thread list overlay */}
