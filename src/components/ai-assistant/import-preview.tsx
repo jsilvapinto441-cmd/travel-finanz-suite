@@ -124,6 +124,10 @@ export function ImportPreviewDialog({
   const [module, setModule] = useState<ImportModule>(initialModule);
   const [rows, setRows] = useState<ImportItem[]>(items);
   const [empresaId, setEmpresaId] = useState<string>("");
+  const [duplicates, setDuplicates] = useState<
+    { index: number; reason: string }[]
+  >([]);
+  const [confirmDuplicates, setConfirmDuplicates] = useState(false);
   const listEmp = useServerFn(listEmpresasQuick);
   const execute = useServerFn(executeImport);
 
@@ -134,6 +138,7 @@ export function ImportPreviewDialog({
   });
 
   const columns = MODULE_COLUMNS[module];
+  const dupIdxSet = new Set(duplicates.map((d) => d.index));
 
   const total = rows.reduce((sum, r) => {
     const v = Number(r.valor ?? r.valor_total ?? r.salario ?? r.saldo_inicial ?? 0);
@@ -149,18 +154,30 @@ export function ImportPreviewDialog({
             ? empresaId || undefined
             : undefined,
           items: rows,
+          confirmDuplicates,
         },
       });
       return result;
     },
     onSuccess: (r) => {
+      // Bloqueio por duplicidade — usuário precisa confirmar explicitamente
+      if ("needsConfirmation" in r && r.needsConfirmation) {
+        setDuplicates(
+          r.duplicates.map((d) => ({ index: d.index, reason: d.reason })),
+        );
+        setConfirmDuplicates(false);
+        toast.warning(r.message, { duration: 6000 });
+        return;
+      }
+      const skipped = "duplicatesSkipped" in r ? r.duplicatesSkipped ?? 0 : 0;
+      const suffix = skipped > 0 ? ` (${skipped} duplicado(s) ignorado(s))` : "";
       if (r.errors.length) {
         toast.warning(
-          `${r.inserted} registro(s) importado(s). Erros: ${r.errors.join(" · ")}`,
+          `${r.inserted} registro(s) importado(s)${suffix}. Erros: ${r.errors.join(" · ")}`,
         );
       } else {
         toast.success(
-          `${r.inserted} registro(s) importado(s) em ${MODULE_LABEL[r.module]}.`,
+          `${r.inserted} registro(s) importado(s) em ${MODULE_LABEL[r.module]}${suffix}.`,
         );
       }
       onConfirmed?.(r);
@@ -171,9 +188,17 @@ export function ImportPreviewDialog({
 
   function updateRow(i: number, patch: Partial<ImportItem>) {
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+    // Alterar a linha invalida a duplicidade detectada para aquela linha
+    setDuplicates((prev) => prev.filter((d) => d.index !== i));
   }
   function removeRow(i: number) {
     setRows((prev) => prev.filter((_, idx) => idx !== i));
+    setDuplicates((prev) =>
+      prev.filter((d) => d.index !== i).map((d) => ({
+        ...d,
+        index: d.index > i ? d.index - 1 : d.index,
+      })),
+    );
   }
 
   return (
