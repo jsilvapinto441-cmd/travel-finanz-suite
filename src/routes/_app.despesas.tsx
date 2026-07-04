@@ -11,10 +11,11 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
-import { CircleDollarSign, CalendarClock } from "lucide-react";
+import { CircleDollarSign, CalendarClock, Target } from "lucide-react";
 import { EmpresaFilter } from "@/components/empresa-filter";
 import { ExportButton } from "@/components/export-button";
 import { KpiCard } from "@/components/kpi-card";
+import { useContasBancarias, contaLabel } from "@/lib/bancos";
 
 export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
