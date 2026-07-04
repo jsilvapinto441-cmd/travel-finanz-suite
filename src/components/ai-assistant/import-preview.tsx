@@ -26,7 +26,8 @@ import {
   type ImportModule,
 } from "@/lib/ai-assistant.functions";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Trash2, Loader2, CheckCircle2 } from "lucide-react";
+import { Trash2, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export type ImportItem = Record<string, unknown>;
 
