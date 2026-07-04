@@ -20,7 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatusBadge } from "@/components/status-badge";
 import { custoTotalFuncionario } from "@/lib/folha";
 import { exportRelatorioGerencial } from "@/lib/relatorio-gerencial";
-import { FileText } from "lucide-react";
+import { FileText, Target } from "lucide-react";
+import { useMissoes } from "@/lib/lookups";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -28,8 +29,10 @@ export const Route = createFileRoute("/_app/dashboard")({
 
 function Dashboard() {
   const [empresaId, setEmpresaId] = useState<string>("all");
+  const [missaoId, setMissaoId] = useState<string>("all");
   const [dataIni, setDataIni] = useState<string>("");
   const [dataFim, setDataFim] = useState<string>("");
+  const { data: missoes } = useMissoes();
 
   // Auto-marca itens vencidos como atrasados ao abrir o dashboard
   useQuery({
@@ -45,12 +48,13 @@ function Dashboard() {
   });
 
   const { data: recebiveis } = useQuery({
-    queryKey: ["dash-recebiveis", empresaId],
+    queryKey: ["dash-recebiveis", empresaId, missaoId],
     queryFn: async () => {
       let q = supabase
         .from("recebiveis")
-        .select("id,pagador,empresa_id,contrato_id,valor_total,valor_parcela,valor_pago,status,data_vencimento,data_recebimento");
+        .select("id,pagador,empresa_id,contrato_id,valor_total,valor_parcela,valor_pago,status,data_vencimento,data_recebimento,missao_id");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+      if (missaoId !== "all") q = q.eq("missao_id", missaoId);
       return (await q).data ?? [];
     },
     staleTime: 60_000,
@@ -68,12 +72,13 @@ function Dashboard() {
   });
 
   const { data: despesas } = useQuery({
-    queryKey: ["dash-despesas", empresaId],
+    queryKey: ["dash-despesas", empresaId, missaoId],
     queryFn: async () => {
       let q = supabase
         .from("despesas")
-        .select("id,descricao,empresa_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento");
+        .select("id,descricao,empresa_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+      if (missaoId !== "all") q = q.eq("missao_id", missaoId);
       return (await q).data ?? [];
     },
     staleTime: 60_000,
@@ -318,21 +323,10 @@ function Dashboard() {
               <FileText className="size-4 mr-2" />
               Relatório Gerencial (PDF)
             </Button>
-            <Select value={empresaId} onValueChange={setEmpresaId}>
-              <SelectTrigger className="w-[220px]">
-                <Building2 className="size-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="Filtrar empresa" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as empresas</SelectItem>
-                {empresas?.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         }
       />
+
 
       {semDados && (
         <Card className="p-6 mb-6 border-dashed border-primary/30 bg-primary/5">
@@ -357,9 +351,39 @@ function Dashboard() {
           <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Período final</Label>
           <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-[170px]" />
         </div>
-        {(dataIni || dataFim) && (
-          <Button variant="outline" size="sm" onClick={() => { setDataIni(""); setDataFim(""); }}>
-            Limpar período
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Empresa</Label>
+          <Select value={empresaId} onValueChange={setEmpresaId}>
+            <SelectTrigger className="w-[200px]">
+              <Building2 className="size-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Todas as empresas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as empresas</SelectItem>
+              {empresas?.map((e) => (
+                <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Missão</Label>
+          <Select value={missaoId} onValueChange={setMissaoId}>
+            <SelectTrigger className="w-[200px]">
+              <Target className="size-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Todas as missões" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as missões</SelectItem>
+              {missoes?.map((m) => (
+                <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {(dataIni || dataFim || empresaId !== "all" || missaoId !== "all") && (
+          <Button variant="outline" size="sm" onClick={() => { setDataIni(""); setDataFim(""); setEmpresaId("all"); setMissaoId("all"); }}>
+            Limpar filtros
           </Button>
         )}
       </Card>
