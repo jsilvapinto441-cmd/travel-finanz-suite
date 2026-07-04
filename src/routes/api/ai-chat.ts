@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/ai-chat")({
               owner_id: userId,
               role: "user",
               content: typeof lastUser.content === "string" ? lastUser.content : "[anexo]",
-              parts: typeof lastUser.content === "string" ? null : (lastUser.content as unknown as object),
+              parts: typeof lastUser.content === "string" ? null : (JSON.parse(JSON.stringify(lastUser.content)) as never),
             });
             // bump thread
             await supabase
