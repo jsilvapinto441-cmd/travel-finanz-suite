@@ -13,6 +13,9 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiAiTranscribeRouteImport } from './routes/api/ai-transcribe'
+import { Route as ApiAiExtractRouteImport } from './routes/api/ai-extract'
+import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
 import { Route as AppRecebiveisRouteImport } from './routes/_app.recebiveis'
 import { Route as AppMissoesRouteImport } from './routes/_app.missoes'
 import { Route as AppLucroRouteImport } from './routes/_app.lucro'
@@ -45,6 +48,21 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiTranscribeRoute = ApiAiTranscribeRouteImport.update({
+  id: '/api/ai-transcribe',
+  path: '/api/ai-transcribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiExtractRoute = ApiAiExtractRouteImport.update({
+  id: '/api/ai-extract',
+  path: '/api/ai-extract',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiChatRoute = ApiAiChatRouteImport.update({
+  id: '/api/ai-chat',
+  path: '/api/ai-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRecebiveisRoute = AppRecebiveisRouteImport.update({
@@ -135,6 +153,9 @@ export interface FileRoutesByFullPath {
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
   '/recebiveis': typeof AppRecebiveisRoute
+  '/api/ai-chat': typeof ApiAiChatRoute
+  '/api/ai-extract': typeof ApiAiExtractRoute
+  '/api/ai-transcribe': typeof ApiAiTranscribeRoute
   '/api/public/version': typeof ApiPublicVersionRoute
 }
 export interface FileRoutesByTo {
@@ -154,6 +175,9 @@ export interface FileRoutesByTo {
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
   '/recebiveis': typeof AppRecebiveisRoute
+  '/api/ai-chat': typeof ApiAiChatRoute
+  '/api/ai-extract': typeof ApiAiExtractRoute
+  '/api/ai-transcribe': typeof ApiAiTranscribeRoute
   '/api/public/version': typeof ApiPublicVersionRoute
 }
 export interface FileRoutesById {
@@ -175,6 +199,9 @@ export interface FileRoutesById {
   '/_app/lucro': typeof AppLucroRoute
   '/_app/missoes': typeof AppMissoesRoute
   '/_app/recebiveis': typeof AppRecebiveisRoute
+  '/api/ai-chat': typeof ApiAiChatRoute
+  '/api/ai-extract': typeof ApiAiExtractRoute
+  '/api/ai-transcribe': typeof ApiAiTranscribeRoute
   '/api/public/version': typeof ApiPublicVersionRoute
 }
 export interface FileRouteTypes {
@@ -196,6 +223,9 @@ export interface FileRouteTypes {
     | '/lucro'
     | '/missoes'
     | '/recebiveis'
+    | '/api/ai-chat'
+    | '/api/ai-extract'
+    | '/api/ai-transcribe'
     | '/api/public/version'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -215,6 +245,9 @@ export interface FileRouteTypes {
     | '/lucro'
     | '/missoes'
     | '/recebiveis'
+    | '/api/ai-chat'
+    | '/api/ai-extract'
+    | '/api/ai-transcribe'
     | '/api/public/version'
   id:
     | '__root__'
@@ -235,6 +268,9 @@ export interface FileRouteTypes {
     | '/_app/lucro'
     | '/_app/missoes'
     | '/_app/recebiveis'
+    | '/api/ai-chat'
+    | '/api/ai-extract'
+    | '/api/ai-transcribe'
     | '/api/public/version'
   fileRoutesById: FileRoutesById
 }
@@ -243,6 +279,9 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiAiChatRoute: typeof ApiAiChatRoute
+  ApiAiExtractRoute: typeof ApiAiExtractRoute
+  ApiAiTranscribeRoute: typeof ApiAiTranscribeRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
 }
 
@@ -274,6 +313,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-transcribe': {
+      id: '/api/ai-transcribe'
+      path: '/api/ai-transcribe'
+      fullPath: '/api/ai-transcribe'
+      preLoaderRoute: typeof ApiAiTranscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-extract': {
+      id: '/api/ai-extract'
+      path: '/api/ai-extract'
+      fullPath: '/api/ai-extract'
+      preLoaderRoute: typeof ApiAiExtractRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-chat': {
+      id: '/api/ai-chat'
+      path: '/api/ai-chat'
+      fullPath: '/api/ai-chat'
+      preLoaderRoute: typeof ApiAiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/recebiveis': {
@@ -416,18 +476,11 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiAiChatRoute: ApiAiChatRoute,
+  ApiAiExtractRoute: ApiAiExtractRoute,
+  ApiAiTranscribeRoute: ApiAiTranscribeRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/com
 import { useIdleTimeout } from "@/lib/idle-timeout";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { AssistantFAB } from "@/components/ai-assistant";
 import logo from "@/assets/produz-logo-white.png";
 
 const nav = [
@@ -158,6 +159,8 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      <AssistantFAB />
     </div>
   );
 }
