@@ -113,15 +113,13 @@ export function exportToExcel<T>({
   rows: T[];
   filename: string;
 }) {
+  const headers = columns.map((c) => c.header);
   const data = rows.map((row) => {
     const obj: Record<string, string> = {};
     for (const c of columns) obj[c.header] = getCellValue(row, c);
     return obj;
   });
-  const ws = XLSX.utils.json_to_sheet(data, {
-    header: columns.map((c) => c.header),
-  });
-  // Largura automática aproximada
+  const ws = XLSX.utils.json_to_sheet(data, { header: headers });
   ws["!cols"] = columns.map((c) => {
     const maxLen = Math.max(
       c.header.length,
@@ -129,7 +127,36 @@ export function exportToExcel<T>({
     );
     return { wch: Math.min(Math.max(maxLen + 2, 10), 40) };
   });
+
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
-  XLSX.writeFile(wb, `${sanitize(filename)}_${timestamp()}.xlsx`);
+  wb.Props = {
+    Title: filename,
+    Subject: sheetName,
+    Author: "PRODUZ Hub",
+    Company: "PRODUZ Hub",
+    CreatedDate: new Date(),
+  };
+  const safeSheet = (sheetName || "Dados")
+    .replace(/[\\/?*[\]:]/g, " ")
+    .slice(0, 31);
+  XLSX.utils.book_append_sheet(wb, ws, safeSheet);
+
+  // Gera bytes reais do XLSX e faz download via Blob (MIME correto),
+  // evitando problemas de corrupção em alguns navegadores/bundlers.
+  const wbout = XLSX.write(wb, {
+    bookType: "xlsx",
+    type: "array",
+    compression: true,
+  }) as ArrayBuffer;
+  const blob = new Blob([wbout], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${sanitize(filename)}_${timestamp()}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
