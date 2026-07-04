@@ -56,12 +56,19 @@ const SUGGESTIONS = [
   { icon: "📊", label: "Gerar relatório", prompt: "Me dê um resumo das despesas do mês atual." },
 ];
 
-export function AssistantChat({ onClose }: { onClose?: () => void }) {
+export function AssistantChat({
+  onClose,
+  onProcessingChange,
+}: {
+  onClose?: () => void;
+  onProcessingChange?: (processing: boolean) => void;
+}) {
   const qc = useQueryClient();
   const listT = useServerFn(listThreads);
   const createT = useServerFn(createThread);
   const deleteT = useServerFn(deleteThread);
   const getMsgs = useServerFn(getThreadMessages);
+
 
   const threadsQ = useQuery({ queryKey: ["ai-threads"], queryFn: () => listT() });
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
