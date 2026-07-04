@@ -31,6 +31,7 @@ import {
   ImportPreviewDialog,
   type ImportItem,
 } from "@/components/ai-assistant/import-preview";
+import type { ImportModule } from "@/lib/ai-assistant.functions";
 import {
   fileToBase64,
   parseSpreadsheetToText,
