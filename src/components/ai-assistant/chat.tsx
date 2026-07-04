@@ -221,6 +221,7 @@ function ChatThreadView({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewModule, setPreviewModule] = useState<ImportModule>("despesas");
   const [previewItems, setPreviewItems] = useState<ImportItem[]>([]);
   const [previewSummary, setPreviewSummary] = useState<string | undefined>();
 
