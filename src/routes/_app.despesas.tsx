@@ -43,6 +43,8 @@ function Page() {
   const { data: contratos } = useContratos();
   const { data: fornecedores } = useFornecedores();
   const [empresaFilter, setEmpresaFilter] = useState("");
+  const [missaoFilter, setMissaoFilter] = useState("");
+  const { data: contas } = useContasBancarias({ ativas: true });
 
   const [payOpen, setPayOpen] = useState(false);
   const [payTarget, setPayTarget] = useState<T | null>(null);
