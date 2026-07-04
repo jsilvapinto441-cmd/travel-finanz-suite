@@ -323,13 +323,6 @@ function Dashboard() {
               <FileText className="size-4 mr-2" />
               Relatório Gerencial (PDF)
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                // handled above
-              }}
-              className="hidden"
-            />
           </div>
         }
       />
