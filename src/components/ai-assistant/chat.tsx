@@ -114,16 +114,28 @@ export function AssistantChat({
             Importa arquivos, cadastra receitas e despesas, executa tarefas.
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
-          onClick={() => setShowThreads((v) => !v)}
-          title="Conversas"
-        >
-          <MessageSquarePlus className="size-4" />
-        </Button>
-        {onClose && null}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+            onClick={() => setShowThreads((v) => !v)}
+            title="Conversas"
+          >
+            <MessageSquarePlus className="size-4" />
+          </Button>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={onClose}
+              title="Fechar"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Thread list overlay */}
