@@ -26,7 +26,8 @@ import {
   type ImportModule,
 } from "@/lib/ai-assistant.functions";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Trash2, Loader2, CheckCircle2 } from "lucide-react";
+import { Trash2, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export type ImportItem = Record<string, unknown>;
 
@@ -123,6 +124,10 @@ export function ImportPreviewDialog({
   const [module, setModule] = useState<ImportModule>(initialModule);
   const [rows, setRows] = useState<ImportItem[]>(items);
   const [empresaId, setEmpresaId] = useState<string>("");
+  const [duplicates, setDuplicates] = useState<
+    { index: number; reason: string }[]
+  >([]);
+  const [confirmDuplicates, setConfirmDuplicates] = useState(false);
   const listEmp = useServerFn(listEmpresasQuick);
   const execute = useServerFn(executeImport);
 
@@ -133,6 +138,7 @@ export function ImportPreviewDialog({
   });
 
   const columns = MODULE_COLUMNS[module];
+  const dupIdxSet = new Set(duplicates.map((d) => d.index));
 
   const total = rows.reduce((sum, r) => {
     const v = Number(r.valor ?? r.valor_total ?? r.salario ?? r.saldo_inicial ?? 0);
@@ -148,18 +154,30 @@ export function ImportPreviewDialog({
             ? empresaId || undefined
             : undefined,
           items: rows,
+          confirmDuplicates,
         },
       });
       return result;
     },
     onSuccess: (r) => {
+      // Bloqueio por duplicidade — usuário precisa confirmar explicitamente
+      if ("needsConfirmation" in r && r.needsConfirmation) {
+        setDuplicates(
+          r.duplicates.map((d) => ({ index: d.index, reason: d.reason })),
+        );
+        setConfirmDuplicates(false);
+        toast.warning(r.message, { duration: 6000 });
+        return;
+      }
+      const skipped = "duplicatesSkipped" in r ? r.duplicatesSkipped ?? 0 : 0;
+      const suffix = skipped > 0 ? ` (${skipped} duplicado(s) ignorado(s))` : "";
       if (r.errors.length) {
         toast.warning(
-          `${r.inserted} registro(s) importado(s). Erros: ${r.errors.join(" · ")}`,
+          `${r.inserted} registro(s) importado(s)${suffix}. Erros: ${r.errors.join(" · ")}`,
         );
       } else {
         toast.success(
-          `${r.inserted} registro(s) importado(s) em ${MODULE_LABEL[r.module]}.`,
+          `${r.inserted} registro(s) importado(s) em ${MODULE_LABEL[r.module]}${suffix}.`,
         );
       }
       onConfirmed?.(r);
@@ -170,9 +188,17 @@ export function ImportPreviewDialog({
 
   function updateRow(i: number, patch: Partial<ImportItem>) {
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+    // Alterar a linha invalida a duplicidade detectada para aquela linha
+    setDuplicates((prev) => prev.filter((d) => d.index !== i));
   }
   function removeRow(i: number) {
     setRows((prev) => prev.filter((_, idx) => idx !== i));
+    setDuplicates((prev) =>
+      prev.filter((d) => d.index !== i).map((d) => ({
+        ...d,
+        index: d.index > i ? d.index - 1 : d.index,
+      })),
+    );
   }
 
   return (
@@ -263,45 +289,87 @@ export function ImportPreviewDialog({
                   </td>
                 </tr>
               )}
-              {rows.map((r, i) => (
-                <tr key={i} className="border-t border-border">
-                  {columns.map((c) => {
-                    const v = r[c.key];
-                    return (
-                      <td key={c.key} className="p-1.5">
-                        <Input
-                          type={c.type === "date" ? "date" : c.type === "number" ? "number" : "text"}
-                          step={c.type === "number" ? "0.01" : undefined}
-                          value={v === null || v === undefined ? "" : String(v)}
-                          className={`h-8 ${c.type === "number" ? "text-right" : ""}`}
-                          onChange={(e) => {
-                            const raw = e.target.value;
-                            const next =
-                              c.type === "number"
-                                ? raw === ""
-                                  ? null
-                                  : parseFloat(raw)
-                                : raw || null;
-                            updateRow(i, { [c.key]: next });
-                          }}
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className="p-1.5">
-                    <button
-                      onClick={() => removeRow(i)}
-                      className="text-muted-foreground hover:text-destructive"
-                      aria-label="Remover"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {rows.map((r, i) => {
+                const dup = duplicates.find((d) => d.index === i);
+                return (
+                  <tr
+                    key={i}
+                    className={`border-t border-border ${dup ? "bg-amber-500/10" : ""}`}
+                  >
+                    {columns.map((c, colIdx) => {
+                      const v = r[c.key];
+                      return (
+                        <td key={c.key} className="p-1.5">
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type={c.type === "date" ? "date" : c.type === "number" ? "number" : "text"}
+                              step={c.type === "number" ? "0.01" : undefined}
+                              value={v === null || v === undefined ? "" : String(v)}
+                              className={`h-8 ${c.type === "number" ? "text-right" : ""}`}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                const next =
+                                  c.type === "number"
+                                    ? raw === ""
+                                      ? null
+                                      : parseFloat(raw)
+                                    : raw || null;
+                                updateRow(i, { [c.key]: next });
+                              }}
+                            />
+                            {dup && colIdx === 0 && (
+                              <Badge
+                                variant="outline"
+                                className="border-amber-500/40 text-amber-600 dark:text-amber-400 gap-1 shrink-0"
+                                title={dup.reason}
+                              >
+                                <AlertTriangle className="size-3" />
+                                Duplicado
+                              </Badge>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td className="p-1.5">
+                      <button
+                        onClick={() => removeRow(i)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label="Remover"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+
+        {duplicates.length > 0 && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm flex items-start gap-2">
+            <AlertTriangle className="size-4 text-amber-500 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <div className="font-medium text-amber-700 dark:text-amber-300">
+                {duplicates.length} possível(is) duplicado(s) detectado(s)
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Remova as linhas duplicadas ou marque a confirmação abaixo para
+                importar mesmo assim (não recomendado).
+              </div>
+              <label className="mt-2 flex items-center gap-2 text-xs cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={confirmDuplicates}
+                  onChange={(e) => setConfirmDuplicates(e.target.checked)}
+                  className="accent-primary"
+                />
+                Confirmo que quero importar mesmo com duplicidades
+              </label>
+            </div>
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -309,10 +377,16 @@ export function ImportPreviewDialog({
           </Button>
           <Button
             onClick={() => mut.mutate()}
-            disabled={mut.isPending || rows.length === 0}
+            disabled={
+              mut.isPending ||
+              rows.length === 0 ||
+              (duplicates.length > 0 && !confirmDuplicates)
+            }
           >
             {mut.isPending && <Loader2 className="size-4 mr-1 animate-spin" />}
-            Importar para o sistema
+            {duplicates.length > 0 && !confirmDuplicates
+              ? "Resolver duplicidades"
+              : "Importar para o sistema"}
           </Button>
         </DialogFooter>
       </DialogContent>

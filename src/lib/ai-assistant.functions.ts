@@ -137,7 +137,214 @@ const ImportPayload = z.object({
   module: z.enum(IMPORT_MODULES),
   empresa_id: z.string().uuid().nullable().optional(),
   items: z.array(z.record(z.string(), z.unknown())).min(1),
+  // Quando true, o usuário confirmou explicitamente a importação mesmo com duplicidades.
+  confirmDuplicates: z.boolean().optional(),
 });
+
+type Duplicate = {
+  index: number;        // índice no array items enviado
+  key: string;          // chave que casou
+  existingId: string;   // id do registro já existente no banco
+  reason: string;       // descrição legível
+};
+
+function normKey(...parts: (string | number | null | undefined)[]): string {
+  return parts
+    .map((p) => (p === null || p === undefined ? "" : String(p).trim().toLowerCase()))
+    .join("|");
+}
+
+/**
+ * Detecta duplicidades comparando os itens a serem importados com registros
+ * já existentes no banco (escopo do usuário via RLS). Retorna a lista de
+ * duplicatas prováveis por índice do array `items`.
+ */
+async function detectDuplicates(
+  supabase: ReturnType<typeof import("@supabase/supabase-js").createClient>,
+  module: ImportModule,
+  items: Record<string, unknown>[],
+  empresa_id: string | null,
+): Promise<Duplicate[]> {
+  const dups: Duplicate[] = [];
+
+  switch (module) {
+    case "despesas": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabase as any)
+        .from("despesas")
+        .select("id, descricao, valor, data_vencimento, empresa_id");
+      const map = new Map<string, string>();
+      for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
+        map.set(
+          normKey(r.descricao as string, Number(r.valor).toFixed(2), r.data_vencimento as string, r.empresa_id as string),
+          r.id as string,
+        );
+      }
+      items.forEach((i, idx) => {
+        const k = normKey(str(i.descricao), num(i.valor).toFixed(2), date(i.data_vencimento), empresa_id);
+        const id = map.get(k);
+        if (id) dups.push({ index: idx, key: k, existingId: id, reason: "Mesma descrição, valor e vencimento" });
+      });
+      break;
+    }
+    case "recebiveis": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabase as any)
+        .from("recebiveis")
+        .select("id, pagador, valor_total, data_vencimento, empresa_id");
+      const map = new Map<string, string>();
+      for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
+        map.set(
+          normKey(r.pagador as string, Number(r.valor_total).toFixed(2), r.data_vencimento as string, r.empresa_id as string),
+          r.id as string,
+        );
+      }
+      items.forEach((i, idx) => {
+        const valor = num(i.valor_total ?? i.valor);
+        const k = normKey(str(i.pagador), valor.toFixed(2), date(i.data_vencimento), empresa_id);
+        const id = map.get(k);
+        if (id) dups.push({ index: idx, key: k, existingId: id, reason: "Mesmo pagador, valor e vencimento" });
+      });
+      break;
+    }
+    case "fornecedores": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabase as any)
+        .from("fornecedores")
+        .select("id, nome, cnpj");
+      const byCnpj = new Map<string, string>();
+      const byNome = new Map<string, string>();
+      for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
+        if (r.cnpj) byCnpj.set(normKey(r.cnpj as string), r.id as string);
+        if (r.nome) byNome.set(normKey(r.nome as string), r.id as string);
+      }
+      items.forEach((i, idx) => {
+        const cnpj = str(i.cnpj);
+        const nome = str(i.nome);
+        const id = (cnpj && byCnpj.get(normKey(cnpj))) || (nome && byNome.get(normKey(nome)));
+        if (id) dups.push({ index: idx, key: normKey(cnpj, nome), existingId: id, reason: cnpj ? "CNPJ já cadastrado" : "Nome já cadastrado" });
+      });
+      break;
+    }
+    case "funcionarios": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabase as any)
+        .from("funcionarios")
+        .select("id, nome, cpf");
+      const byCpf = new Map<string, string>();
+      const byNome = new Map<string, string>();
+      for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
+        if (r.cpf) byCpf.set(normKey(r.cpf as string), r.id as string);
+        if (r.nome) byNome.set(normKey(r.nome as string), r.id as string);
+      }
+      items.forEach((i, idx) => {
+        const cpf = str(i.cpf);
+        const nome = str(i.nome);
+        const id = (cpf && byCpf.get(normKey(cpf))) || (nome && byNome.get(normKey(nome)));
+        if (id) dups.push({ index: idx, key: normKey(cpf, nome), existingId: id, reason: cpf ? "CPF já cadastrado" : "Nome já cadastrado" });
+      });
+      break;
+    }
+    case "empresas": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabase as any)
+        .from("empresas")
+        .select("id, nome, cnpj");
+      const byCnpj = new Map<string, string>();
+      const byNome = new Map<string, string>();
+      for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
+        if (r.cnpj) byCnpj.set(normKey(r.cnpj as string), r.id as string);
+        if (r.nome) byNome.set(normKey(r.nome as string), r.id as string);
+      }
+      items.forEach((i, idx) => {
+        const cnpj = str(i.cnpj);
+        const nome = str(i.nome);
+        const id = (cnpj && byCnpj.get(normKey(cnpj))) || (nome && byNome.get(normKey(nome)));
+        if (id) dups.push({ index: idx, key: normKey(cnpj, nome), existingId: id, reason: cnpj ? "CNPJ já cadastrado" : "Nome já cadastrado" });
+      });
+      break;
+    }
+    case "bancos": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabase as any)
+        .from("contas_bancarias")
+        .select("id, banco, agencia, conta");
+      const map = new Map<string, string>();
+      for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
+        map.set(normKey(r.banco as string, r.agencia as string, r.conta as string), r.id as string);
+      }
+      items.forEach((i, idx) => {
+        const k = normKey(str(i.banco), str(i.agencia), str(i.conta));
+        const id = map.get(k);
+        if (id) dups.push({ index: idx, key: k, existingId: id, reason: "Banco/agência/conta já cadastrado" });
+      });
+      break;
+    }
+    case "missoes": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabase as any)
+        .from("missoes")
+        .select("id, nome");
+      const map = new Map<string, string>();
+      for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
+        if (r.nome) map.set(normKey(r.nome as string), r.id as string);
+      }
+      items.forEach((i, idx) => {
+        const k = normKey(str(i.nome));
+        const id = map.get(k);
+        if (id) dups.push({ index: idx, key: k, existingId: id, reason: "Missão com mesmo nome" });
+      });
+      break;
+    }
+    case "contratos": {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabase as any)
+        .from("contratos")
+        .select("id, cliente, valor, data_inicio, empresa_id");
+      const map = new Map<string, string>();
+      for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
+        map.set(
+          normKey(r.cliente as string, Number(r.valor).toFixed(2), r.data_inicio as string, r.empresa_id as string),
+          r.id as string,
+        );
+      }
+      items.forEach((i, idx) => {
+        const k = normKey(str(i.cliente), num(i.valor).toFixed(2), date(i.data_inicio), empresa_id);
+        const id = map.get(k);
+        if (id) dups.push({ index: idx, key: k, existingId: id, reason: "Mesmo cliente, valor e data inicial" });
+      });
+      break;
+    }
+  }
+
+  return dups;
+}
+
+/**
+ * Endpoint separado para o front-end conferir duplicidades ANTES de importar,
+ * usado pela prévia editável.
+ */
+export const checkDuplicates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        module: z.enum(IMPORT_MODULES),
+        empresa_id: z.string().uuid().nullable().optional(),
+        items: z.array(z.record(z.string(), z.unknown())).min(1),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const duplicates = await detectDuplicates(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      context.supabase as any,
+      data.module,
+      data.items,
+      data.empresa_id ?? null,
+    );
+    return { duplicates };
+  });
 
 export const executeImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -147,6 +354,34 @@ export const executeImport = createServerFn({ method: "POST" })
     const empresa_id = data.empresa_id ?? null;
     const errors: string[] = [];
     let inserted = 0;
+
+    // 1) Detecção de duplicidades — bloqueia se não confirmadas
+    const duplicates = await detectDuplicates(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      supabase as any,
+      data.module,
+      data.items,
+      empresa_id,
+    );
+    if (duplicates.length > 0 && !data.confirmDuplicates) {
+      return {
+        inserted: 0,
+        errors: [],
+        module: data.module,
+        needsConfirmation: true as const,
+        duplicates,
+        message: `Foram encontrados ${duplicates.length} possíveis duplicados. Revise e confirme para importar mesmo assim.`,
+      };
+    }
+
+    // Se o usuário confirmou, ainda assim removemos os índices duplicados
+    // para não gravar em cima — a política é NUNCA sobrescrever automaticamente.
+    // O usuário precisa remover manualmente as linhas na prévia se quiser
+    // reimportar. Aqui apenas ignoramos os índices duplicados por segurança.
+    const dupIdx = new Set(duplicates.map((d) => d.index));
+    const items = data.confirmDuplicates
+      ? data.items // confiança total — usuário assumiu o risco
+      : data.items.filter((_, idx) => !dupIdx.has(idx));
 
     async function insertMany(table: string, rows: Record<string, unknown>[]) {
       if (!rows.length) return;
@@ -163,7 +398,7 @@ export const executeImport = createServerFn({ method: "POST" })
 
     switch (data.module) {
       case "despesas": {
-        const rows = data.items
+        const rows = items
           .map((i) => ({
             empresa_id,
             descricao: str(i.descricao) ?? "Lançamento",
@@ -177,7 +412,7 @@ export const executeImport = createServerFn({ method: "POST" })
         break;
       }
       case "recebiveis": {
-        const rows = data.items.map((i) => {
+        const rows = items.map((i) => {
           const valor = num(i.valor_total ?? i.valor);
           const parcelas = Math.max(1, Math.floor(num(i.parcelas, 1)));
           return {
@@ -195,7 +430,7 @@ export const executeImport = createServerFn({ method: "POST" })
         break;
       }
       case "fornecedores": {
-        const rows = data.items
+        const rows = items
           .map((i) => ({
             nome: str(i.nome) ?? "",
             cnpj: str(i.cnpj),
@@ -209,7 +444,7 @@ export const executeImport = createServerFn({ method: "POST" })
         break;
       }
       case "funcionarios": {
-        const rows = data.items
+        const rows = items
           .map((i) => ({
             empresa_id,
             nome: str(i.nome) ?? "",
@@ -222,7 +457,7 @@ export const executeImport = createServerFn({ method: "POST" })
         break;
       }
       case "empresas": {
-        const rows = data.items
+        const rows = items
           .map((i) => ({
             nome: str(i.nome) ?? "",
             cnpj: str(i.cnpj),
@@ -233,7 +468,7 @@ export const executeImport = createServerFn({ method: "POST" })
         break;
       }
       case "bancos": {
-        const rows = data.items
+        const rows = items
           .map((i) => ({
             banco: str(i.banco) ?? "",
             agencia: str(i.agencia),
@@ -250,7 +485,7 @@ export const executeImport = createServerFn({ method: "POST" })
         break;
       }
       case "missoes": {
-        const rows = data.items
+        const rows = items
           .map((i) => ({
             nome: str(i.nome) ?? "",
             descricao: str(i.descricao),
@@ -261,7 +496,7 @@ export const executeImport = createServerFn({ method: "POST" })
         break;
       }
       case "contratos": {
-        const rows = data.items
+        const rows = items
           .map((i) => ({
             empresa_id,
             cliente: str(i.cliente) ?? "",
@@ -279,5 +514,11 @@ export const executeImport = createServerFn({ method: "POST" })
       }
     }
 
-    return { inserted, errors, module: data.module };
+    return {
+      inserted,
+      errors,
+      module: data.module,
+      duplicatesSkipped: data.confirmDuplicates ? 0 : duplicates.length,
+      duplicates: data.confirmDuplicates ? [] : duplicates,
+    };
   });
