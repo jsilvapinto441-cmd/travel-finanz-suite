@@ -29,8 +29,10 @@ export const Route = createFileRoute("/_app/dashboard")({
 
 function Dashboard() {
   const [empresaId, setEmpresaId] = useState<string>("all");
+  const [missaoId, setMissaoId] = useState<string>("all");
   const [dataIni, setDataIni] = useState<string>("");
   const [dataFim, setDataFim] = useState<string>("");
+  const { data: missoes } = useMissoes();
 
   // Auto-marca itens vencidos como atrasados ao abrir o dashboard
   useQuery({
