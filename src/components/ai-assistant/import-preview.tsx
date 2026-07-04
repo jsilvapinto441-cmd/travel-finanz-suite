@@ -289,45 +289,87 @@ export function ImportPreviewDialog({
                   </td>
                 </tr>
               )}
-              {rows.map((r, i) => (
-                <tr key={i} className="border-t border-border">
-                  {columns.map((c) => {
-                    const v = r[c.key];
-                    return (
-                      <td key={c.key} className="p-1.5">
-                        <Input
-                          type={c.type === "date" ? "date" : c.type === "number" ? "number" : "text"}
-                          step={c.type === "number" ? "0.01" : undefined}
-                          value={v === null || v === undefined ? "" : String(v)}
-                          className={`h-8 ${c.type === "number" ? "text-right" : ""}`}
-                          onChange={(e) => {
-                            const raw = e.target.value;
-                            const next =
-                              c.type === "number"
-                                ? raw === ""
-                                  ? null
-                                  : parseFloat(raw)
-                                : raw || null;
-                            updateRow(i, { [c.key]: next });
-                          }}
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className="p-1.5">
-                    <button
-                      onClick={() => removeRow(i)}
-                      className="text-muted-foreground hover:text-destructive"
-                      aria-label="Remover"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {rows.map((r, i) => {
+                const dup = duplicates.find((d) => d.index === i);
+                return (
+                  <tr
+                    key={i}
+                    className={`border-t border-border ${dup ? "bg-amber-500/10" : ""}`}
+                  >
+                    {columns.map((c, colIdx) => {
+                      const v = r[c.key];
+                      return (
+                        <td key={c.key} className="p-1.5">
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type={c.type === "date" ? "date" : c.type === "number" ? "number" : "text"}
+                              step={c.type === "number" ? "0.01" : undefined}
+                              value={v === null || v === undefined ? "" : String(v)}
+                              className={`h-8 ${c.type === "number" ? "text-right" : ""}`}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                const next =
+                                  c.type === "number"
+                                    ? raw === ""
+                                      ? null
+                                      : parseFloat(raw)
+                                    : raw || null;
+                                updateRow(i, { [c.key]: next });
+                              }}
+                            />
+                            {dup && colIdx === 0 && (
+                              <Badge
+                                variant="outline"
+                                className="border-amber-500/40 text-amber-600 dark:text-amber-400 gap-1 shrink-0"
+                                title={dup.reason}
+                              >
+                                <AlertTriangle className="size-3" />
+                                Duplicado
+                              </Badge>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td className="p-1.5">
+                      <button
+                        onClick={() => removeRow(i)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label="Remover"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+
+        {duplicates.length > 0 && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm flex items-start gap-2">
+            <AlertTriangle className="size-4 text-amber-500 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <div className="font-medium text-amber-700 dark:text-amber-300">
+                {duplicates.length} possível(is) duplicado(s) detectado(s)
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Remova as linhas duplicadas ou marque a confirmação abaixo para
+                importar mesmo assim (não recomendado).
+              </div>
+              <label className="mt-2 flex items-center gap-2 text-xs cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={confirmDuplicates}
+                  onChange={(e) => setConfirmDuplicates(e.target.checked)}
+                  className="accent-primary"
+                />
+                Confirmo que quero importar mesmo com duplicidades
+              </label>
+            </div>
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -335,10 +377,16 @@ export function ImportPreviewDialog({
           </Button>
           <Button
             onClick={() => mut.mutate()}
-            disabled={mut.isPending || rows.length === 0}
+            disabled={
+              mut.isPending ||
+              rows.length === 0 ||
+              (duplicates.length > 0 && !confirmDuplicates)
+            }
           >
             {mut.isPending && <Loader2 className="size-4 mr-1 animate-spin" />}
-            Importar para o sistema
+            {duplicates.length > 0 && !confirmDuplicates
+              ? "Resolver duplicidades"
+              : "Importar para o sistema"}
           </Button>
         </DialogFooter>
       </DialogContent>
