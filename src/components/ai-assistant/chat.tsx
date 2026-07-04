@@ -26,6 +26,7 @@ import {
   createThread,
   deleteThread,
   getThreadMessages,
+  renameThread,
 } from "@/lib/ai-assistant.functions";
 import {
   ImportPreviewDialog,
