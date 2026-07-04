@@ -645,12 +645,13 @@ function ChatThreadView({
       <ImportPreviewDialog
         open={previewOpen}
         onOpenChange={setPreviewOpen}
+        module={previewModule}
         items={previewItems}
         summary={previewSummary}
         onConfirmed={(r) => {
           setAttached(null);
           sendMessage(
-            `Importação confirmada: ${r.despesas} despesa(s) e ${r.recebiveis} receita(s) cadastradas.`,
+            `Importação confirmada: ${r.inserted} registro(s) cadastrado(s) em ${r.module}.`,
           );
         }}
       />
