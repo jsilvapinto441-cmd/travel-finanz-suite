@@ -72,12 +72,13 @@ function Dashboard() {
   });
 
   const { data: despesas } = useQuery({
-    queryKey: ["dash-despesas", empresaId],
+    queryKey: ["dash-despesas", empresaId, missaoId],
     queryFn: async () => {
       let q = supabase
         .from("despesas")
-        .select("id,descricao,empresa_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento");
+        .select("id,descricao,empresa_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+      if (missaoId !== "all") q = q.eq("missao_id", missaoId);
       return (await q).data ?? [];
     },
     staleTime: 60_000,
