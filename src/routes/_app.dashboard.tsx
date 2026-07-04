@@ -351,9 +351,39 @@ function Dashboard() {
           <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Período final</Label>
           <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-[170px]" />
         </div>
-        {(dataIni || dataFim) && (
-          <Button variant="outline" size="sm" onClick={() => { setDataIni(""); setDataFim(""); }}>
-            Limpar período
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Empresa</Label>
+          <Select value={empresaId} onValueChange={setEmpresaId}>
+            <SelectTrigger className="w-[200px]">
+              <Building2 className="size-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Todas as empresas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as empresas</SelectItem>
+              {empresas?.map((e) => (
+                <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Missão</Label>
+          <Select value={missaoId} onValueChange={setMissaoId}>
+            <SelectTrigger className="w-[200px]">
+              <Target className="size-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Todas as missões" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as missões</SelectItem>
+              {missoes?.map((m) => (
+                <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {(dataIni || dataFim || empresaId !== "all" || missaoId !== "all") && (
+          <Button variant="outline" size="sm" onClick={() => { setDataIni(""); setDataFim(""); setEmpresaId("all"); setMissaoId("all"); }}>
+            Limpar filtros
           </Button>
         )}
       </Card>
