@@ -209,6 +209,8 @@ function ChatThreadView({
   getMessages: (id: string) => Promise<Array<{ id: string; role: string; content: string }>>;
   onProcessingChange?: (processing: boolean) => void;
 }) {
+  const qc = useQueryClient();
+  const renameT = useServerFn(renameThread);
   const [messages, setMessages] = useState<UIMsg[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [input, setInput] = useState("");
