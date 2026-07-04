@@ -26,6 +26,7 @@ import {
   createThread,
   deleteThread,
   getThreadMessages,
+  renameThread,
 } from "@/lib/ai-assistant.functions";
 import {
   ImportPreviewDialog,
@@ -122,17 +123,7 @@ export function AssistantChat({
         >
           <MessageSquarePlus className="size-4" />
         </Button>
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
-            onClick={onClose}
-            aria-label="Fechar"
-          >
-            <X className="size-4" />
-          </Button>
-        )}
+        {onClose && null}
       </div>
 
       {/* Thread list overlay */}
@@ -218,6 +209,8 @@ function ChatThreadView({
   getMessages: (id: string) => Promise<Array<{ id: string; role: string; content: string }>>;
   onProcessingChange?: (processing: boolean) => void;
 }) {
+  const qc = useQueryClient();
+  const renameT = useServerFn(renameThread);
   const [messages, setMessages] = useState<UIMsg[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [input, setInput] = useState("");
@@ -295,10 +288,20 @@ function ChatThreadView({
         role: "assistant",
         content: "",
       };
+      const isFirstMessage = messages.length === 0;
       setMessages((prev) => [...prev, userMsg, asstMsg]);
       setInput("");
       setBusy(true);
       setStreaming(true);
+
+      // Auto-título no primeiro envio (como ChatGPT): usa a mensagem do usuário.
+      if (isFirstMessage && text.trim()) {
+        const rawTitle = text.trim().replace(/\s+/g, " ");
+        const title = rawTitle.length > 50 ? rawTitle.slice(0, 50) + "…" : rawTitle;
+        renameT({ data: { id: threadId, title } })
+          .then(() => qc.invalidateQueries({ queryKey: ["ai-threads"] }))
+          .catch(() => {});
+      }
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -371,7 +374,7 @@ function ChatThreadView({
         abortRef.current = null;
       }
     },
-    [messages, threadId, authHeader],
+    [messages, threadId, authHeader, renameT, qc],
   );
 
   const stopStreaming = () => abortRef.current?.abort();
