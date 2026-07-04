@@ -17,15 +17,16 @@ export function AssistantFAB() {
           "fixed bottom-5 right-5 z-40",
           "group flex items-center justify-center",
           "size-14 rounded-full",
-          "bg-black/20 backdrop-blur-sm",
-          "border border-white/5",
+          "bg-transparent",
+          "border border-white/[0.06]",
           "transition-all duration-300 ease-out",
-          "hover:scale-[1.08]",
+          "hover:scale-[1.08] hover:bg-black/10",
           isProcessing && "animate-flash-pulse",
         )}
       >
         <span className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <span className="absolute inset-0 rounded-full bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
         <Zap
           className={cn(
             "relative size-7 text-primary transition-all duration-300",
