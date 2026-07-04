@@ -401,14 +401,20 @@ function ChatThreadView({
         throw new Error(t || `Erro ${res.status}`);
       }
       const data = (await res.json()) as {
+        module?: ImportModule | "misto";
         summary?: string;
+        questions?: string[];
         items?: ImportItem[];
       };
       const items = Array.isArray(data.items) ? data.items : [];
       if (items.length === 0) {
-        toast.warning("Nenhum lançamento identificado no arquivo.");
+        toast.warning("Nenhum registro identificado no arquivo.");
         return;
       }
+      // "misto" cai como despesas no default e o usuário pode trocar no seletor.
+      const mod: ImportModule =
+        data.module && data.module !== "misto" ? data.module : "despesas";
+      setPreviewModule(mod);
       setPreviewItems(items);
       setPreviewSummary(data.summary);
       setPreviewOpen(true);
