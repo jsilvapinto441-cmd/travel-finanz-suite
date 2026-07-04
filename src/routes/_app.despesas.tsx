@@ -54,6 +54,43 @@ function Page() {
     queryFn: async () => (await supabase.from("despesas").select("*").order("data_vencimento", { ascending: false })).data ?? [],
     staleTime: 30_000,
   });
+
+  const { data: anexosMap = new Map<string, { nome: string; path: string }[]>() } = useQuery({
+    queryKey: ["despesas-anexos-export"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("anexos")
+        .select("entidade_id, nome, path")
+        .eq("entidade", "despesas");
+      const m = new Map<string, { nome: string; path: string }[]>();
+      for (const a of (data ?? []) as any[]) {
+        const arr = m.get(a.entidade_id) ?? [];
+        arr.push({ nome: a.nome, path: a.path });
+        m.set(a.entidade_id, arr);
+      }
+      return m;
+    },
+    staleTime: 30_000,
+  });
+
+  const { data: pagamentosMap = new Map<string, { forma: string; data: string | null; valor: number }[]>() } = useQuery({
+    queryKey: ["despesas-pagamentos-export"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("registros_pagamento")
+        .select("despesa_id, forma_pagamento, data_pagamento, valor")
+        .not("despesa_id", "is", null);
+      const m = new Map<string, { forma: string; data: string | null; valor: number }[]>();
+      for (const p of (data ?? []) as any[]) {
+        const arr = m.get(p.despesa_id) ?? [];
+        arr.push({ forma: p.forma_pagamento, data: p.data_pagamento, valor: Number(p.valor) });
+        m.set(p.despesa_id, arr);
+      }
+      return m;
+    },
+    staleTime: 30_000,
+  });
+
   const exportRows = (allDespesas as unknown as T[])
     .filter((r) => !empresaFilter || r.empresa_id === empresaFilter)
     .filter((r) => !missaoFilter || r.missao_id === missaoFilter);
@@ -65,34 +102,65 @@ function Page() {
       .reduce((acc, r) => acc + Math.max(0, Number(r.valor) - Number(r.valor_pago ?? 0)), 0);
   }, [exportRows]);
 
+  const contratoLabel = (id: string | null) => {
+    if (!id) return "—";
+    const c = contratos?.find((x) => x.id === id);
+    return c ? `${c.numero ?? ""} ${c.cliente}`.trim() : "—";
+  };
+
   return (
     <PageContainer>
       <PageHeader
         title="Despesas"
         description="Contas a pagar. O status é calculado automaticamente a partir dos pagamentos registrados."
         actions={
-          <ExportButton<T>
+          <ExportButton<any>
             title="Despesas"
             filename="despesas"
-            rows={exportRows}
+            rows={exportRows as any}
             columns={[
-              { header: "Descrição", accessor: "descricao" },
-              { header: "Categoria", accessor: (r) => {
-                const cat = r.categoria_personalizada ?? r.categoria.replace(/_/g, " ");
-                return cat;
+              { header: "ID", accessor: (r: T) => r.id },
+              { header: "Descrição", accessor: (r: T) => r.descricao },
+              { header: "Categoria", accessor: (r: T) => r.categoria_personalizada ?? r.categoria.replace(/_/g, " ") },
+              { header: "Empresa", accessor: (r: T) => nomeById(empresas, r.empresa_id) },
+              { header: "Missão", accessor: (r: T) => nomeById(missoes, r.missao_id) },
+              { header: "Contrato", accessor: (r: T) => contratoLabel(r.contrato_id) },
+              { header: "Fornecedor", accessor: (r: T) => nomeById(fornecedores, r.fornecedor_id) },
+              { header: "Banco", accessor: (r: T) => r.banco ?? "—" },
+              { header: "Valor", accessor: (r: T) => formatCurrency(Number(r.valor)) },
+              { header: "Valor pago", accessor: (r: T) => formatCurrency(Number(r.valor_pago ?? 0)) },
+              { header: "Valor em aberto", accessor: (r: T) => formatCurrency(Math.max(0, Number(r.valor) - Number(r.valor_pago ?? 0))) },
+              { header: "Parcela", accessor: (r: T) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
+              { header: "Total de parcelas", accessor: (r: T) => r.parcelas },
+              { header: "Número da parcela", accessor: (r: T) => r.numero_parcela },
+              { header: "Frequência", accessor: (r: T) => r.frequencia },
+              { header: "Data de vencimento", accessor: (r: T) => formatDate(r.data_vencimento) },
+              { header: "Data de pagamento", accessor: (r: T) => formatDate(r.data_pagamento) },
+              { header: "Status", accessor: (r: T) => r.status },
+              { header: "Forma(s) de pagamento", accessor: (r: T) => {
+                const ps = pagamentosMap.get(r.id) ?? [];
+                if (ps.length === 0) return "—";
+                return Array.from(new Set(ps.map((p) => p.forma))).join(", ");
               } },
-              { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
-              { header: "Fornecedor", accessor: (r) => nomeById(fornecedores, r.fornecedor_id) },
-              { header: "Valor", accessor: (r) => formatCurrency(Number(r.valor)) },
-              { header: "Valor pago", accessor: (r) => formatCurrency(Number(r.valor_pago ?? 0)) },
-              { header: "Vencimento", accessor: (r) => formatDate(r.data_vencimento) },
-              { header: "Pagamento", accessor: (r) => formatDate(r.data_pagamento) },
-              { header: "Parcela", accessor: (r) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
-              { header: "Status", accessor: "status" },
+              { header: "Pagamentos registrados", accessor: (r: T) => {
+                const ps = pagamentosMap.get(r.id) ?? [];
+                if (ps.length === 0) return "—";
+                return ps.map((p) => `${formatDate(p.data)} ${formatCurrency(p.valor)} (${p.forma})`).join(" | ");
+              } },
+              { header: "Anexos", accessor: (r: T) => {
+                const ax = anexosMap.get(r.id) ?? [];
+                if (ax.length === 0) return "—";
+                return ax.map((a) => `${a.nome} [${a.path}]`).join(" | ");
+              } },
+              { header: "Observações", accessor: (r: T) => r.observacoes ?? "—" },
+              { header: "ID pai (parcela)", accessor: (r: T) => r.parent_id ?? "—" },
+              { header: "Criado em", accessor: (r: T) => formatDate((r as any).created_at) },
+              { header: "Atualizado em", accessor: (r: T) => formatDate((r as any).updated_at) },
             ]}
           />
         }
       />
+
       <KpiCard
         label="Total a pagar hoje"
         value={formatCurrency(totalHoje)}
