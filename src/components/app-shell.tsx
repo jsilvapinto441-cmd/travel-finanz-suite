@@ -27,6 +27,15 @@ const nav = [
   { to: "/admin", label: "Administração", icon: ShieldCheck, adminOnly: true },
 ] as const;
 
+// Barra inferior mobile — 4 módulos mais usados + botão Menu
+const bottomNav = [
+  { to: "/", label: "Início", icon: LayoutDashboard },
+  { to: "/recebiveis", label: "Receber", icon: ArrowDownLeft },
+  { to: "/despesas", label: "Pagar", icon: ArrowUpRight },
+  { to: "/contratos", label: "Contratos", icon: FileText },
+] as const;
+
+
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -123,8 +132,10 @@ export function AppShell() {
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
-        {/* Top bar mobile */}
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0">
+        {/* Top bar mobile — respeita safe-area do notch */}
+        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 pt-[env(safe-area-inset-top)] border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0"
+          style={{ height: "calc(3.5rem + env(safe-area-inset-top))" }}
+        >
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Abrir menu" className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent shrink-0">
@@ -133,7 +144,7 @@ export function AppShell() {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-[80vw] max-w-72 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border"
+              className="w-[85vw] max-w-80 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
             >
               <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
               <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border md:hidden">
@@ -147,7 +158,7 @@ export function AppShell() {
               {SidebarContent}
             </SheetContent>
           </Sheet>
-          <span className="absolute left-1/2 -translate-x-1/2 max-w-[50%] truncate text-sm font-semibold text-center pointer-events-none">
+          <span className="absolute left-1/2 -translate-x-1/2 top-[env(safe-area-inset-top)] h-14 flex items-center max-w-[50%] truncate text-sm font-semibold text-center pointer-events-none">
             {currentLabel}
           </span>
           <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
@@ -155,12 +166,51 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 overflow-y-auto">
+        <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
           <Outlet />
         </main>
+
+        {/* Bottom navigation — apenas mobile, respeita safe-area do iPhone */}
+        <nav
+          className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-5 border-t border-sidebar-border bg-sidebar/95 backdrop-blur-lg text-sidebar-foreground pb-[env(safe-area-inset-bottom)]"
+          aria-label="Navegação principal"
+        >
+          {bottomNav.map((item) => {
+            const active =
+              item.to === "/"
+                ? location.pathname === "/"
+                : location.pathname.startsWith(item.to);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 h-16 text-[10px] font-medium transition-colors active:bg-sidebar-accent/60",
+                  active
+                    ? "text-primary"
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground",
+                )}
+              >
+                <Icon className={cn("size-5", active && "drop-shadow-[0_0_6px_var(--color-primary)]")} />
+                <span className="truncate max-w-full px-1">{item.label}</span>
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="flex flex-col items-center justify-center gap-0.5 h-16 text-[10px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground active:bg-sidebar-accent/60 transition-colors"
+            aria-label="Abrir menu completo"
+          >
+            <Menu className="size-5" />
+            <span>Menu</span>
+          </button>
+        </nav>
       </div>
 
       <AssistantFAB />
     </div>
   );
 }
+

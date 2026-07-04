@@ -140,10 +140,10 @@ export function DataTable<T extends { id: string }>({
   return (
     <>
       <Card className="overflow-hidden">
-        <div className="p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between border-b">
-          <div className="flex flex-1 gap-2 items-center">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <div className="p-3 sm:p-4 flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center sm:justify-between border-b">
+          <div className="flex flex-1 gap-2 items-center min-w-0">
+            <div className="relative flex-1 sm:max-w-sm min-w-0">
+              <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <Input
                 className="pl-9"
                 placeholder="Buscar..."
@@ -153,17 +153,18 @@ export function DataTable<T extends { id: string }>({
             </div>
             {toolbar}
             {isFetching && !isLoading && (
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              <Loader2 className="size-4 animate-spin text-muted-foreground shrink-0" />
             )}
           </div>
           {canEdit && (
-            <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button onClick={openNew} className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="size-4 mr-1" /> Novo
             </Button>
           )}
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Vista tabela — apenas em sm+ (mantém experiência desktop intacta) */}
+        <div className="hidden sm:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -221,10 +222,71 @@ export function DataTable<T extends { id: string }>({
           </Table>
         </div>
 
+        {/* Vista cards — apenas mobile. Mesmos dados/render/columns, layout stacked. */}
+        <div className="sm:hidden divide-y">
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="p-4 space-y-2">
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+            ))
+          ) : pageRows.length === 0 ? (
+            <div className="text-center py-12 px-4 text-sm text-muted-foreground">
+              {emptyHint ?? "Nenhum registro encontrado."}
+            </div>
+          ) : pageRows.map((row) => (
+            <div key={row.id} className="p-4 active:bg-accent/40 transition-colors">
+              <dl className="space-y-1.5">
+                {columns.map((c, idx) => {
+                  const content = c.render ? c.render(row) : String((row as any)[c.key] ?? "—");
+                  // Primeira coluna vira o "título" do card em destaque
+                  if (idx === 0) {
+                    return (
+                      <div key={c.key} className="mb-2">
+                        <dd className="text-base font-semibold leading-tight break-words">
+                          {content}
+                        </dd>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={c.key} className="grid grid-cols-[minmax(0,90px)_minmax(0,1fr)] gap-2 items-start">
+                      <dt className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium pt-0.5">
+                        {c.label}
+                      </dt>
+                      <dd className="text-sm text-foreground break-words min-w-0 text-right">
+                        {content}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+              {canEdit && (
+                <div className="mt-3 pt-3 border-t flex justify-end gap-1">
+                  {extraRowActions?.(row)}
+                  <Button size="sm" variant="ghost" onClick={() => openEdit(row)} className="gap-1">
+                    <Pencil className="size-3.5" /> Editar
+                  </Button>
+                  {isAdmin && (
+                    <Button size="sm" variant="ghost"
+                      onClick={() => setDeletingId(row.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1">
+                      <Trash2 className="size-3.5" /> Excluir
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
         {total > pageSize && (
           <div className="flex items-center justify-between px-4 py-3 border-t text-sm">
-            <div className="text-muted-foreground">
-              {safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, total)} de {total}
+            <div className="text-muted-foreground text-xs sm:text-sm">
+              <span className="hidden sm:inline">{safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, total)} de </span>
+              {total} <span className="sm:hidden">itens</span>
             </div>
             <div className="flex items-center gap-2">
               <Button size="icon" variant="outline" disabled={safePage === 0}
@@ -242,6 +304,7 @@ export function DataTable<T extends { id: string }>({
           </div>
         )}
       </Card>
+
 
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditing(null); setValues(defaultValues); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

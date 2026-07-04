@@ -159,24 +159,61 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    -webkit-tap-highlight-color: transparent;
   }
 
   html {
     font-family: var(--font-sans);
     color-scheme: dark;
+    /* iOS momentum scroll + evita fontes minúsculas em landscape */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-feature-settings: "ss01", "cv11";
+    /* Nunca permitir scroll horizontal acidental no mobile */
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
+
+  /* Alvo de toque mínimo confortável para botões/ícones nos formulários */
+  @media (max-width: 640px) {
+    button, [role="button"], a.btn, input[type="button"], input[type="submit"] {
+      touch-action: manipulation;
+    }
+    /* Impede zoom do iOS ao focar inputs (< 16px dispara zoom) */
+    input, select, textarea {
+      font-size: 16px;
+    }
+  }
 }
+
+/* Safe-area helpers (iPhone notch / Dynamic Island / gesture bar) */
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+@utility pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+}
+@utility h-safe-bottom-nav {
+  height: calc(4rem + env(safe-area-inset-bottom));
+}
+
 
 /* Orange gradient — primary brand gradient */
 @utility gradient-emerald {

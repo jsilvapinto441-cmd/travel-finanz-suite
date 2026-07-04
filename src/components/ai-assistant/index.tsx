@@ -14,7 +14,7 @@ export function AssistantFAB() {
         onClick={() => setOpen(true)}
         aria-label="Abrir Assistente Financeiro IA"
         className={cn(
-          "fixed bottom-5 right-5 z-40",
+          "fixed right-4 z-40 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 md:right-5",
           "group flex items-center justify-center",
           "size-14 rounded-full",
           "bg-transparent",
