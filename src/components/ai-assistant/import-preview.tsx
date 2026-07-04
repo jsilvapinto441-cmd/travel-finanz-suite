@@ -19,33 +19,108 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { executeImport, listEmpresasQuick } from "@/lib/ai-assistant.functions";
+import {
+  executeImport,
+  listEmpresasQuick,
+  IMPORT_MODULES,
+  type ImportModule,
+} from "@/lib/ai-assistant.functions";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Trash2, Loader2, CheckCircle2 } from "lucide-react";
 
-export type ImportItem = {
-  tipo: "despesa" | "receita";
-  descricao: string;
-  valor: number;
-  data_vencimento?: string | null;
-  categoria?: string | null;
-  pagador_ou_fornecedor?: string | null;
-  observacoes?: string | null;
+export type ImportItem = Record<string, unknown>;
+
+const MODULE_LABEL: Record<ImportModule, string> = {
+  despesas: "Despesas",
+  recebiveis: "Recebíveis",
+  fornecedores: "Fornecedores",
+  funcionarios: "Funcionários",
+  empresas: "Empresas",
+  bancos: "Bancos",
+  missoes: "Missões",
+  contratos: "Contratos",
 };
+
+// Colunas exibidas na prévia por módulo (chave → label + tipo)
+const MODULE_COLUMNS: Record<
+  ImportModule,
+  { key: string; label: string; type: "text" | "number" | "date" }[]
+> = {
+  despesas: [
+    { key: "descricao", label: "Descrição", type: "text" },
+    { key: "categoria", label: "Categoria", type: "text" },
+    { key: "data_vencimento", label: "Vencimento", type: "date" },
+    { key: "valor", label: "Valor", type: "number" },
+  ],
+  recebiveis: [
+    { key: "pagador", label: "Pagador", type: "text" },
+    { key: "categoria", label: "Categoria", type: "text" },
+    { key: "data_vencimento", label: "Vencimento", type: "date" },
+    { key: "parcelas", label: "Parcelas", type: "number" },
+    { key: "valor_total", label: "Valor total", type: "number" },
+  ],
+  fornecedores: [
+    { key: "nome", label: "Nome", type: "text" },
+    { key: "cnpj", label: "CNPJ", type: "text" },
+    { key: "email", label: "E-mail", type: "text" },
+    { key: "telefone", label: "Telefone", type: "text" },
+    { key: "responsavel", label: "Responsável", type: "text" },
+  ],
+  funcionarios: [
+    { key: "nome", label: "Nome", type: "text" },
+    { key: "cargo", label: "Cargo", type: "text" },
+    { key: "salario", label: "Salário", type: "number" },
+    { key: "data_admissao", label: "Admissão", type: "date" },
+  ],
+  empresas: [
+    { key: "nome", label: "Nome", type: "text" },
+    { key: "cnpj", label: "CNPJ", type: "text" },
+    { key: "razao_social", label: "Razão social", type: "text" },
+  ],
+  bancos: [
+    { key: "banco", label: "Banco", type: "text" },
+    { key: "agencia", label: "Agência", type: "text" },
+    { key: "conta", label: "Conta", type: "text" },
+    { key: "titular", label: "Titular", type: "text" },
+    { key: "saldo_inicial", label: "Saldo", type: "number" },
+  ],
+  missoes: [
+    { key: "nome", label: "Nome", type: "text" },
+    { key: "descricao", label: "Descrição", type: "text" },
+  ],
+  contratos: [
+    { key: "cliente", label: "Cliente", type: "text" },
+    { key: "destino", label: "Destino", type: "text" },
+    { key: "data_inicio", label: "Início", type: "date" },
+    { key: "parcelas", label: "Parcelas", type: "number" },
+    { key: "valor", label: "Valor", type: "number" },
+  ],
+};
+
+// Módulos que aceitam vínculo com empresa
+const MODULES_WITH_EMPRESA: ImportModule[] = [
+  "despesas",
+  "recebiveis",
+  "funcionarios",
+  "contratos",
+];
 
 export function ImportPreviewDialog({
   open,
   onOpenChange,
+  module: initialModule,
   items,
   summary,
   onConfirmed,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  module: ImportModule;
   items: ImportItem[];
   summary?: string;
-  onConfirmed?: (result: { despesas: number; recebiveis: number }) => void;
+  onConfirmed?: (result: { inserted: number; module: ImportModule }) => void;
 }) {
+  const [module, setModule] = useState<ImportModule>(initialModule);
   const [rows, setRows] = useState<ImportItem[]>(items);
   const [empresaId, setEmpresaId] = useState<string>("");
   const listEmp = useServerFn(listEmpresasQuick);
@@ -54,32 +129,39 @@ export function ImportPreviewDialog({
   const empresasQ = useQuery({
     queryKey: ["ai-import-empresas"],
     queryFn: () => listEmp(),
-    enabled: open,
+    enabled: open && MODULES_WITH_EMPRESA.includes(module),
   });
 
-  const totals = rows.reduce(
-    (acc, r) => {
-      if (r.tipo === "despesa") acc.despesas += r.valor;
-      else acc.receitas += r.valor;
-      return acc;
-    },
-    { despesas: 0, receitas: 0 },
-  );
+  const columns = MODULE_COLUMNS[module];
+
+  const total = rows.reduce((sum, r) => {
+    const v = Number(r.valor ?? r.valor_total ?? r.salario ?? r.saldo_inicial ?? 0);
+    return sum + (Number.isFinite(v) ? v : 0);
+  }, 0);
 
   const mut = useMutation({
     mutationFn: async () => {
       const result = await execute({
         data: {
-          empresa_id: empresaId || undefined,
+          module,
+          empresa_id: MODULES_WITH_EMPRESA.includes(module)
+            ? empresaId || undefined
+            : undefined,
           items: rows,
         },
       });
       return result;
     },
     onSuccess: (r) => {
-      toast.success(
-        `Importado: ${r.despesas} despesa(s), ${r.recebiveis} receita(s).`,
-      );
+      if (r.errors.length) {
+        toast.warning(
+          `${r.inserted} registro(s) importado(s). Erros: ${r.errors.join(" · ")}`,
+        );
+      } else {
+        toast.success(
+          `${r.inserted} registro(s) importado(s) em ${MODULE_LABEL[r.module]}.`,
+        );
+      }
       onConfirmed?.(r);
       onOpenChange(false);
     },
@@ -99,122 +181,113 @@ export function ImportPreviewDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle2 className="size-5 text-primary" />
-            Prévia da importação
+            Prévia da importação · {MODULE_LABEL[module]}
           </DialogTitle>
           <DialogDescription>
             {summary ??
-              "Revise os lançamentos identificados antes de gravar no sistema."}
+              "Revise os registros identificados antes de gravar no sistema."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 py-2">
           <div className="rounded-md border border-border p-3">
-            <div className="text-xs text-muted-foreground">Registros</div>
-            <div className="text-lg font-semibold">{rows.length}</div>
-          </div>
-          <div className="rounded-md border border-border p-3">
-            <div className="text-xs text-muted-foreground">Total despesas</div>
-            <div className="text-lg font-semibold text-destructive">
-              {formatCurrency(totals.despesas)}
-            </div>
-          </div>
-          <div className="rounded-md border border-border p-3">
-            <div className="text-xs text-muted-foreground">Total receitas</div>
-            <div className="text-lg font-semibold text-primary">
-              {formatCurrency(totals.receitas)}
-            </div>
-          </div>
-          <div className="rounded-md border border-border p-3">
-            <div className="text-xs text-muted-foreground mb-1">Empresa</div>
-            <Select value={empresaId} onValueChange={setEmpresaId}>
+            <div className="text-xs text-muted-foreground mb-1">Módulo destino</div>
+            <Select
+              value={module}
+              onValueChange={(v) => setModule(v as ImportModule)}
+            >
               <SelectTrigger className="h-8">
-                <SelectValue placeholder="Selecionar (opcional)" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(empresasQ.data ?? []).map((e) => (
-                  <SelectItem key={e.id} value={e.id}>
-                    {e.nome}
+                {IMPORT_MODULES.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {MODULE_LABEL[m]}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+          <div className="rounded-md border border-border p-3">
+            <div className="text-xs text-muted-foreground">Registros</div>
+            <div className="text-lg font-semibold">{rows.length}</div>
+          </div>
+          <div className="rounded-md border border-border p-3">
+            <div className="text-xs text-muted-foreground">Total</div>
+            <div className="text-lg font-semibold text-primary">
+              {formatCurrency(total)}
+            </div>
+          </div>
+          {MODULES_WITH_EMPRESA.includes(module) && (
+            <div className="rounded-md border border-border p-3">
+              <div className="text-xs text-muted-foreground mb-1">Empresa</div>
+              <Select value={empresaId} onValueChange={setEmpresaId}>
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Selecionar (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(empresasQ.data ?? []).map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="max-h-[45vh] overflow-y-auto border border-border rounded-md">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 sticky top-0">
               <tr>
-                <th className="text-left p-2 font-medium">Tipo</th>
-                <th className="text-left p-2 font-medium">Descrição</th>
-                <th className="text-left p-2 font-medium">Categoria</th>
-                <th className="text-left p-2 font-medium">Vencimento</th>
-                <th className="text-right p-2 font-medium">Valor</th>
+                {columns.map((c) => (
+                  <th
+                    key={c.key}
+                    className={`text-${c.type === "number" ? "right" : "left"} p-2 font-medium`}
+                  >
+                    {c.label}
+                  </th>
+                ))}
                 <th className="w-8"></th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-6 text-center text-muted-foreground">
-                    Nenhum lançamento identificado.
+                  <td
+                    colSpan={columns.length + 1}
+                    className="p-6 text-center text-muted-foreground"
+                  >
+                    Nenhum registro identificado.
                   </td>
                 </tr>
               )}
               {rows.map((r, i) => (
                 <tr key={i} className="border-t border-border">
-                  <td className="p-1.5">
-                    <Select
-                      value={r.tipo}
-                      onValueChange={(v) =>
-                        updateRow(i, { tipo: v as "despesa" | "receita" })
-                      }
-                    >
-                      <SelectTrigger className="h-8 w-28">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="despesa">Despesa</SelectItem>
-                        <SelectItem value="receita">Receita</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td className="p-1.5">
-                    <Input
-                      value={r.descricao}
-                      className="h-8"
-                      onChange={(e) => updateRow(i, { descricao: e.target.value })}
-                    />
-                  </td>
-                  <td className="p-1.5">
-                    <Input
-                      value={r.categoria ?? ""}
-                      className="h-8 w-36"
-                      placeholder="outros"
-                      onChange={(e) => updateRow(i, { categoria: e.target.value })}
-                    />
-                  </td>
-                  <td className="p-1.5">
-                    <Input
-                      type="date"
-                      value={r.data_vencimento ?? ""}
-                      className="h-8 w-40"
-                      onChange={(e) =>
-                        updateRow(i, { data_vencimento: e.target.value || null })
-                      }
-                    />
-                  </td>
-                  <td className="p-1.5">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={r.valor}
-                      className="h-8 w-28 text-right"
-                      onChange={(e) =>
-                        updateRow(i, { valor: parseFloat(e.target.value) || 0 })
-                      }
-                    />
-                  </td>
+                  {columns.map((c) => {
+                    const v = r[c.key];
+                    return (
+                      <td key={c.key} className="p-1.5">
+                        <Input
+                          type={c.type === "date" ? "date" : c.type === "number" ? "number" : "text"}
+                          step={c.type === "number" ? "0.01" : undefined}
+                          value={v === null || v === undefined ? "" : String(v)}
+                          className={`h-8 ${c.type === "number" ? "text-right" : ""}`}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const next =
+                              c.type === "number"
+                                ? raw === ""
+                                  ? null
+                                  : parseFloat(raw)
+                                : raw || null;
+                            updateRow(i, { [c.key]: next });
+                          }}
+                        />
+                      </td>
+                    );
+                  })}
                   <td className="p-1.5">
                     <button
                       onClick={() => removeRow(i)}
