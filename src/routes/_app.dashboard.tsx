@@ -48,12 +48,13 @@ function Dashboard() {
   });
 
   const { data: recebiveis } = useQuery({
-    queryKey: ["dash-recebiveis", empresaId],
+    queryKey: ["dash-recebiveis", empresaId, missaoId],
     queryFn: async () => {
       let q = supabase
         .from("recebiveis")
-        .select("id,pagador,empresa_id,contrato_id,valor_total,valor_parcela,valor_pago,status,data_vencimento,data_recebimento");
+        .select("id,pagador,empresa_id,contrato_id,valor_total,valor_parcela,valor_pago,status,data_vencimento,data_recebimento,missao_id");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+      if (missaoId !== "all") q = q.eq("missao_id", missaoId);
       return (await q).data ?? [];
     },
     staleTime: 60_000,
