@@ -374,7 +374,7 @@ function ChatThreadView({
         abortRef.current = null;
       }
     },
-    [messages, threadId, authHeader],
+    [messages, threadId, authHeader, renameT, qc],
   );
 
   const stopStreaming = () => abortRef.current?.abort();
