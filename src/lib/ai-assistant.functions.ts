@@ -2,19 +2,20 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const CATEGORIAS = [
-  "aluguel",
-  "salarios",
-  "marketing",
+// Enum categoria_despesa do banco
+const CATEGORIAS_DESPESA = [
   "impostos",
-  "servicos",
-  "materiais",
-  "viagem",
-  "alimentacao",
-  "transporte",
-  "tecnologia",
+  "funcionarios",
+  "aluguel",
+  "luz",
+  "condominio",
+  "telefone",
+  "parcelamento_simples",
+  "avulso",
+  "fornecedor",
   "outros",
 ] as const;
+type CategoriaDespesa = (typeof CATEGORIAS_DESPESA)[number];
 
 export const listThreads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
