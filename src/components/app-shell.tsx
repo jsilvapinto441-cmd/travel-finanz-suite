@@ -159,6 +159,8 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      <AssistantFAB />
     </div>
   );
 }
