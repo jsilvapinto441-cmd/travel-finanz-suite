@@ -18,14 +18,15 @@ export function AssistantFAB() {
           "group flex items-center justify-center",
           "size-14 rounded-full",
           "bg-transparent",
-          "border border-white/[0.06]",
+          "border border-transparent",
           "transition-all duration-300 ease-out",
-          "hover:scale-[1.08] hover:bg-black/10",
+          "hover:scale-[1.08] hover:border-white/[0.08]",
           isProcessing && "animate-flash-pulse",
         )}
       >
         <span className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <span className="absolute inset-0 rounded-full bg-primary/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
 
         <Zap
           className={cn(
