@@ -42,6 +42,7 @@ export function AssistantFAB() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="right"
+          hideClose
           className="p-0 w-full sm:max-w-[440px] flex flex-col border-l border-border"
         >
           <SheetTitle className="sr-only">Assistente Financeiro IA</SheetTitle>
