@@ -288,10 +288,20 @@ function ChatThreadView({
         role: "assistant",
         content: "",
       };
+      const isFirstMessage = messages.length === 0;
       setMessages((prev) => [...prev, userMsg, asstMsg]);
       setInput("");
       setBusy(true);
       setStreaming(true);
+
+      // Auto-título no primeiro envio (como ChatGPT): usa a mensagem do usuário.
+      if (isFirstMessage && text.trim()) {
+        const rawTitle = text.trim().replace(/\s+/g, " ");
+        const title = rawTitle.length > 50 ? rawTitle.slice(0, 50) + "…" : rawTitle;
+        renameT({ data: { id: threadId, title } })
+          .then(() => qc.invalidateQueries({ queryKey: ["ai-threads"] }))
+          .catch(() => {});
+      }
 
       const controller = new AbortController();
       abortRef.current = controller;
