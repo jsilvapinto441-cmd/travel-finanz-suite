@@ -180,7 +180,8 @@ function Page() {
             <SelectField label="Fornecedor" value={values.fornecedor_id ?? ""} onChange={(v) => setValues({ ...values, fornecedor_id: v })}
               options={(fornecedores ?? []).map((f) => ({ value: f.id, label: f.nome }))} />
             <TextField label="Vencimento" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} type="date" />
-            <TextField label="Banco" value={values.banco} onChange={(v) => setValues({ ...values, banco: v })} />
+            <SelectField label="Banco" value={values.banco ?? ""} onChange={(v) => setValues({ ...values, banco: v })}
+              options={(contas ?? []).map((c) => ({ value: contaLabel(c), label: contaLabel(c) }))} />
             <div className="col-span-2">
               <TextField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} />
             </div>
