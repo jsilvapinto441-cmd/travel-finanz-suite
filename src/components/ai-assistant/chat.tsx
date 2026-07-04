@@ -189,8 +189,10 @@ export function AssistantChat({
           key={activeThreadId}
           threadId={activeThreadId}
           getMessages={(id) => getMsgs({ data: { threadId: id } })}
+          onProcessingChange={onProcessingChange}
         />
       ) : (
+
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div>
             <div className="text-sm text-muted-foreground mb-3">
