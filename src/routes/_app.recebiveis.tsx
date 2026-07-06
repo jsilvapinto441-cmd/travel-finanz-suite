@@ -30,6 +30,7 @@ import {
   CircleDollarSign, ExternalLink, Plus, Pencil, Trash2, Search, Loader2,
 } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
+import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
