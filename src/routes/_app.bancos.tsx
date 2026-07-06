@@ -24,6 +24,7 @@ import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Loader2, Landmark } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
+import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 
 export const Route = createFileRoute("/_app/bancos")({ component: Page });
 
