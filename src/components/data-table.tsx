@@ -19,6 +19,7 @@ import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight } from
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useDebounce } from "@/lib/use-debounce";
+import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 
 export interface Column<T> {
   key: string;
