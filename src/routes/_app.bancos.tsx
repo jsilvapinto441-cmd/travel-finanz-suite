@@ -24,6 +24,7 @@ import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Loader2, Landmark } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
+import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 
 export const Route = createFileRoute("/_app/bancos")({ component: Page });
 
@@ -69,13 +70,12 @@ function Page() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("contas_bancarias" as any).delete().eq("id", id);
-      if (error) throw error;
+      await deleteRecord("contas_bancarias", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["contas-bancarias"] });
       qc.invalidateQueries({ queryKey: ["saldos-bancarios"] });
-      toast.success("Conta excluída");
+      toast.success("Conta excluída com sucesso");
       setDeletingId(null);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -242,16 +242,16 @@ function Page() {
       <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir conta bancária</AlertDialogTitle>
-            <AlertDialogDescription>
-              Todas as movimentações vinculadas a esta conta também serão removidas. Esta ação é irreversível.
-            </AlertDialogDescription>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>{CONFIRM_DELETE_MESSAGE}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={remove.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
+              disabled={remove.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deletingId && remove.mutate(deletingId)}>
+              onClick={(e) => { e.preventDefault(); if (deletingId) remove.mutate(deletingId); }}>
+              {remove.isPending && <Loader2 className="size-4 animate-spin mr-2" />}
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

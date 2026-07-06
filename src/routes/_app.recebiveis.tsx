@@ -30,6 +30,7 @@ import {
   CircleDollarSign, ExternalLink, Plus, Pencil, Trash2, Search, Loader2,
 } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
+import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
@@ -260,12 +261,11 @@ function Page() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("recebiveis").delete().eq("id", id);
-      if (error) throw error;
+      await deleteRecord("recebiveis", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["recebiveis"] });
-      toast.success("Excluído");
+      toast.success("Registro excluído com sucesso");
       setDeletingId(null);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -454,13 +454,15 @@ function Page() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogDescription>{CONFIRM_DELETE_MESSAGE}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={remove.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
+              disabled={remove.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deletingId && remove.mutate(deletingId)}>
+              onClick={(e) => { e.preventDefault(); if (deletingId) remove.mutate(deletingId); }}>
+              {remove.isPending && <Loader2 className="size-4 animate-spin mr-2" />}
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

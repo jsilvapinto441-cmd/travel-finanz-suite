@@ -19,6 +19,7 @@ import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight } from
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useDebounce } from "@/lib/use-debounce";
+import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 
 export interface Column<T> {
   key: string;
@@ -114,12 +115,11 @@ export function DataTable<T extends { id: string }>({
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from(table as any).delete().eq("id", id);
-      if (error) throw error;
+      await deleteRecord(table, id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });
-      toast.success("Excluído");
+      toast.success("Registro excluído com sucesso");
       setDeletingId(null);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -329,13 +329,15 @@ export function DataTable<T extends { id: string }>({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogDescription>{CONFIRM_DELETE_MESSAGE}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={remove.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
+              disabled={remove.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deletingId && remove.mutate(deletingId)}>
+              onClick={(e) => { e.preventDefault(); if (deletingId) remove.mutate(deletingId); }}>
+              {remove.isPending && <Loader2 className="size-4 animate-spin mr-2" />}
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
