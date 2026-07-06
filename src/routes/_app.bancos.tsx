@@ -39,6 +39,13 @@ function Page() {
   const { canEdit, isAdmin } = useAuth();
   const { data, isLoading } = useContasBancarias();
   const { data: saldos } = useSaldosBancarios();
+  const { data: empresas } = useQuery({
+    queryKey: ["empresas-por-conta"],
+    queryFn: async () => (await supabase.from("empresas").select("id, nome, conta_bancaria_id").order("nome")).data ?? [],
+    staleTime: 30_000,
+  });
+
+  const empresaPorConta = new Map((empresas ?? []).map((e) => [e.conta_bancaria_id, e.nome]));
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ContaBancaria | null>(null);
