@@ -242,16 +242,16 @@ function Page() {
       <AlertDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir conta bancária</AlertDialogTitle>
-            <AlertDialogDescription>
-              Todas as movimentações vinculadas a esta conta também serão removidas. Esta ação é irreversível.
-            </AlertDialogDescription>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>{CONFIRM_DELETE_MESSAGE}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={remove.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
+              disabled={remove.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deletingId && remove.mutate(deletingId)}>
+              onClick={(e) => { e.preventDefault(); if (deletingId) remove.mutate(deletingId); }}>
+              {remove.isPending && <Loader2 className="size-4 animate-spin mr-2" />}
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
