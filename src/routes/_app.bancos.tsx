@@ -178,6 +178,11 @@ function Page() {
                       {c.agencia ? `Ag. ${c.agencia}` : "—"} · {c.conta ? `CC ${c.conta}${c.digito ? "-" + c.digito : ""}` : "—"}
                     </div>
                     <div className="text-[11px] text-muted-foreground capitalize mt-0.5">{c.tipo}</div>
+                    {empresaPorConta.get(c.id) && (
+                      <div className="text-[11px] text-primary font-medium mt-0.5 truncate">
+                        {empresaPorConta.get(c.id)}
+                      </div>
+                    )}
                   </div>
                   {canEdit && (
                     <div className="flex gap-1 shrink-0">
