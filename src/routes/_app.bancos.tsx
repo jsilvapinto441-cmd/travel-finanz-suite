@@ -70,13 +70,12 @@ function Page() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("contas_bancarias" as any).delete().eq("id", id);
-      if (error) throw error;
+      await deleteRecord("contas_bancarias", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["contas-bancarias"] });
       qc.invalidateQueries({ queryKey: ["saldos-bancarios"] });
-      toast.success("Conta excluída");
+      toast.success("Conta excluída com sucesso");
       setDeletingId(null);
     },
     onError: (e: Error) => toast.error(e.message),
