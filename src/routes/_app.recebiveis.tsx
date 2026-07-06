@@ -261,12 +261,11 @@ function Page() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("recebiveis").delete().eq("id", id);
-      if (error) throw error;
+      await deleteRecord("recebiveis", id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["recebiveis"] });
-      toast.success("Excluído");
+      toast.success("Registro excluído com sucesso");
       setDeletingId(null);
     },
     onError: (e: Error) => toast.error(e.message),
