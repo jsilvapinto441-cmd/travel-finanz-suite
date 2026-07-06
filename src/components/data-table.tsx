@@ -115,12 +115,11 @@ export function DataTable<T extends { id: string }>({
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from(table as any).delete().eq("id", id);
-      if (error) throw error;
+      await deleteRecord(table, id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });
-      toast.success("Excluído");
+      toast.success("Registro excluído com sucesso");
       setDeletingId(null);
     },
     onError: (e: Error) => toast.error(e.message),
