@@ -454,13 +454,15 @@ function Page() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogDescription>{CONFIRM_DELETE_MESSAGE}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={remove.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
+              disabled={remove.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deletingId && remove.mutate(deletingId)}>
+              onClick={(e) => { e.preventDefault(); if (deletingId) remove.mutate(deletingId); }}>
+              {remove.isPending && <Loader2 className="size-4 animate-spin mr-2" />}
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
