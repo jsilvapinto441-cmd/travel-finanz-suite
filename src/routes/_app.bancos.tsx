@@ -119,6 +119,7 @@ function Page() {
               rows={data ?? []}
               columns={[
                 { header: "Banco", accessor: "banco" },
+                { header: "Empresa", accessor: (r) => empresaPorConta.get(r.id) ?? "—" },
                 { header: "Tipo", accessor: "tipo" },
                 { header: "Agência", accessor: "agencia" },
                 { header: "Conta", accessor: (r) => r.conta ? `${r.conta}${r.digito ? "-" + r.digito : ""}` : "" },
