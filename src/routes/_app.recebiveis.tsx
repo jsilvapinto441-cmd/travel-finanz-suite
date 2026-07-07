@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
 import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
+import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
+import { useContasBancarias, contaLabel } from "@/lib/bancos";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
@@ -243,11 +245,12 @@ function Page() {
 
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
+      const clean = sanitizeUpdatePayload("recebiveis", payload);
       if (editing) {
-        const { error } = await supabase.from("recebiveis").update(payload as any).eq("id", editing.id);
+        const { error } = await supabase.from("recebiveis").update(clean as any).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("recebiveis").insert(payload as any);
+        const { error } = await supabase.from("recebiveis").insert(clean as any);
         if (error) throw error;
       }
     },

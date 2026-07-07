@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useDebounce } from "@/lib/use-debounce";
 import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
+import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
 
 export interface Column<T> {
   key: string;
@@ -98,10 +99,12 @@ export function DataTable<T extends { id: string }>({
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
       if (editing) {
-        const { error } = await supabase.from(table as any).update(payload as any).eq("id", editing.id);
+        const clean = sanitizeUpdatePayload(table, payload);
+        const { error } = await supabase.from(table as any).update(clean as any).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from(table as any).insert(payload as any);
+        const clean = sanitizeUpdatePayload(table, payload);
+        const { error } = await supabase.from(table as any).insert(clean as any);
         if (error) throw error;
       }
     },
