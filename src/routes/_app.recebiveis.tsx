@@ -67,13 +67,14 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 function RecebivelForm({
-  values, setValues, empresas, missoes, contratos,
+  values, setValues, empresas, missoes, contratos, contas,
 }: {
   values: Partial<T>;
   setValues: React.Dispatch<React.SetStateAction<Partial<T>>>;
   empresas: { id: string; nome: string }[];
   missoes: { id: string; nome: string }[];
   contratos: { id: string; numero: string | null; cliente: string }[];
+  contas: { id: string; banco: string; agencia: string | null; conta: string | null; digito: string | null; tipo: string; chave_pix: string | null; titular: string | null; documento: string | null; saldo_inicial: number; ativo: boolean; observacoes: string | null }[];
 }) {
   const linkedContrato = useMemo(
     () => contratos.find((c) => c.id === values.contrato_id) ?? null,
@@ -120,7 +121,12 @@ function RecebivelForm({
 
       <div className="grid grid-cols-2 gap-3">
         <TextField label="Nº Fatura" value={values.numero_fatura} onChange={(v) => setValues({ ...values, numero_fatura: v })} />
-        <TextField label="Banco" value={values.banco} onChange={(v) => setValues({ ...values, banco: v })} />
+        <SelectField
+          label="Banco"
+          value={values.banco ?? ""}
+          onChange={(v) => setValues({ ...values, banco: v })}
+          options={contas.map((c) => ({ value: contaLabel(c as any), label: contaLabel(c as any) }))}
+        />
         <TextField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} />
         <ReadOnlyField label="Valor pago (registrado)" value={formatCurrency(Number(values.valor_pago ?? 0))} />
         <div className="col-span-2">
