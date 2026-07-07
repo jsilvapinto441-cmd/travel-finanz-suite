@@ -35,6 +35,7 @@ type T = {
   data_fim: string | null;
   status: string;
   observacoes: string | null;
+  metodo_pagamento: string | null;
 };
 
 const TIPOS = [
@@ -56,6 +57,17 @@ const STATUS = [
   { value: "aguardando_pagamento", label: "Aguardando pagamento" },
   { value: "concluido", label: "Concluído" },
   { value: "cancelado", label: "Cancelado" },
+];
+const METODOS_PAGAMENTO = [
+  { value: "boleto", label: "Boleto" },
+  { value: "pix", label: "Pix" },
+  { value: "link_pagamento", label: "Link de pagamento" },
+  { value: "cartao_credito", label: "Cartão de crédito" },
+  { value: "deposito", label: "Depósito" },
+  { value: "ted", label: "TED" },
+  { value: "transferencia_bancaria", label: "Transferência bancária" },
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "cheque", label: "Cheque" },
 ];
 
 function pad(n: number) { return n.toString().padStart(2, "0"); }
@@ -207,6 +219,7 @@ function ContratoForm({
           <NumberField label="Dia do vencimento" value={values.dia_vencimento ?? 10} onChange={(v) => setValues({ ...values, dia_vencimento: Math.min(31, Math.max(1, Math.floor(v || 1))) })} step="1" />
           <TextField label="Vigência — início" type="date" value={values.data_inicio} onChange={(v) => setValues({ ...values, data_inicio: v })} />
           <TextField label="Vigência — fim" type="date" value={values.data_fim} onChange={(v) => setValues({ ...values, data_fim: v })} />
+          <SelectField label="Método de pagamento" value={values.metodo_pagamento ?? ""} onChange={(v) => setValues({ ...values, metodo_pagamento: v })} options={METODOS_PAGAMENTO} />
         </div>
 
         {preview.length > 0 && (

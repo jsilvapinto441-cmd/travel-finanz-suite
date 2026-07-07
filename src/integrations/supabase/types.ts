@@ -212,6 +212,7 @@ export type Database = {
           empresa_id: string | null
           frequencia: string
           id: string
+          metodo_pagamento: string | null
           missao_id: string | null
           num_passageiros: number | null
           numero: string | null
@@ -239,6 +240,7 @@ export type Database = {
           empresa_id?: string | null
           frequencia?: string
           id?: string
+          metodo_pagamento?: string | null
           missao_id?: string | null
           num_passageiros?: number | null
           numero?: string | null
@@ -266,6 +268,7 @@ export type Database = {
           empresa_id?: string | null
           frequencia?: string
           id?: string
+          metodo_pagamento?: string | null
           missao_id?: string | null
           num_passageiros?: number | null
           numero?: string | null

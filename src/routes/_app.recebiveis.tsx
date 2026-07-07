@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
 import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
+import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
+import { useContasBancarias, contaLabel } from "@/lib/bancos";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
@@ -65,13 +67,14 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 function RecebivelForm({
-  values, setValues, empresas, missoes, contratos,
+  values, setValues, empresas, missoes, contratos, contas,
 }: {
   values: Partial<T>;
   setValues: React.Dispatch<React.SetStateAction<Partial<T>>>;
   empresas: { id: string; nome: string }[];
   missoes: { id: string; nome: string }[];
   contratos: { id: string; numero: string | null; cliente: string }[];
+  contas: { id: string; banco: string; agencia: string | null; conta: string | null; digito: string | null; tipo: string; chave_pix: string | null; titular: string | null; documento: string | null; saldo_inicial: number; ativo: boolean; observacoes: string | null }[];
 }) {
   const linkedContrato = useMemo(
     () => contratos.find((c) => c.id === values.contrato_id) ?? null,
@@ -118,7 +121,12 @@ function RecebivelForm({
 
       <div className="grid grid-cols-2 gap-3">
         <TextField label="Nº Fatura" value={values.numero_fatura} onChange={(v) => setValues({ ...values, numero_fatura: v })} />
-        <TextField label="Banco" value={values.banco} onChange={(v) => setValues({ ...values, banco: v })} />
+        <SelectField
+          label="Banco"
+          value={values.banco ?? ""}
+          onChange={(v) => setValues({ ...values, banco: v })}
+          options={contas.map((c) => ({ value: contaLabel(c as any), label: contaLabel(c as any) }))}
+        />
         <TextField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} />
         <ReadOnlyField label="Valor pago (registrado)" value={formatCurrency(Number(values.valor_pago ?? 0))} />
         <div className="col-span-2">
@@ -201,6 +209,7 @@ function Page() {
   const { data: empresas } = useEmpresas();
   const { data: missoes } = useMissoes();
   const { data: contratos } = useContratos();
+  const { data: contas } = useContasBancarias({ ativas: true });
 
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 200);
@@ -243,11 +252,12 @@ function Page() {
 
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
+      const clean = sanitizeUpdatePayload("recebiveis", payload);
       if (editing) {
-        const { error } = await supabase.from("recebiveis").update(payload as any).eq("id", editing.id);
+        const { error } = await supabase.from("recebiveis").update(clean as any).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("recebiveis").insert(payload as any);
+        const { error } = await supabase.from("recebiveis").insert(clean as any);
         if (error) throw error;
       }
     },
@@ -438,7 +448,7 @@ function Page() {
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); upsert.mutate(values); }} className="space-y-4">
             <RecebivelForm values={values} setValues={setValues}
-              empresas={empresas ?? []} missoes={missoes ?? []} contratos={contratos ?? []} />
+              empresas={empresas ?? []} missoes={missoes ?? []} contratos={contratos ?? []} contas={contas ?? []} />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={upsert.isPending} className="bg-primary text-primary-foreground hover:bg-primary/90">
