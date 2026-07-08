@@ -185,9 +185,6 @@ function ContratoForm({
             value={values.data_retorno}
             onChange={(v) => setValues({ ...values, data_retorno: v })}
           />
-        </div>
-        <div className="grid grid-cols-1 gap-4 hidden">
-          <span />
           <Field label="Nº de passageiros">
             <div className="relative">
               <Users className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
