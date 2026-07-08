@@ -17,6 +17,7 @@ import { Route as ApiAiTranscribeRouteImport } from './routes/api/ai-transcribe'
 import { Route as ApiAiExtractRouteImport } from './routes/api/ai-extract'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
 import { Route as AppRecebiveisRouteImport } from './routes/_app.recebiveis'
+import { Route as AppPrestadoresMeiRouteImport } from './routes/_app.prestadores-mei'
 import { Route as AppMissoesRouteImport } from './routes/_app.missoes'
 import { Route as AppLucroRouteImport } from './routes/_app.lucro'
 import { Route as AppFuncionariosRouteImport } from './routes/_app.funcionarios'
@@ -26,6 +27,7 @@ import { Route as AppEmpresasRouteImport } from './routes/_app.empresas'
 import { Route as AppDespesasRouteImport } from './routes/_app.despesas'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppContratosRouteImport } from './routes/_app.contratos'
+import { Route as AppConsolidadorasRouteImport } from './routes/_app.consolidadoras'
 import { Route as AppConfiguracoesRouteImport } from './routes/_app.configuracoes'
 import { Route as AppBancosRouteImport } from './routes/_app.bancos'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
@@ -68,6 +70,11 @@ const ApiAiChatRoute = ApiAiChatRouteImport.update({
 const AppRecebiveisRoute = AppRecebiveisRouteImport.update({
   id: '/recebiveis',
   path: '/recebiveis',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPrestadoresMeiRoute = AppPrestadoresMeiRouteImport.update({
+  id: '/prestadores-mei',
+  path: '/prestadores-mei',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMissoesRoute = AppMissoesRouteImport.update({
@@ -115,6 +122,11 @@ const AppContratosRoute = AppContratosRouteImport.update({
   path: '/contratos',
   getParentRoute: () => AppRoute,
 } as any)
+const AppConsolidadorasRoute = AppConsolidadorasRouteImport.update({
+  id: '/consolidadoras',
+  path: '/consolidadoras',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
@@ -143,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AppAdminRoute
   '/bancos': typeof AppBancosRoute
   '/configuracoes': typeof AppConfiguracoesRoute
+  '/consolidadoras': typeof AppConsolidadorasRoute
   '/contratos': typeof AppContratosRoute
   '/dashboard': typeof AppDashboardRoute
   '/despesas': typeof AppDespesasRoute
@@ -152,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/funcionarios': typeof AppFuncionariosRoute
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
+  '/prestadores-mei': typeof AppPrestadoresMeiRoute
   '/recebiveis': typeof AppRecebiveisRoute
   '/api/ai-chat': typeof ApiAiChatRoute
   '/api/ai-extract': typeof ApiAiExtractRoute
@@ -165,6 +179,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AppAdminRoute
   '/bancos': typeof AppBancosRoute
   '/configuracoes': typeof AppConfiguracoesRoute
+  '/consolidadoras': typeof AppConsolidadorasRoute
   '/contratos': typeof AppContratosRoute
   '/dashboard': typeof AppDashboardRoute
   '/despesas': typeof AppDespesasRoute
@@ -174,6 +189,7 @@ export interface FileRoutesByTo {
   '/funcionarios': typeof AppFuncionariosRoute
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
+  '/prestadores-mei': typeof AppPrestadoresMeiRoute
   '/recebiveis': typeof AppRecebiveisRoute
   '/api/ai-chat': typeof ApiAiChatRoute
   '/api/ai-extract': typeof ApiAiExtractRoute
@@ -189,6 +205,7 @@ export interface FileRoutesById {
   '/_app/admin': typeof AppAdminRoute
   '/_app/bancos': typeof AppBancosRoute
   '/_app/configuracoes': typeof AppConfiguracoesRoute
+  '/_app/consolidadoras': typeof AppConsolidadorasRoute
   '/_app/contratos': typeof AppContratosRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/despesas': typeof AppDespesasRoute
@@ -198,6 +215,7 @@ export interface FileRoutesById {
   '/_app/funcionarios': typeof AppFuncionariosRoute
   '/_app/lucro': typeof AppLucroRoute
   '/_app/missoes': typeof AppMissoesRoute
+  '/_app/prestadores-mei': typeof AppPrestadoresMeiRoute
   '/_app/recebiveis': typeof AppRecebiveisRoute
   '/api/ai-chat': typeof ApiAiChatRoute
   '/api/ai-extract': typeof ApiAiExtractRoute
@@ -213,6 +231,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/bancos'
     | '/configuracoes'
+    | '/consolidadoras'
     | '/contratos'
     | '/dashboard'
     | '/despesas'
@@ -222,6 +241,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/lucro'
     | '/missoes'
+    | '/prestadores-mei'
     | '/recebiveis'
     | '/api/ai-chat'
     | '/api/ai-extract'
@@ -235,6 +255,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/bancos'
     | '/configuracoes'
+    | '/consolidadoras'
     | '/contratos'
     | '/dashboard'
     | '/despesas'
@@ -244,6 +265,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/lucro'
     | '/missoes'
+    | '/prestadores-mei'
     | '/recebiveis'
     | '/api/ai-chat'
     | '/api/ai-extract'
@@ -258,6 +280,7 @@ export interface FileRouteTypes {
     | '/_app/admin'
     | '/_app/bancos'
     | '/_app/configuracoes'
+    | '/_app/consolidadoras'
     | '/_app/contratos'
     | '/_app/dashboard'
     | '/_app/despesas'
@@ -267,6 +290,7 @@ export interface FileRouteTypes {
     | '/_app/funcionarios'
     | '/_app/lucro'
     | '/_app/missoes'
+    | '/_app/prestadores-mei'
     | '/_app/recebiveis'
     | '/api/ai-chat'
     | '/api/ai-extract'
@@ -343,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRecebiveisRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/prestadores-mei': {
+      id: '/_app/prestadores-mei'
+      path: '/prestadores-mei'
+      fullPath: '/prestadores-mei'
+      preLoaderRoute: typeof AppPrestadoresMeiRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/missoes': {
       id: '/_app/missoes'
       path: '/missoes'
@@ -406,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContratosRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/consolidadoras': {
+      id: '/_app/consolidadoras'
+      path: '/consolidadoras'
+      fullPath: '/consolidadoras'
+      preLoaderRoute: typeof AppConsolidadorasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/configuracoes': {
       id: '/_app/configuracoes'
       path: '/configuracoes'
@@ -441,6 +479,7 @@ interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppBancosRoute: typeof AppBancosRoute
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
+  AppConsolidadorasRoute: typeof AppConsolidadorasRoute
   AppContratosRoute: typeof AppContratosRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDespesasRoute: typeof AppDespesasRoute
@@ -450,6 +489,7 @@ interface AppRouteChildren {
   AppFuncionariosRoute: typeof AppFuncionariosRoute
   AppLucroRoute: typeof AppLucroRoute
   AppMissoesRoute: typeof AppMissoesRoute
+  AppPrestadoresMeiRoute: typeof AppPrestadoresMeiRoute
   AppRecebiveisRoute: typeof AppRecebiveisRoute
 }
 
@@ -457,6 +497,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppBancosRoute: AppBancosRoute,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
+  AppConsolidadorasRoute: AppConsolidadorasRoute,
   AppContratosRoute: AppContratosRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDespesasRoute: AppDespesasRoute,
@@ -466,6 +507,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFuncionariosRoute: AppFuncionariosRoute,
   AppLucroRoute: AppLucroRoute,
   AppMissoesRoute: AppMissoesRoute,
+  AppPrestadoresMeiRoute: AppPrestadoresMeiRoute,
   AppRecebiveisRoute: AppRecebiveisRoute,
 }
 
