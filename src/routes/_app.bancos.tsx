@@ -242,16 +242,14 @@ function Page() {
                       <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
                         <Pencil className="size-3.5" />
                       </Button>
-                      {isAdmin && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setDeletingId(c.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      )}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setDeletingId(c.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
                     </div>
                   )}
                 </div>

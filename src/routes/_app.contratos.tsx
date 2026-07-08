@@ -179,9 +179,12 @@ function ContratoForm({
               }}
             />
           </Field>
-          <Field label="Data de retorno (calculada)">
-            <Input type="date" value={values.data_retorno ?? ""} readOnly className="bg-muted/40 cursor-not-allowed" />
-          </Field>
+          <TextField
+            label="Data de retorno"
+            type="date"
+            value={values.data_retorno}
+            onChange={(v) => setValues({ ...values, data_retorno: v })}
+          />
           <Field label="Nº de passageiros">
             <div className="relative">
               <Users className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -214,7 +217,7 @@ function ContratoForm({
           <Field label="Saldo a parcelar">
             <Input value={formatCurrency(saldo)} readOnly className="bg-muted/40 cursor-not-allowed" />
           </Field>
-          <NumberField label="Parcelas (saldo)" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: Math.max(1, Math.floor(v || 1)) })} step="1" />
+          <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: Math.max(1, Math.floor(v || 1)) })} step="1" />
           <SelectField label="Frequência" value={freq} onChange={(v) => setValues({ ...values, frequencia: v })} options={FREQS} />
           <NumberField label="Dia do vencimento" value={values.dia_vencimento ?? 10} onChange={(v) => setValues({ ...values, dia_vencimento: Math.min(31, Math.max(1, Math.floor(v || 1))) })} step="1" />
           <TextField label="Vigência — início" type="date" value={values.data_inicio} onChange={(v) => setValues({ ...values, data_inicio: v })} />

@@ -54,7 +54,7 @@ export function DataTable<T extends { id: string }>({
   pageSize = 50, extraRowActions,
 }: DataTableProps<T>) {
   const qc = useQueryClient();
-  const { canEdit, isAdmin } = useAuth();
+  const { canEdit } = useAuth();
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 200);
   const [page, setPage] = useState(0);
@@ -209,13 +209,11 @@ export function DataTable<T extends { id: string }>({
                         <Button size="icon" variant="ghost" onClick={() => openEdit(row)}>
                           <Pencil className="size-3.5" />
                         </Button>
-                        {isAdmin && (
-                          <Button size="icon" variant="ghost"
-                            onClick={() => setDeletingId(row.id)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        )}
+                        <Button size="icon" variant="ghost"
+                          onClick={() => setDeletingId(row.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                          <Trash2 className="size-3.5" />
+                        </Button>
                       </div>
                     </TableCell>
                   )}
@@ -272,13 +270,11 @@ export function DataTable<T extends { id: string }>({
                   <Button size="sm" variant="ghost" onClick={() => openEdit(row)} className="gap-1">
                     <Pencil className="size-3.5" /> Editar
                   </Button>
-                  {isAdmin && (
-                    <Button size="sm" variant="ghost"
-                      onClick={() => setDeletingId(row.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1">
-                      <Trash2 className="size-3.5" /> Excluir
-                    </Button>
-                  )}
+                  <Button size="sm" variant="ghost"
+                    onClick={() => setDeletingId(row.id)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1">
+                    <Trash2 className="size-3.5" /> Excluir
+                  </Button>
                 </div>
               )}
             </div>
