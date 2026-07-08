@@ -22,6 +22,8 @@ const nav = [
   { to: "/recebiveis", label: "Recebíveis", icon: ArrowDownLeft },
   { to: "/despesas", label: "Despesas", icon: ArrowUpRight },
   { to: "/funcionarios", label: "Funcionários", icon: Users },
+  { to: "/prestadores-mei", label: "Prestadores de Serviço (MEI)", icon: Users },
+  { to: "/consolidadoras", label: "Consolidadoras", icon: Truck },
   { to: "/fornecedores", label: "Fornecedores", icon: Truck },
   { to: "/lucro", label: "Lucros", icon: TrendingUp },
   { to: "/admin", label: "Administração", icon: ShieldCheck, adminOnly: true },
