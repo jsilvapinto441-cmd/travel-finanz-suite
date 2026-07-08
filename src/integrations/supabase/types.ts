@@ -322,7 +322,10 @@ export type Database = {
           fornecedor_id: string | null
           frequencia: string
           id: string
+          metodo_pagamento: string | null
           missao_id: string | null
+          nome_empresa: string | null
+          numero_nota_fiscal: string | null
           numero_parcela: number
           observacoes: string | null
           owner_id: string
@@ -346,7 +349,10 @@ export type Database = {
           fornecedor_id?: string | null
           frequencia?: string
           id?: string
+          metodo_pagamento?: string | null
           missao_id?: string | null
+          nome_empresa?: string | null
+          numero_nota_fiscal?: string | null
           numero_parcela?: number
           observacoes?: string | null
           owner_id?: string
@@ -370,7 +376,10 @@ export type Database = {
           fornecedor_id?: string | null
           frequencia?: string
           id?: string
+          metodo_pagamento?: string | null
           missao_id?: string | null
+          nome_empresa?: string | null
+          numero_nota_fiscal?: string | null
           numero_parcela?: number
           observacoes?: string | null
           owner_id?: string
@@ -1051,6 +1060,8 @@ export type Database = {
         | "avulso"
         | "fornecedor"
         | "outros"
+        | "prestador_mei"
+        | "consolidadora"
       forma_pagamento:
         | "pix"
         | "transferencia"
@@ -1215,6 +1226,8 @@ export const Constants = {
         "avulso",
         "fornecedor",
         "outros",
+        "prestador_mei",
+        "consolidadora",
       ],
       forma_pagamento: ["pix", "transferencia", "boleto", "cartao", "dinheiro"],
       status_contrato: [
