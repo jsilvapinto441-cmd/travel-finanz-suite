@@ -185,7 +185,7 @@ export function PagamentoDialog(props: Props) {
     window.open(data.signedUrl, "_blank");
   }
 
-  const contaOptions = (contas ?? []).map((c) => ({ value: c.id, label: contaLabel(c) }));
+  const contaOptions = (contas ?? []).map((c) => ({ value: c.id, label: c.label }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
