@@ -211,7 +211,12 @@ function Page() {
   const { data: empresas } = useEmpresas();
   const { data: missoes } = useMissoes();
   const { data: contratos } = useContratos();
-  const { data: contas } = useContasBancarias({ ativas: true });
+  const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
+
+  const [empresaFilter, setEmpresaFilter] = useState("");
+  const [missaoFilter, setMissaoFilter] = useState("");
+  const [dataDe, setDataDe] = useState("");
+  const [dataAte, setDataAte] = useState("");
 
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 200);
