@@ -7,7 +7,7 @@ import { TextField, CurrencyField, SelectField } from "@/components/form-fields"
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { ExportButton } from "@/components/export-button";
-import { useContasBancarias, contaLabel } from "@/lib/bancos";
+import { useContasBancariasComEmpresa } from "@/lib/bancos";
 
 export const Route = createFileRoute("/_app/consolidadoras")({ component: Page });
 
@@ -43,7 +43,7 @@ type T = {
 };
 
 function Page() {
-  const { data: contas } = useContasBancarias({ ativas: true });
+  const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
 
   const { data: allRows = [] } = useQuery({
     queryKey: ["despesas-export-consolidadora"],
@@ -110,7 +110,7 @@ function Page() {
               options={METODOS_PAGAMENTO} />
             <SelectField label="Banco" value={values.banco ?? ""}
               onChange={(v) => setValues({ ...values, banco: v })}
-              options={(contas ?? []).map((c) => ({ value: contaLabel(c), label: contaLabel(c) }))} />
+              options={(contas ?? []).map((c) => ({ value: c.label, label: c.label }))} />
             <TextField label="Data de vencimento" type="date" value={values.data_vencimento}
               onChange={(v) => setValues({ ...values, data_vencimento: v })} />
           </div>

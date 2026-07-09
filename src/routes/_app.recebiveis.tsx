@@ -32,7 +32,9 @@ import {
 import { ExportButton } from "@/components/export-button";
 import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
-import { useContasBancarias, contaLabel } from "@/lib/bancos";
+import { useContasBancariasComEmpresa, type ContaBancariaComEmpresa } from "@/lib/bancos";
+import { EmpresaFilter } from "@/components/empresa-filter";
+import { Target } from "lucide-react";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
@@ -74,7 +76,7 @@ function RecebivelForm({
   empresas: { id: string; nome: string }[];
   missoes: { id: string; nome: string }[];
   contratos: { id: string; numero: string | null; cliente: string }[];
-  contas: { id: string; banco: string; agencia: string | null; conta: string | null; digito: string | null; tipo: string; chave_pix: string | null; titular: string | null; documento: string | null; saldo_inicial: number; ativo: boolean; observacoes: string | null }[];
+  contas: ContaBancariaComEmpresa[];
 }) {
   const linkedContrato = useMemo(
     () => contratos.find((c) => c.id === values.contrato_id) ?? null,
@@ -125,7 +127,7 @@ function RecebivelForm({
           label="Banco"
           value={values.banco ?? ""}
           onChange={(v) => setValues({ ...values, banco: v })}
-          options={contas.map((c) => ({ value: contaLabel(c as any), label: contaLabel(c as any) }))}
+          options={contas.map((c) => ({ value: c.label, label: c.label }))}
         />
         <TextField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} />
         <ReadOnlyField label="Valor pago (registrado)" value={formatCurrency(Number(values.valor_pago ?? 0))} />
@@ -209,7 +211,12 @@ function Page() {
   const { data: empresas } = useEmpresas();
   const { data: missoes } = useMissoes();
   const { data: contratos } = useContratos();
-  const { data: contas } = useContasBancarias({ ativas: true });
+  const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
+
+  const [empresaFilter, setEmpresaFilter] = useState("");
+  const [missaoFilter, setMissaoFilter] = useState("");
+  const [dataDe, setDataDe] = useState("");
+  const [dataAte, setDataAte] = useState("");
 
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 200);
@@ -236,14 +243,20 @@ function Page() {
   });
 
   const filtered = useMemo(() => {
-    const rows = data ?? [];
-    if (!search) return rows;
-    const q = search.toLowerCase();
-    return rows.filter((r) =>
-      (r.pagador ?? "").toLowerCase().includes(q) ||
-      (r.numero_fatura ?? "").toLowerCase().includes(q)
-    );
-  }, [data, search]);
+    let rows = data ?? [];
+    if (empresaFilter) rows = rows.filter((r) => r.empresa_id === empresaFilter);
+    if (missaoFilter) rows = rows.filter((r) => r.missao_id === missaoFilter);
+    if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
+    if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
+    if (search) {
+      const q = search.toLowerCase();
+      rows = rows.filter((r) =>
+        (r.pagador ?? "").toLowerCase().includes(q) ||
+        (r.numero_fatura ?? "").toLowerCase().includes(q)
+      );
+    }
+    return rows;
+  }, [data, search, empresaFilter, missaoFilter, dataDe, dataAte]);
 
   const groups = useMemo(
     () => buildGroups(filtered, contratos ?? []),
@@ -311,22 +324,39 @@ function Page() {
       />
 
       <Card className="overflow-hidden">
-        <div className="p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between border-b">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Buscar por cliente ou fatura..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
+        <div className="p-4 flex flex-col gap-3 border-b">
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Buscar por cliente ou fatura..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+            </div>
+            {canEdit && (
+              <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="size-4 mr-1" /> Novo
+              </Button>
+            )}
           </div>
-          {canEdit && (
-            <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="size-4 mr-1" /> Novo
-            </Button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <EmpresaFilter value={empresaFilter} onChange={setEmpresaFilter} />
+            <div className="flex items-center gap-2 min-w-[200px]">
+              <Target className="size-4 text-muted-foreground shrink-0" />
+              <SelectField
+                label=""
+                value={missaoFilter === "" ? "__all__" : missaoFilter}
+                onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
+                options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]}
+              />
+            </div>
+            <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" title="Vencimento — de" />
+            <Input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" title="Vencimento — até" />
+          </div>
         </div>
+
 
         {isLoading ? (
           <div className="p-4 space-y-2">

@@ -46,12 +46,13 @@ interface DataTableProps<T extends { id: string }> {
   emptyHint?: string;
   pageSize?: number;
   extraRowActions?: (row: T) => ReactNode;
+  onAfterSave?: (savedId: string, values: Partial<T>, mode: "create" | "update") => Promise<void> | void;
 }
 
 export function DataTable<T extends { id: string }>({
   table, title, columns, searchFields = [], renderForm, defaultValues = {},
   orderBy = "created_at", ascending = false, filter, toolbar, emptyHint,
-  pageSize = 50, extraRowActions,
+  pageSize = 50, extraRowActions, onAfterSave,
 }: DataTableProps<T>) {
   const qc = useQueryClient();
   const { canEdit } = useAuth();
@@ -98,14 +99,19 @@ export function DataTable<T extends { id: string }>({
 
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
+      const clean = sanitizeUpdatePayload(table, payload);
       if (editing) {
-        const clean = sanitizeUpdatePayload(table, payload);
-        const { error } = await supabase.from(table as any).update(clean as any).eq("id", editing.id);
+        const { data: updated, error } = await supabase
+          .from(table as any).update(clean as any).eq("id", editing.id)
+          .select("id").single();
         if (error) throw error;
+        if (onAfterSave) await onAfterSave((updated as any).id, payload, "update");
       } else {
-        const clean = sanitizeUpdatePayload(table, payload);
-        const { error } = await supabase.from(table as any).insert(clean as any);
+        const { data: inserted, error } = await supabase
+          .from(table as any).insert(clean as any)
+          .select("id").single();
         if (error) throw error;
+        if (onAfterSave) await onAfterSave((inserted as any).id, payload, "create");
       }
     },
     onSuccess: () => {

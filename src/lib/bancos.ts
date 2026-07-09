@@ -56,6 +56,47 @@ export function contaLabel(c: ContaBancaria): string {
   return parts.join(" · ");
 }
 
+export function contaLabelComEmpresa(c: ContaBancaria, empresaNome?: string | null): string {
+  const base = contaLabel(c);
+  return empresaNome ? `${base}  |  Empresa: ${empresaNome}` : base;
+}
+
+export type ContaBancariaComEmpresa = ContaBancaria & {
+  empresaNome: string | null;
+  label: string;
+};
+
+/**
+ * Hook que retorna contas bancárias já enriquecidas com o nome da empresa
+ * vinculada (via empresas.conta_bancaria_id) e um `label` pronto para exibição.
+ */
+export function useContasBancariasComEmpresa(opts: { ativas?: boolean } = {}) {
+  return useQuery({
+    queryKey: ["contas-bancarias-empresa", opts.ativas ?? "all"],
+    queryFn: async () => {
+      let q = supabase.from("contas_bancarias" as any).select("*").order("banco");
+      if (opts.ativas) q = q.eq("ativo", true);
+      const { data: contas, error } = await q;
+      if (error) throw error;
+      const { data: empresas } = await supabase
+        .from("empresas")
+        .select("id, nome, conta_bancaria_id");
+      const empresaPorConta = new Map<string, string>();
+      for (const e of (empresas ?? []) as any[]) {
+        if (e.conta_bancaria_id) empresaPorConta.set(e.conta_bancaria_id, e.nome);
+      }
+      return ((contas ?? []) as unknown as ContaBancaria[]).map((c) => {
+        const empresaNome = empresaPorConta.get(c.id) ?? null;
+        return {
+          ...c,
+          empresaNome,
+          label: contaLabelComEmpresa(c, empresaNome),
+        } as ContaBancariaComEmpresa;
+      });
+    },
+  });
+}
+
 export function useSaldosBancarios() {
   return useQuery({
     queryKey: ["saldos-bancarios"],

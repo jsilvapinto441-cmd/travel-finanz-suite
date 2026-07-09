@@ -10,7 +10,8 @@ import { useEmpresas, useMissoes, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { ExportButton } from "@/components/export-button";
-import { CalendarDays, Plane, Sparkles, Users } from "lucide-react";
+import { EmpresaFilter } from "@/components/empresa-filter";
+import { CalendarDays, Plane, Sparkles, Users, Target } from "lucide-react";
 
 export const Route = createFileRoute("/_app/contratos")({ component: Page });
 
@@ -36,6 +37,7 @@ type T = {
   status: string;
   observacoes: string | null;
   metodo_pagamento: string | null;
+  __overrides?: { i: number; valor?: number; venc?: string }[];
 };
 
 const TIPOS = [
@@ -97,8 +99,7 @@ function addDays(base: string, days: number): string {
 }
 
 function ContratoForm({
-  values, setValues,
-  empresas, missoes,
+  values, setValues, empresas, missoes,
 }: {
   values: Partial<T>;
   setValues: React.Dispatch<React.SetStateAction<Partial<T>>>;
@@ -113,7 +114,7 @@ function ContratoForm({
   const dia = Math.min(31, Math.max(1, Number(values.dia_vencimento ?? 10)));
   const inicio = values.data_inicio ?? "";
 
-  const preview = useMemo(() => {
+  const previewBase = useMemo(() => {
     if (saldo <= 0 || !inicio) return [] as { i: number; valor: number; venc: string }[];
     const cents = Math.round(saldo * 100);
     const per = Math.floor(cents / parcelas);
@@ -134,14 +135,23 @@ function ContratoForm({
     }));
   }, [saldo, parcelas, freq, dia, inicio]);
 
-  // Quantidade de dias da viagem (calcula data_retorno automaticamente)
+  const overrides = values.__overrides ?? [];
+  const getOverride = (i: number) => overrides.find((o) => o.i === i);
+  const setOverride = (i: number, patch: Partial<{ valor: number; venc: string }>) => {
+    const others = overrides.filter((o) => o.i !== i);
+    const current = getOverride(i) ?? { i };
+    const merged = { ...current, ...patch, i };
+    // remover se ficar vazio
+    const isEmpty = merged.valor === undefined && !merged.venc;
+    setValues({ ...values, __overrides: isEmpty ? others : [...others, merged] });
+  };
+
   const qtdDias = values.data_embarque && values.data_retorno
     ? Math.max(1, diffDays(values.data_embarque, values.data_retorno))
     : null;
 
   return (
     <div className="space-y-6">
-      {/* Cliente & Viagem */}
       <div className="rounded-lg border border-border bg-card/40 p-4 space-y-4">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-primary font-semibold">
           <Plane className="size-3.5" /> Cliente & viagem
@@ -150,9 +160,7 @@ function ContratoForm({
           <TextField label="Cliente" value={values.cliente} onChange={(v) => setValues({ ...values, cliente: v })} required />
           <TextField label="Destino" value={values.destino} onChange={(v) => setValues({ ...values, destino: v })} />
           <TextField
-            label="Data de embarque"
-            type="date"
-            value={values.data_embarque}
+            label="Data de embarque" type="date" value={values.data_embarque}
             onChange={(v) => {
               const dias = qtdDias ?? null;
               const novo: Partial<T> = { ...values, data_embarque: v };
@@ -161,30 +169,15 @@ function ContratoForm({
             }}
           />
           <Field label="Quantidade de dias">
-            <Input
-              type="number"
-              min={1}
-              value={qtdDias ?? ""}
-              placeholder="Ex: 7"
+            <Input type="number" min={1} value={qtdDias ?? ""} placeholder="Ex: 7"
               onChange={(e) => {
                 const raw = e.target.value;
-                if (raw === "") {
-                  setValues({ ...values, data_retorno: null });
-                  return;
-                }
+                if (raw === "") { setValues({ ...values, data_retorno: null }); return; }
                 const d = Math.max(1, Math.floor(Number(raw) || 1));
-                if (values.data_embarque) {
-                  setValues({ ...values, data_retorno: addDays(values.data_embarque, d) });
-                }
-              }}
-            />
+                if (values.data_embarque) setValues({ ...values, data_retorno: addDays(values.data_embarque, d) });
+              }} />
           </Field>
-          <TextField
-            label="Data de retorno"
-            type="date"
-            value={values.data_retorno}
-            onChange={(v) => setValues({ ...values, data_retorno: v })}
-          />
+          <TextField label="Data de retorno" type="date" value={values.data_retorno} onChange={(v) => setValues({ ...values, data_retorno: v })} />
           <Field label="Nº de passageiros">
             <div className="relative">
               <Users className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -196,7 +189,6 @@ function ContratoForm({
         </div>
       </div>
 
-      {/* Vínculos */}
       <div className="grid grid-cols-2 gap-4">
         <SelectField label="Empresa" value={values.empresa_id ?? ""} onChange={(v) => setValues({ ...values, empresa_id: v })}
           options={empresas.map((e) => ({ value: e.id, label: e.nome }))} />
@@ -206,7 +198,6 @@ function ContratoForm({
         <SelectField label="Status" value={values.status ?? "ativo"} onChange={(v) => setValues({ ...values, status: v })} options={STATUS} />
       </div>
 
-      {/* Financeiro */}
       <div className="rounded-lg border border-border bg-card/40 p-4 space-y-4">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-primary font-semibold">
           <Sparkles className="size-3.5" /> Plano financeiro
@@ -225,11 +216,11 @@ function ContratoForm({
           <SelectField label="Método de pagamento" value={values.metodo_pagamento ?? ""} onChange={(v) => setValues({ ...values, metodo_pagamento: v })} options={METODOS_PAGAMENTO} />
         </div>
 
-        {preview.length > 0 && (
+        {previewBase.length > 0 && (
           <div className="rounded-lg border border-border overflow-hidden animate-in fade-in slide-in-from-top-1">
             <div className="flex items-center justify-between px-4 py-2 bg-muted/40 border-b border-border">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-primary font-semibold">
-                <CalendarDays className="size-3.5" /> Preview das parcelas
+                <CalendarDays className="size-3.5" /> Preview das parcelas (editável)
               </div>
               <div className="text-xs text-muted-foreground tabular-nums">
                 {entrada > 0 && <>Entrada {formatCurrency(entrada)} + </>}{parcelas}× saldo {formatCurrency(saldo)}
@@ -251,17 +242,36 @@ function ContratoForm({
                     <td className="px-3 py-2 tabular-nums">{formatDate(inicio || null)}</td>
                   </tr>
                 )}
-                {preview.map((p) => (
-                  <tr key={p.i} className="border-t border-border/60 hover:bg-muted/20 transition-colors">
-                    <td className="px-3 py-2 text-muted-foreground tabular-nums">{p.i}/{parcelas}</td>
-                    <td className="px-3 py-2 text-right font-medium tabular-nums">{formatCurrency(p.valor)}</td>
-                    <td className="px-3 py-2 tabular-nums">{formatDate(p.venc)}</td>
-                  </tr>
-                ))}
+                {previewBase.map((p) => {
+                  const ov = getOverride(p.i);
+                  const vAtual = ov?.valor ?? p.valor;
+                  const vencAtual = ov?.venc ?? p.venc;
+                  return (
+                    <tr key={p.i} className="border-t border-border/60 hover:bg-muted/20 transition-colors">
+                      <td className="px-3 py-2 text-muted-foreground tabular-nums">{p.i}/{parcelas}</td>
+                      <td className="px-3 py-2 text-right">
+                        <Input
+                          type="number" step="0.01" min="0"
+                          value={vAtual}
+                          onChange={(e) => setOverride(p.i, { valor: Number(e.target.value) })}
+                          className="h-8 text-right tabular-nums max-w-[140px] ml-auto"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <Input
+                          type="date"
+                          value={vencAtual}
+                          onChange={(e) => setOverride(p.i, { venc: e.target.value })}
+                          className="h-8 max-w-[170px]"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             <div className="px-4 py-2 text-[11px] text-muted-foreground border-t border-border bg-muted/20">
-              Os recebíveis serão criados/atualizados automaticamente ao salvar. Parcelas com pagamento registrado são preservadas.
+              Edite valores e datas conforme necessário. As alterações são aplicadas às parcelas geradas ao salvar. Parcelas com pagamento registrado são preservadas.
             </div>
           </div>
         )}
@@ -276,7 +286,11 @@ function Page() {
   const { data: empresas } = useEmpresas();
   const { data: missoes } = useMissoes();
 
-  // Recebíveis para contar parcelas pagas por contrato (info na lista)
+  const [empresaFilter, setEmpresaFilter] = useState("");
+  const [missaoFilter, setMissaoFilter] = useState("");
+  const [dataDe, setDataDe] = useState("");
+  const [dataAte, setDataAte] = useState("");
+
   const { data: recebiveis } = useQuery({
     queryKey: ["recebiveis-min-por-contrato"],
     queryFn: async () =>
@@ -304,6 +318,28 @@ function Page() {
     staleTime: 30_000,
   });
 
+  const applyOverrides = async (contratoId: string, overrides?: T["__overrides"]) => {
+    if (!overrides || overrides.length === 0) return;
+    // Buscar parcelas existentes (numero_parcela >= 1, ignora entrada 0)
+    const { data: parcelas } = await supabase
+      .from("recebiveis")
+      .select("id, numero_parcela, valor_pago")
+      .eq("contrato_id", contratoId);
+    if (!parcelas) return;
+    for (const ov of overrides) {
+      const alvo = parcelas.find((p: any) => Number(p.numero_parcela) === Number(ov.i));
+      if (!alvo) continue;
+      // Preservar parcelas já pagas
+      if (Number((alvo as any).valor_pago ?? 0) > 0) continue;
+      const patch: Record<string, unknown> = {};
+      if (ov.valor !== undefined) { patch.valor_total = ov.valor; patch.valor_parcela = ov.valor; }
+      if (ov.venc) patch.data_vencimento = ov.venc;
+      if (Object.keys(patch).length > 0) {
+        await supabase.from("recebiveis").update(patch as any).eq("id", (alvo as any).id);
+      }
+    }
+  };
+
   return (
     <PageContainer>
       <PageHeader
@@ -318,6 +354,7 @@ function Page() {
               { header: "Nº", accessor: "numero" },
               { header: "Cliente", accessor: "cliente" },
               { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
+              { header: "Missão", accessor: (r) => nomeById(missoes, r.missao_id) },
               { header: "Destino", accessor: "destino" },
               { header: "Embarque", accessor: (r) => formatDate(r.data_embarque) },
               { header: "Retorno", accessor: (r) => formatDate(r.data_retorno) },
@@ -336,12 +373,30 @@ function Page() {
         title="Contrato"
         searchFields={["cliente", "numero", "destino"]}
         defaultValues={{
-          status: "ativo",
-          valor: 0,
-          valor_entrada: 0,
-          parcelas: 1,
-          frequencia: "mensal",
-          dia_vencimento: 10,
+          status: "ativo", valor: 0, valor_entrada: 0, parcelas: 1,
+          frequencia: "mensal", dia_vencimento: 10,
+        }}
+        filter={(row) =>
+          (!empresaFilter || row.empresa_id === empresaFilter) &&
+          (!missaoFilter || row.missao_id === missaoFilter) &&
+          (!dataDe || (row.data_inicio ?? "") >= dataDe) &&
+          (!dataAte || (row.data_inicio ?? "") <= dataAte)
+        }
+        toolbar={
+          <div className="flex flex-wrap items-center gap-2">
+            <EmpresaFilter value={empresaFilter} onChange={setEmpresaFilter} />
+            <div className="flex items-center gap-2 min-w-[180px]">
+              <Target className="size-4 text-muted-foreground shrink-0" />
+              <SelectField label="" value={missaoFilter === "" ? "__all__" : missaoFilter}
+                onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
+                options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]} />
+            </div>
+            <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" placeholder="De" title="De" />
+            <Input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" placeholder="Até" title="Até" />
+          </div>
+        }
+        onAfterSave={async (savedId, values) => {
+          await applyOverrides(savedId, (values as T).__overrides);
         }}
         columns={[
           { key: "numero", label: "Nº" },

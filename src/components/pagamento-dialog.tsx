@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { CurrencyField, SelectField, TextField, TextAreaField, Field } from "@/components/form-fields";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
-import { useContasBancarias, contaLabel } from "@/lib/bancos";
+import { useContasBancariasComEmpresa } from "@/lib/bancos";
 import { Link } from "@tanstack/react-router";
 
 type Recebivel = {
@@ -62,7 +62,7 @@ export function PagamentoDialog(props: Props) {
   const { open, onOpenChange } = props;
   const qc = useQueryClient();
   const { isAdmin, user } = useAuth();
-  const { data: contas } = useContasBancarias({ ativas: true });
+  const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
 
   const mode: "recebivel" | "despesa" = "despesa" in props && props.despesa !== undefined ? "despesa" : "recebivel";
   const target = mode === "despesa" ? (props as any).despesa : (props as any).recebivel;
@@ -185,7 +185,7 @@ export function PagamentoDialog(props: Props) {
     window.open(data.signedUrl, "_blank");
   }
 
-  const contaOptions = (contas ?? []).map((c) => ({ value: c.id, label: contaLabel(c) }));
+  const contaOptions = (contas ?? []).map((c) => ({ value: c.id, label: c.label }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
