@@ -43,7 +43,7 @@ type T = {
 };
 
 function Page() {
-  const { data: contas } = useContasBancarias({ ativas: true });
+  const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
 
   const { data: allRows = [] } = useQuery({
     queryKey: ["despesas-export-consolidadora"],
