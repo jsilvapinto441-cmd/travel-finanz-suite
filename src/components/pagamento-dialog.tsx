@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { CurrencyField, SelectField, TextField, TextAreaField, Field } from "@/components/form-fields";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
-import { useContasBancarias, contaLabel } from "@/lib/bancos";
+import { useContasBancariasComEmpresa } from "@/lib/bancos";
 import { Link } from "@tanstack/react-router";
 
 type Recebivel = {
