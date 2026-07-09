@@ -62,7 +62,7 @@ export function PagamentoDialog(props: Props) {
   const { open, onOpenChange } = props;
   const qc = useQueryClient();
   const { isAdmin, user } = useAuth();
-  const { data: contas } = useContasBancarias({ ativas: true });
+  const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
 
   const mode: "recebivel" | "despesa" = "despesa" in props && props.despesa !== undefined ? "despesa" : "recebivel";
   const target = mode === "despesa" ? (props as any).despesa : (props as any).recebivel;
