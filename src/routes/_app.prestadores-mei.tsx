@@ -110,7 +110,7 @@ function Page() {
               options={METODOS_PAGAMENTO} />
             <SelectField label="Banco" value={values.banco ?? ""}
               onChange={(v) => setValues({ ...values, banco: v })}
-              options={(contas ?? []).map((c) => ({ value: contaLabel(c), label: contaLabel(c) }))} />
+              options={(contas ?? []).map((c) => ({ value: c.label, label: c.label }))} />
             <TextField label="Data de vencimento" type="date" value={values.data_vencimento}
               onChange={(v) => setValues({ ...values, data_vencimento: v })} />
           </div>
