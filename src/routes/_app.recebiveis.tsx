@@ -324,22 +324,39 @@ function Page() {
       />
 
       <Card className="overflow-hidden">
-        <div className="p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between border-b">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Buscar por cliente ou fatura..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
+        <div className="p-4 flex flex-col gap-3 border-b">
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Buscar por cliente ou fatura..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+            </div>
+            {canEdit && (
+              <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="size-4 mr-1" /> Novo
+              </Button>
+            )}
           </div>
-          {canEdit && (
-            <Button onClick={openNew} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="size-4 mr-1" /> Novo
-            </Button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <EmpresaFilter value={empresaFilter} onChange={setEmpresaFilter} />
+            <div className="flex items-center gap-2 min-w-[200px]">
+              <Target className="size-4 text-muted-foreground shrink-0" />
+              <SelectField
+                label=""
+                value={missaoFilter === "" ? "__all__" : missaoFilter}
+                onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
+                options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]}
+              />
+            </div>
+            <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" title="Vencimento — de" />
+            <Input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" title="Vencimento — até" />
+          </div>
         </div>
+
 
         {isLoading ? (
           <div className="p-4 space-y-2">
