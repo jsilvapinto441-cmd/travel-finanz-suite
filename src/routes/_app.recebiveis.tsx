@@ -76,7 +76,7 @@ function RecebivelForm({
   empresas: { id: string; nome: string }[];
   missoes: { id: string; nome: string }[];
   contratos: { id: string; numero: string | null; cliente: string }[];
-  contas: { id: string; banco: string; agencia: string | null; conta: string | null; digito: string | null; tipo: string; chave_pix: string | null; titular: string | null; documento: string | null; saldo_inicial: number; ativo: boolean; observacoes: string | null }[];
+  contas: ContaBancariaComEmpresa[];
 }) {
   const linkedContrato = useMemo(
     () => contratos.find((c) => c.id === values.contrato_id) ?? null,
