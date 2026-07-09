@@ -243,14 +243,20 @@ function Page() {
   });
 
   const filtered = useMemo(() => {
-    const rows = data ?? [];
-    if (!search) return rows;
-    const q = search.toLowerCase();
-    return rows.filter((r) =>
-      (r.pagador ?? "").toLowerCase().includes(q) ||
-      (r.numero_fatura ?? "").toLowerCase().includes(q)
-    );
-  }, [data, search]);
+    let rows = data ?? [];
+    if (empresaFilter) rows = rows.filter((r) => r.empresa_id === empresaFilter);
+    if (missaoFilter) rows = rows.filter((r) => r.missao_id === missaoFilter);
+    if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
+    if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
+    if (search) {
+      const q = search.toLowerCase();
+      rows = rows.filter((r) =>
+        (r.pagador ?? "").toLowerCase().includes(q) ||
+        (r.numero_fatura ?? "").toLowerCase().includes(q)
+      );
+    }
+    return rows;
+  }, [data, search, empresaFilter, missaoFilter, dataDe, dataAte]);
 
   const groups = useMemo(
     () => buildGroups(filtered, contratos ?? []),
