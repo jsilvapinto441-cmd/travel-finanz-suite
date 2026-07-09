@@ -32,7 +32,9 @@ import {
 import { ExportButton } from "@/components/export-button";
 import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
-import { useContasBancarias, contaLabel } from "@/lib/bancos";
+import { useContasBancariasComEmpresa, type ContaBancariaComEmpresa } from "@/lib/bancos";
+import { EmpresaFilter } from "@/components/empresa-filter";
+import { Target } from "lucide-react";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
