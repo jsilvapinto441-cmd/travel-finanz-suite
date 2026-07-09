@@ -46,6 +46,7 @@ interface DataTableProps<T extends { id: string }> {
   emptyHint?: string;
   pageSize?: number;
   extraRowActions?: (row: T) => ReactNode;
+  onAfterSave?: (savedId: string, values: Partial<T>, mode: "create" | "update") => Promise<void> | void;
 }
 
 export function DataTable<T extends { id: string }>({
