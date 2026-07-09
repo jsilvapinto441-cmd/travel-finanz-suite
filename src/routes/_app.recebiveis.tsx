@@ -127,7 +127,7 @@ function RecebivelForm({
           label="Banco"
           value={values.banco ?? ""}
           onChange={(v) => setValues({ ...values, banco: v })}
-          options={contas.map((c) => ({ value: contaLabel(c as any), label: contaLabel(c as any) }))}
+          options={contas.map((c) => ({ value: c.label, label: c.label }))}
         />
         <TextField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v })} />
         <ReadOnlyField label="Valor pago (registrado)" value={formatCurrency(Number(values.valor_pago ?? 0))} />
