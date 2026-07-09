@@ -7,7 +7,7 @@ import { TextField, CurrencyField, SelectField } from "@/components/form-fields"
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { ExportButton } from "@/components/export-button";
-import { useContasBancarias, contaLabel } from "@/lib/bancos";
+import { useContasBancariasComEmpresa } from "@/lib/bancos";
 
 export const Route = createFileRoute("/_app/prestadores-mei")({ component: Page });
 
