@@ -52,7 +52,7 @@ interface DataTableProps<T extends { id: string }> {
 export function DataTable<T extends { id: string }>({
   table, title, columns, searchFields = [], renderForm, defaultValues = {},
   orderBy = "created_at", ascending = false, filter, toolbar, emptyHint,
-  pageSize = 50, extraRowActions,
+  pageSize = 50, extraRowActions, onAfterSave,
 }: DataTableProps<T>) {
   const qc = useQueryClient();
   const { canEdit } = useAuth();
