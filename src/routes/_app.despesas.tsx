@@ -401,10 +401,39 @@ function Page() {
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); upsert.mutate(values); }} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <SelectField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v, categoria_personalizada: v === "outros" ? values.categoria_personalizada : null })} options={CATEGORIAS} />
+              <SelectField label="Categoria" value={values.categoria}
+                onChange={(v) => setValues({
+                  ...values,
+                  categoria: v,
+                  categoria_personalizada: v === "outros" ? values.categoria_personalizada : null,
+                  // limpa vínculos de outras categorias ao trocar
+                  funcionario_id: v === "funcionarios" ? values.funcionario_id : null,
+                  prestador_mei_id: v === "prestador_mei" ? values.prestador_mei_id : null,
+                  consolidadora_id: v === "consolidadora" ? values.consolidadora_id : null,
+                  fornecedor_id: v === "fornecedor" ? values.fornecedor_id : null,
+                })}
+                options={CATEGORIAS} />
               {values.categoria === "outros" && (
                 <TextField label="Categoria personalizada" value={values.categoria_personalizada ?? ""} onChange={(v) => setValues({ ...values, categoria_personalizada: v })} />
               )}
+              {(() => {
+                const cat = values.categoria ?? "";
+                const meta = DYNAMIC_CATEGORIES[cat];
+                if (!meta) return null;
+                const options =
+                  meta.field === "funcionario_id" ? (funcionarios ?? []) :
+                  meta.field === "prestador_mei_id" ? (prestadoresMei ?? []) :
+                  meta.field === "consolidadora_id" ? (consolidadoras ?? []) :
+                  (fornecedores ?? []);
+                return (
+                  <SelectField
+                    label={meta.label}
+                    value={(values as any)[meta.field] ?? ""}
+                    onChange={(v) => setValues({ ...values, [meta.field]: v } as Partial<T>)}
+                    options={options.map((o: { id: string; nome: string }) => ({ value: o.id, label: o.nome }))}
+                  />
+                );
+              })()}
               <CurrencyField label="Valor (por parcela)" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
               <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
               <SelectField label="Frequência" value={values.frequencia ?? "mensal"} onChange={(v) => setValues({ ...values, frequencia: v })}
@@ -418,8 +447,7 @@ function Page() {
                 options={(missoes ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
               <SelectField label="Contrato" value={values.contrato_id ?? ""} onChange={(v) => setValues({ ...values, contrato_id: v })}
                 options={(contratos ?? []).map((c) => ({ value: c.id, label: `${c.numero ?? ""} ${c.cliente}` }))} />
-              <SelectField label="Fornecedor" value={values.fornecedor_id ?? ""} onChange={(v) => setValues({ ...values, fornecedor_id: v })}
-                options={(fornecedores ?? []).map((f) => ({ value: f.id, label: f.nome }))} />
+
               <TextField label="Vencimento" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} type="date" />
               <SelectField label="Banco" value={values.banco ?? ""} onChange={(v) => setValues({ ...values, banco: v })}
                 options={(contas ?? []).map((c) => ({ value: c.label, label: c.label }))} />
