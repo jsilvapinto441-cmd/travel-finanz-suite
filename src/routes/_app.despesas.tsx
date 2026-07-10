@@ -137,7 +137,11 @@ function Page() {
   const { data: missoes } = useMissoes();
   const { data: contratos } = useContratos();
   const { data: fornecedores } = useFornecedores();
+  const { data: funcionarios } = useFuncionarios();
+  const { data: prestadoresMei } = usePrestadoresMei();
+  const { data: consolidadoras } = useConsolidadoras();
   const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
+
 
   const [empresaFilter, setEmpresaFilter] = useState("");
   const [missaoFilter, setMissaoFilter] = useState("");
