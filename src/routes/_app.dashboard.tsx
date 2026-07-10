@@ -144,15 +144,17 @@ function Dashboard() {
     const totalOperacional = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
     const despesasPagas = desps.reduce((s, d) => s + Number(d.valor_pago ?? 0), 0);
 
-    // 5b. CUSTOS COM FUNCIONÁRIOS — folha mensal dos ativos (recorrente)
+    // 5b. CUSTOS COM FUNCIONÁRIOS — cadastros de funcionários NÃO geram despesa
+    //     automática. O custo só entra quando uma despesa é lançada em Despesas.
     const funcAtivos = (funcionarios ?? []).filter((f: any) => f.ativo);
-    const folhaMensal = funcAtivos.reduce((s, f: any) => s + custoTotalFuncionario(f), 0);
+    const folhaMensal = 0;
 
-    // 5c. TOTAL GERAL DE DESPESAS = Operacionais + Folha
-    const totalDespesa = totalOperacional + folhaMensal;
+    // 5c. TOTAL GERAL DE DESPESAS = apenas Operacionais
+    const totalDespesa = totalOperacional;
 
     // 6. LUCRO LÍQUIDO = Total Recebido - Total de Despesas
     const lucro = totalRecebido - totalDespesa;
+
 
     const atrasados = [
       ...recs.filter((r) => ["atrasado", "vencido"].includes(st(r))),
