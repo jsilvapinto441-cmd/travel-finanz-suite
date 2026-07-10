@@ -145,6 +145,45 @@ export type Database = {
         }
         Relationships: []
       }
+      consolidadoras: {
+        Row: {
+          ativo: boolean
+          banco: string | null
+          created_at: string
+          documento: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          owner_id: string
+          updated_at: string
+          valor_contratado: number
+        }
+        Insert: {
+          ativo?: boolean
+          banco?: string | null
+          created_at?: string
+          documento?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          owner_id?: string
+          updated_at?: string
+          valor_contratado?: number
+        }
+        Update: {
+          ativo?: boolean
+          banco?: string | null
+          created_at?: string
+          documento?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          owner_id?: string
+          updated_at?: string
+          valor_contratado?: number
+        }
+        Relationships: []
+      }
       contas_bancarias: {
         Row: {
           agencia: string | null
@@ -313,6 +352,7 @@ export type Database = {
           banco: string | null
           categoria: Database["public"]["Enums"]["categoria_despesa"]
           categoria_personalizada: string | null
+          consolidadora_id: string | null
           contrato_id: string | null
           created_at: string
           data_pagamento: string | null
@@ -321,6 +361,7 @@ export type Database = {
           empresa_id: string | null
           fornecedor_id: string | null
           frequencia: string
+          funcionario_id: string | null
           id: string
           metodo_pagamento: string | null
           missao_id: string | null
@@ -331,6 +372,7 @@ export type Database = {
           owner_id: string
           parcelas: number
           parent_id: string | null
+          prestador_mei_id: string | null
           status: Database["public"]["Enums"]["status_financeiro"]
           updated_at: string
           valor: number
@@ -340,6 +382,7 @@ export type Database = {
           banco?: string | null
           categoria?: Database["public"]["Enums"]["categoria_despesa"]
           categoria_personalizada?: string | null
+          consolidadora_id?: string | null
           contrato_id?: string | null
           created_at?: string
           data_pagamento?: string | null
@@ -348,6 +391,7 @@ export type Database = {
           empresa_id?: string | null
           fornecedor_id?: string | null
           frequencia?: string
+          funcionario_id?: string | null
           id?: string
           metodo_pagamento?: string | null
           missao_id?: string | null
@@ -358,6 +402,7 @@ export type Database = {
           owner_id?: string
           parcelas?: number
           parent_id?: string | null
+          prestador_mei_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
           valor?: number
@@ -367,6 +412,7 @@ export type Database = {
           banco?: string | null
           categoria?: Database["public"]["Enums"]["categoria_despesa"]
           categoria_personalizada?: string | null
+          consolidadora_id?: string | null
           contrato_id?: string | null
           created_at?: string
           data_pagamento?: string | null
@@ -375,6 +421,7 @@ export type Database = {
           empresa_id?: string | null
           fornecedor_id?: string | null
           frequencia?: string
+          funcionario_id?: string | null
           id?: string
           metodo_pagamento?: string | null
           missao_id?: string | null
@@ -385,12 +432,20 @@ export type Database = {
           owner_id?: string
           parcelas?: number
           parent_id?: string | null
+          prestador_mei_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
           updated_at?: string
           valor?: number
           valor_pago?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "despesas_consolidadora_id_fkey"
+            columns: ["consolidadora_id"]
+            isOneToOne: false
+            referencedRelation: "consolidadoras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "despesas_contrato_id_fkey"
             columns: ["contrato_id"]
@@ -427,6 +482,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "despesas_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "despesas_missao_id_fkey"
             columns: ["missao_id"]
             isOneToOne: false
@@ -438,6 +500,13 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "despesas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_prestador_mei_id_fkey"
+            columns: ["prestador_mei_id"]
+            isOneToOne: false
+            referencedRelation: "prestadores_mei"
             referencedColumns: ["id"]
           },
         ]
@@ -718,6 +787,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prestadores_mei: {
+        Row: {
+          ativo: boolean
+          banco: string | null
+          created_at: string
+          documento: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          owner_id: string
+          updated_at: string
+          valor_contratado: number
+        }
+        Insert: {
+          ativo?: boolean
+          banco?: string | null
+          created_at?: string
+          documento?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          owner_id?: string
+          updated_at?: string
+          valor_contratado?: number
+        }
+        Update: {
+          ativo?: boolean
+          banco?: string | null
+          created_at?: string
+          documento?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          owner_id?: string
+          updated_at?: string
+          valor_contratado?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

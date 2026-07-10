@@ -18,7 +18,7 @@ import {
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
-import { custoTotalFuncionario } from "@/lib/folha";
+// funcionários não geram despesa automática — mantido o import removido intencionalmente.
 import { exportRelatorioGerencial } from "@/lib/relatorio-gerencial";
 import { FileText, Target } from "lucide-react";
 import { useMissoes } from "@/lib/lookups";
@@ -144,15 +144,17 @@ function Dashboard() {
     const totalOperacional = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
     const despesasPagas = desps.reduce((s, d) => s + Number(d.valor_pago ?? 0), 0);
 
-    // 5b. CUSTOS COM FUNCIONÁRIOS — folha mensal dos ativos (recorrente)
-    const funcAtivos = (funcionarios ?? []).filter((f: any) => f.ativo);
-    const folhaMensal = funcAtivos.reduce((s, f: any) => s + custoTotalFuncionario(f), 0);
+    // 5b. CUSTOS COM FUNCIONÁRIOS — cadastros de funcionários NÃO geram despesa
+    //     automática. O custo só entra quando uma despesa é lançada em Despesas.
+    const folhaMensal = 0;
 
-    // 5c. TOTAL GERAL DE DESPESAS = Operacionais + Folha
-    const totalDespesa = totalOperacional + folhaMensal;
+
+    // 5c. TOTAL GERAL DE DESPESAS = apenas Operacionais
+    const totalDespesa = totalOperacional;
 
     // 6. LUCRO LÍQUIDO = Total Recebido - Total de Despesas
     const lucro = totalRecebido - totalDespesa;
+
 
     const atrasados = [
       ...recs.filter((r) => ["atrasado", "vencido"].includes(st(r))),
@@ -222,17 +224,8 @@ function Dashboard() {
       if (idx === undefined) continue;
       monthsPorEmpresa[idx][`out_${d.empresa_id}`] += Number(d.valor ?? 0);
     }
-    // Folha mensal recorrente por empresa em todos os meses
-    const folhaPorEmpresa = new Map<string, number>();
-    for (const f of (funcionarios ?? []) as any[]) {
-      if (!f.ativo || !f.empresa_id) continue;
-      folhaPorEmpresa.set(f.empresa_id, (folhaPorEmpresa.get(f.empresa_id) ?? 0) + custoTotalFuncionario(f));
-    }
-    for (const m of monthsPorEmpresa) {
-      for (const e of empresasList) {
-        m[`out_${e.id}`] += folhaPorEmpresa.get(e.id) ?? 0;
-      }
-    }
+    // Cadastros de funcionários NÃO geram despesa automática por empresa.
+
 
     // Receita mensal por empresa + linha "Soma total"
     const receitaPorEmpresa = monthsPorEmpresa.map((m) => {

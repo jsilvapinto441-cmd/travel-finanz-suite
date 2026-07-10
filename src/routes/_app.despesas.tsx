@@ -18,7 +18,7 @@ import {
 import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/components/ui/accordion";
-import { useEmpresas, useMissoes, useContratos, useFornecedores, nomeById } from "@/lib/lookups";
+import { useEmpresas, useMissoes, useContratos, useFornecedores, useFuncionarios, usePrestadoresMei, useConsolidadoras, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
@@ -38,7 +38,9 @@ export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
 type T = {
   id: string; empresa_id: string | null; missao_id: string | null; contrato_id: string | null;
-  fornecedor_id: string | null; descricao: string; categoria: string; categoria_personalizada: string | null;
+  fornecedor_id: string | null;
+  funcionario_id: string | null; prestador_mei_id: string | null; consolidadora_id: string | null;
+  descricao: string; categoria: string; categoria_personalizada: string | null;
   valor: number;
   valor_pago: number;
   data_vencimento: string | null; data_pagamento: string | null; banco: string | null;
@@ -47,12 +49,25 @@ type T = {
 };
 
 const CATEGORIAS = [
-  { value: "impostos", label: "Impostos" }, { value: "funcionarios", label: "Funcionários" },
+  { value: "impostos", label: "Impostos" },
+  { value: "funcionarios", label: "Funcionário" },
+  { value: "prestador_mei", label: "MEI (Prestador de serviço)" },
+  { value: "consolidadora", label: "Consolidador" },
+  { value: "fornecedor", label: "Fornecedor" },
   { value: "aluguel", label: "Aluguel" }, { value: "luz", label: "Luz" },
   { value: "condominio", label: "Condomínio" }, { value: "telefone", label: "Telefone" },
   { value: "parcelamento_simples", label: "Parcelamento Simples" }, { value: "avulso", label: "Avulso" },
-  { value: "fornecedor", label: "Fornecedor" }, { value: "outros", label: "Outros" },
+  { value: "outros", label: "Outros" },
 ];
+
+// Categorias que exibem um campo dinâmico de seleção (cadastro correspondente).
+const DYNAMIC_CATEGORIES: Record<string, { label: string; field: "funcionario_id" | "prestador_mei_id" | "consolidadora_id" | "fornecedor_id" }> = {
+  funcionarios: { label: "Funcionário", field: "funcionario_id" },
+  prestador_mei: { label: "MEI", field: "prestador_mei_id" },
+  consolidadora: { label: "Consolidador", field: "consolidadora_id" },
+  fornecedor: { label: "Fornecedor", field: "fornecedor_id" },
+};
+
 
 type Group = {
   key: string;
@@ -122,7 +137,11 @@ function Page() {
   const { data: missoes } = useMissoes();
   const { data: contratos } = useContratos();
   const { data: fornecedores } = useFornecedores();
+  const { data: funcionarios } = useFuncionarios();
+  const { data: prestadoresMei } = usePrestadoresMei();
+  const { data: consolidadoras } = useConsolidadoras();
   const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
+
 
   const [empresaFilter, setEmpresaFilter] = useState("");
   const [missaoFilter, setMissaoFilter] = useState("");
@@ -382,10 +401,39 @@ function Page() {
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); upsert.mutate(values); }} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <SelectField label="Categoria" value={values.categoria} onChange={(v) => setValues({ ...values, categoria: v, categoria_personalizada: v === "outros" ? values.categoria_personalizada : null })} options={CATEGORIAS} />
+              <SelectField label="Categoria" value={values.categoria}
+                onChange={(v) => setValues({
+                  ...values,
+                  categoria: v,
+                  categoria_personalizada: v === "outros" ? values.categoria_personalizada : null,
+                  // limpa vínculos de outras categorias ao trocar
+                  funcionario_id: v === "funcionarios" ? values.funcionario_id : null,
+                  prestador_mei_id: v === "prestador_mei" ? values.prestador_mei_id : null,
+                  consolidadora_id: v === "consolidadora" ? values.consolidadora_id : null,
+                  fornecedor_id: v === "fornecedor" ? values.fornecedor_id : null,
+                })}
+                options={CATEGORIAS} />
               {values.categoria === "outros" && (
                 <TextField label="Categoria personalizada" value={values.categoria_personalizada ?? ""} onChange={(v) => setValues({ ...values, categoria_personalizada: v })} />
               )}
+              {(() => {
+                const cat = values.categoria ?? "";
+                const meta = DYNAMIC_CATEGORIES[cat];
+                if (!meta) return null;
+                const options =
+                  meta.field === "funcionario_id" ? (funcionarios ?? []) :
+                  meta.field === "prestador_mei_id" ? (prestadoresMei ?? []) :
+                  meta.field === "consolidadora_id" ? (consolidadoras ?? []) :
+                  (fornecedores ?? []);
+                return (
+                  <SelectField
+                    label={meta.label}
+                    value={(values as any)[meta.field] ?? ""}
+                    onChange={(v) => setValues({ ...values, [meta.field]: v } as Partial<T>)}
+                    options={options.map((o: { id: string; nome: string }) => ({ value: o.id, label: o.nome }))}
+                  />
+                );
+              })()}
               <CurrencyField label="Valor (por parcela)" value={values.valor} onChange={(v) => setValues({ ...values, valor: v })} />
               <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: v })} step="1" />
               <SelectField label="Frequência" value={values.frequencia ?? "mensal"} onChange={(v) => setValues({ ...values, frequencia: v })}
@@ -399,8 +447,7 @@ function Page() {
                 options={(missoes ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
               <SelectField label="Contrato" value={values.contrato_id ?? ""} onChange={(v) => setValues({ ...values, contrato_id: v })}
                 options={(contratos ?? []).map((c) => ({ value: c.id, label: `${c.numero ?? ""} ${c.cliente}` }))} />
-              <SelectField label="Fornecedor" value={values.fornecedor_id ?? ""} onChange={(v) => setValues({ ...values, fornecedor_id: v })}
-                options={(fornecedores ?? []).map((f) => ({ value: f.id, label: f.nome }))} />
+
               <TextField label="Vencimento" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} type="date" />
               <SelectField label="Banco" value={values.banco ?? ""} onChange={(v) => setValues({ ...values, banco: v })}
                 options={(contas ?? []).map((c) => ({ value: c.label, label: c.label }))} />
