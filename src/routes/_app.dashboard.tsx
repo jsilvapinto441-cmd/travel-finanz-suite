@@ -18,7 +18,7 @@ import {
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/status-badge";
-import { custoTotalFuncionario } from "@/lib/folha";
+// funcionários não geram despesa automática — mantido o import removido intencionalmente.
 import { exportRelatorioGerencial } from "@/lib/relatorio-gerencial";
 import { FileText, Target } from "lucide-react";
 import { useMissoes } from "@/lib/lookups";
