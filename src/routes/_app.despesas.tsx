@@ -38,7 +38,9 @@ export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
 type T = {
   id: string; empresa_id: string | null; missao_id: string | null; contrato_id: string | null;
-  fornecedor_id: string | null; descricao: string; categoria: string; categoria_personalizada: string | null;
+  fornecedor_id: string | null;
+  funcionario_id: string | null; prestador_mei_id: string | null; consolidadora_id: string | null;
+  descricao: string; categoria: string; categoria_personalizada: string | null;
   valor: number;
   valor_pago: number;
   data_vencimento: string | null; data_pagamento: string | null; banco: string | null;
@@ -47,12 +49,25 @@ type T = {
 };
 
 const CATEGORIAS = [
-  { value: "impostos", label: "Impostos" }, { value: "funcionarios", label: "Funcionários" },
+  { value: "impostos", label: "Impostos" },
+  { value: "funcionarios", label: "Funcionário" },
+  { value: "prestador_mei", label: "MEI (Prestador de serviço)" },
+  { value: "consolidadora", label: "Consolidador" },
+  { value: "fornecedor", label: "Fornecedor" },
   { value: "aluguel", label: "Aluguel" }, { value: "luz", label: "Luz" },
   { value: "condominio", label: "Condomínio" }, { value: "telefone", label: "Telefone" },
   { value: "parcelamento_simples", label: "Parcelamento Simples" }, { value: "avulso", label: "Avulso" },
-  { value: "fornecedor", label: "Fornecedor" }, { value: "outros", label: "Outros" },
+  { value: "outros", label: "Outros" },
 ];
+
+// Categorias que exibem um campo dinâmico de seleção (cadastro correspondente).
+const DYNAMIC_CATEGORIES: Record<string, { label: string; field: "funcionario_id" | "prestador_mei_id" | "consolidadora_id" | "fornecedor_id" }> = {
+  funcionarios: { label: "Funcionário", field: "funcionario_id" },
+  prestador_mei: { label: "MEI", field: "prestador_mei_id" },
+  consolidadora: { label: "Consolidador", field: "consolidadora_id" },
+  fornecedor: { label: "Fornecedor", field: "fornecedor_id" },
+};
+
 
 type Group = {
   key: string;
