@@ -224,17 +224,8 @@ function Dashboard() {
       if (idx === undefined) continue;
       monthsPorEmpresa[idx][`out_${d.empresa_id}`] += Number(d.valor ?? 0);
     }
-    // Folha mensal recorrente por empresa em todos os meses
-    const folhaPorEmpresa = new Map<string, number>();
-    for (const f of (funcionarios ?? []) as any[]) {
-      if (!f.ativo || !f.empresa_id) continue;
-      folhaPorEmpresa.set(f.empresa_id, (folhaPorEmpresa.get(f.empresa_id) ?? 0) + custoTotalFuncionario(f));
-    }
-    for (const m of monthsPorEmpresa) {
-      for (const e of empresasList) {
-        m[`out_${e.id}`] += folhaPorEmpresa.get(e.id) ?? 0;
-      }
-    }
+    // Cadastros de funcionários NÃO geram despesa automática por empresa.
+
 
     // Receita mensal por empresa + linha "Soma total"
     const receitaPorEmpresa = monthsPorEmpresa.map((m) => {
