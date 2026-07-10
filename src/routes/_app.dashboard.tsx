@@ -146,8 +146,8 @@ function Dashboard() {
 
     // 5b. CUSTOS COM FUNCIONÁRIOS — cadastros de funcionários NÃO geram despesa
     //     automática. O custo só entra quando uma despesa é lançada em Despesas.
-    const funcAtivos = (funcionarios ?? []).filter((f: any) => f.ativo);
     const folhaMensal = 0;
+
 
     // 5c. TOTAL GERAL DE DESPESAS = apenas Operacionais
     const totalDespesa = totalOperacional;
