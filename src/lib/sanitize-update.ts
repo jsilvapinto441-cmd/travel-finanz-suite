@@ -16,6 +16,8 @@ export function sanitizeUpdatePayload<T extends Record<string, unknown>>(
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(payload)) {
     if (strip.has(k)) continue;
+    // Descartar campos internos do cliente (marcadores começados por "_")
+    if (k.startsWith("_")) continue;
     out[k] = v;
   }
   return out as Partial<T>;
