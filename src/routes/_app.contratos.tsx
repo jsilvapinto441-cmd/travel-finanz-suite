@@ -373,6 +373,7 @@ function Page() {
         defaultValues={{
           status: "ativo", valor: 0, valor_entrada: 0, parcelas: 1,
           frequencia: "mensal", dia_vencimento: 10,
+          data_inicio: new Date().toISOString().slice(0, 10),
         }}
         filter={(row) =>
           (!empresaFilter || row.empresa_id === empresaFilter) &&
