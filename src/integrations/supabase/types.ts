@@ -149,40 +149,67 @@ export type Database = {
         Row: {
           ativo: boolean
           banco: string | null
+          cnpj: string | null
           created_at: string
           documento: string | null
+          email: string | null
+          empresa_id: string | null
           id: string
           nome: string
           observacoes: string | null
           owner_id: string
+          telefone: string | null
           updated_at: string
           valor_contratado: number
         }
         Insert: {
           ativo?: boolean
           banco?: string | null
+          cnpj?: string | null
           created_at?: string
           documento?: string | null
+          email?: string | null
+          empresa_id?: string | null
           id?: string
           nome: string
           observacoes?: string | null
           owner_id?: string
+          telefone?: string | null
           updated_at?: string
           valor_contratado?: number
         }
         Update: {
           ativo?: boolean
           banco?: string | null
+          cnpj?: string | null
           created_at?: string
           documento?: string | null
+          email?: string | null
+          empresa_id?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
           owner_id?: string
+          telefone?: string | null
           updated_at?: string
           valor_contratado?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "consolidadoras_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consolidadoras_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_empresa"
+            referencedColumns: ["empresa_id"]
+          },
+        ]
       }
       contas_bancarias: {
         Row: {
@@ -561,9 +588,11 @@ export type Database = {
       fornecedores: {
         Row: {
           ativo: boolean
+          banco: string | null
           cnpj: string | null
           created_at: string
           email: string | null
+          empresa_id: string | null
           id: string
           nome: string
           observacoes: string | null
@@ -571,12 +600,15 @@ export type Database = {
           responsavel: string | null
           telefone: string | null
           updated_at: string
+          valor_contratado: number
         }
         Insert: {
           ativo?: boolean
+          banco?: string | null
           cnpj?: string | null
           created_at?: string
           email?: string | null
+          empresa_id?: string | null
           id?: string
           nome: string
           observacoes?: string | null
@@ -584,12 +616,15 @@ export type Database = {
           responsavel?: string | null
           telefone?: string | null
           updated_at?: string
+          valor_contratado?: number
         }
         Update: {
           ativo?: boolean
+          banco?: string | null
           cnpj?: string | null
           created_at?: string
           email?: string | null
+          empresa_id?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
@@ -597,8 +632,24 @@ export type Database = {
           responsavel?: string | null
           telefone?: string | null
           updated_at?: string
+          valor_contratado?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_empresa"
+            referencedColumns: ["empresa_id"]
+          },
+        ]
       }
       funcionarios: {
         Row: {
@@ -792,40 +843,67 @@ export type Database = {
         Row: {
           ativo: boolean
           banco: string | null
+          cnpj: string | null
           created_at: string
           documento: string | null
+          email: string | null
+          empresa_id: string | null
           id: string
           nome: string
           observacoes: string | null
           owner_id: string
+          telefone: string | null
           updated_at: string
           valor_contratado: number
         }
         Insert: {
           ativo?: boolean
           banco?: string | null
+          cnpj?: string | null
           created_at?: string
           documento?: string | null
+          email?: string | null
+          empresa_id?: string | null
           id?: string
           nome: string
           observacoes?: string | null
           owner_id?: string
+          telefone?: string | null
           updated_at?: string
           valor_contratado?: number
         }
         Update: {
           ativo?: boolean
           banco?: string | null
+          cnpj?: string | null
           created_at?: string
           documento?: string | null
+          email?: string | null
+          empresa_id?: string | null
           id?: string
           nome?: string
           observacoes?: string | null
           owner_id?: string
+          telefone?: string | null
           updated_at?: string
           valor_contratado?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prestadores_mei_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prestadores_mei_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_empresa"
+            referencedColumns: ["empresa_id"]
+          },
+        ]
       }
       profiles: {
         Row: {
