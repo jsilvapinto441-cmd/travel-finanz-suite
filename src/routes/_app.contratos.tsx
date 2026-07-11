@@ -211,8 +211,6 @@ function ContratoForm({
           <NumberField label="Parcelas" value={values.parcelas} onChange={(v) => setValues({ ...values, parcelas: Math.max(1, Math.floor(v || 1)) })} step="1" />
           <SelectField label="Frequência" value={freq} onChange={(v) => setValues({ ...values, frequencia: v })} options={FREQS} />
           <NumberField label="Dia do vencimento" value={values.dia_vencimento ?? 10} onChange={(v) => setValues({ ...values, dia_vencimento: Math.min(31, Math.max(1, Math.floor(v || 1))) })} step="1" />
-          <TextField label="Vigência — início" type="date" value={values.data_inicio} onChange={(v) => setValues({ ...values, data_inicio: v })} />
-          <TextField label="Vigência — fim" type="date" value={values.data_fim} onChange={(v) => setValues({ ...values, data_fim: v })} />
           <SelectField label="Método de pagamento" value={values.metodo_pagamento ?? ""} onChange={(v) => setValues({ ...values, metodo_pagamento: v })} options={METODOS_PAGAMENTO} />
         </div>
 
@@ -375,6 +373,7 @@ function Page() {
         defaultValues={{
           status: "ativo", valor: 0, valor_entrada: 0, parcelas: 1,
           frequencia: "mensal", dia_vencimento: 10,
+          data_inicio: new Date().toISOString().slice(0, 10),
         }}
         filter={(row) =>
           (!empresaFilter || row.empresa_id === empresaFilter) &&
