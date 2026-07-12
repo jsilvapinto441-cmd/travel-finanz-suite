@@ -105,7 +105,9 @@ export function AssistantChat({
     <div className="flex h-full flex-col bg-background">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-sidebar text-sidebar-foreground">
-        <img src={logo} alt="PRODUZ" className="h-7 w-auto shrink-0" />
+        <div className="size-7 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+          <Zap className="size-4 text-primary" fill="currentColor" />
+        </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold leading-tight flex items-center gap-1.5">
             <Sparkles className="size-3.5 text-primary" />
