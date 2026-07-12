@@ -109,10 +109,12 @@ function Dashboard() {
     const recsAll = recebiveis ?? [];
     const despsAll = despesas ?? [];
     const pagsAll = pagamentos ?? [];
+    // Ids dos recebíveis já filtrados por empresa/missão (queries acima)
+    const recIdsFiltrados = new Set(recsAll.map((r) => r.id));
     const recs = recsAll.filter((r) => inDateRange(r.data_vencimento));
     const desps = despsAll.filter((d) => inDateRange(d.data_pagamento ?? d.data_vencimento));
-    // SOMENTE pagamentos de clientes (recebíveis) — nunca de despesas
-    const pagsCliente = pagsAll.filter((p) => p.recebivel_id && inDateRange(p.data_pagamento));
+    // SOMENTE pagamentos de clientes cujo recebível pertence ao escopo filtrado
+    const pagsCliente = pagsAll.filter((p) => p.recebivel_id && recIdsFiltrados.has(p.recebivel_id) && inDateRange(p.data_pagamento));
 
     const st = (r: any) => String(r.status ?? "");
 
