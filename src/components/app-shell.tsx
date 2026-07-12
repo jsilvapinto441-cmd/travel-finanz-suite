@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate, Outlet, useRouterState } from "@tanstac
 import { useAuth } from "@/lib/auth-context";
 import {
   LayoutDashboard, Building2, Target, FileText, ArrowDownLeft, ArrowUpRight,
-  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, X,
+  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, X, Zap, UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { useIdleTimeout } from "@/lib/idle-timeout";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AssistantFAB } from "@/components/ai-assistant";
-import logo from "@/assets/produz-logo-white.png";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -22,10 +21,10 @@ const nav = [
   { to: "/recebiveis", label: "Recebíveis", icon: ArrowDownLeft },
   { to: "/despesas", label: "Despesas", icon: ArrowUpRight },
   { to: "/funcionarios", label: "Funcionários", icon: Users },
-  { to: "/prestadores-mei", label: "Prestadores de Serviço (MEI)", icon: Users },
-  { to: "/consolidadoras", label: "Consolidadoras", icon: Truck },
-  { to: "/fornecedores", label: "Fornecedores", icon: Truck },
+  { to: "/prestadores-mei", label: "Prestadores de Serviços (MEI)", icon: Users },
+  { to: "/consolidadoras", label: "Consolidadores", icon: Truck },
   { to: "/lucro", label: "Lucros", icon: TrendingUp },
+  { to: "/perfil", label: "Login", icon: UserCircle },
   { to: "/admin", label: "Administração", icon: ShieldCheck, adminOnly: true },
 ] as const;
 
