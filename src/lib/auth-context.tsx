@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { audit } from "@/lib/audit";
 import { toast } from "sonner";
+import { setBrandName, setBrandLogo } from "@/lib/brand";
 
 type AppRole = "admin" | "financeiro" | "viewer";
 
