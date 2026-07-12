@@ -326,7 +326,7 @@ function Dashboard() {
           <div className="flex items-start gap-3">
             <Wallet className="size-5 text-primary mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-display font-semibold mb-1">Bem-vindo ao PRODUZ Hub!</h3>
+              <h3 className="font-display font-semibold mb-1">Bem-vindo ao Rotas!</h3>
               <p className="text-sm text-muted-foreground">
                 Você ainda não cadastrou nenhum dado. Comece adicionando uma <strong>empresa</strong>, um <strong>contrato</strong> ou uma <strong>despesa</strong> para ver seus indicadores e gráficos ganharem vida.
               </p>
