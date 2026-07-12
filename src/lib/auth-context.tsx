@@ -117,6 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(async () => {
           const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
           setRoles((data ?? []).map((r) => r.role as AppRole));
+          const { data: prof } = await supabase.from("profiles").select("empresa_nome, avatar_url").eq("id", uid).maybeSingle();
+          setBrandName((prof as any)?.empresa_nome);
+          setBrandLogo((prof as any)?.avatar_url);
 
           if (event === "SIGNED_IN") {
             // Novo login → invalida sessões anteriores gerando novo session_id
