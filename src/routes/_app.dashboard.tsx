@@ -171,9 +171,9 @@ function Dashboard() {
       months.push({ key, label: formatMonth(d), entradas: 0, saidas: 0 });
     }
     const monthIdx = new Map(months.map((m, i) => [m.key, i]));
-    // Entradas = somente pagamentos de clientes
+    // Entradas = somente pagamentos de clientes dentro do escopo filtrado
     for (const p of pagsAll) {
-      if (!p.recebivel_id) continue;
+      if (!p.recebivel_id || !recIdsFiltrados.has(p.recebivel_id)) continue;
       const idx = monthIdx.get((p.data_pagamento ?? "").slice(0, 7));
       if (idx !== undefined) months[idx].entradas += Number(p.valor ?? 0);
     }
