@@ -133,8 +133,8 @@ export function exportToExcel<T>({
   wb.Props = {
     Title: filename,
     Subject: sheetName,
-    Author: "PRODUZ Hub",
-    Company: "PRODUZ Hub",
+    Author: getBrandName(),
+    Company: getBrandName(),
     CreatedDate: new Date(),
   };
   const safeSheet = (sheetName || "Dados")
