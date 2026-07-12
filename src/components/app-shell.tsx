@@ -60,12 +60,15 @@ export function AppShell() {
 
   const currentLabel = navItems.find((i) =>
     i.to === "/" ? location.pathname === "/" : location.pathname.startsWith(i.to),
-  )?.label ?? "PRODUZ";
+  )?.label ?? "Rotas";
 
   const SidebarContent = (
     <>
-      <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center">
-        <img src={logo} alt="PRODUZ" className="h-9 w-auto" />
+      <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center gap-2.5">
+        <div className="size-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+          <Zap className="size-5 text-primary" fill="currentColor" />
+        </div>
+        <span className="font-display text-2xl font-bold tracking-tight">Rotas</span>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
