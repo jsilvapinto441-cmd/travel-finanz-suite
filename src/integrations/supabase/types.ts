@@ -908,26 +908,35 @@ export type Database = {
       profiles: {
         Row: {
           ativo: boolean
+          avatar_url: string | null
           created_at: string
           email: string
+          empresa_nome: string | null
           id: string
           nome: string
+          telefone: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          avatar_url?: string | null
           created_at?: string
           email: string
+          empresa_nome?: string | null
           id: string
           nome: string
+          telefone?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          avatar_url?: string | null
           created_at?: string
           email?: string
+          empresa_nome?: string | null
           id?: string
           nome?: string
+          telefone?: string | null
           updated_at?: string
         }
         Relationships: []
