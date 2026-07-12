@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { getBrandName } from "@/lib/brand";
 
 export type ExportColumn<T> = {
   header: string;
@@ -58,7 +59,7 @@ export function exportToPDF<T>({
   doc.setTextColor(249, 115, 22);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("PRODUZ Hub", 12, 11);
+  doc.text(getBrandName(), 12, 11);
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -132,8 +133,8 @@ export function exportToExcel<T>({
   wb.Props = {
     Title: filename,
     Subject: sheetName,
-    Author: "PRODUZ Hub",
-    Company: "PRODUZ Hub",
+    Author: getBrandName(),
+    Company: getBrandName(),
     CreatedDate: new Date(),
   };
   const safeSheet = (sheetName || "Dados")

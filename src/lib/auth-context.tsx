@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { audit } from "@/lib/audit";
 import { toast } from "sonner";
+import { setBrandName, setBrandLogo } from "@/lib/brand";
 
 type AppRole = "admin" | "financeiro" | "viewer";
 
@@ -116,6 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(async () => {
           const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
           setRoles((data ?? []).map((r) => r.role as AppRole));
+          const { data: prof } = await supabase.from("profiles").select("empresa_nome, avatar_url").eq("id", uid).maybeSingle();
+          setBrandName((prof as any)?.empresa_nome);
+          setBrandLogo((prof as any)?.avatar_url);
 
           if (event === "SIGNED_IN") {
             // Novo login → invalida sessões anteriores gerando novo session_id
@@ -143,6 +147,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const uid = session.user.id;
         const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
         setRoles((data ?? []).map((r) => r.role as AppRole));
+        const { data: prof } = await supabase.from("profiles").select("empresa_nome, avatar_url").eq("id", uid).maybeSingle();
+        setBrandName((prof as any)?.empresa_nome);
+        setBrandLogo((prof as any)?.avatar_url);
 
         // Se já existe session_id local, valida; senão, reivindica (primeiro carregamento após login)
         const localSid = localStorage.getItem(SESSION_STORAGE_KEY);

@@ -109,10 +109,12 @@ function Dashboard() {
     const recsAll = recebiveis ?? [];
     const despsAll = despesas ?? [];
     const pagsAll = pagamentos ?? [];
+    // Ids dos recebíveis já filtrados por empresa/missão (queries acima)
+    const recIdsFiltrados = new Set(recsAll.map((r) => r.id));
     const recs = recsAll.filter((r) => inDateRange(r.data_vencimento));
     const desps = despsAll.filter((d) => inDateRange(d.data_pagamento ?? d.data_vencimento));
-    // SOMENTE pagamentos de clientes (recebíveis) — nunca de despesas
-    const pagsCliente = pagsAll.filter((p) => p.recebivel_id && inDateRange(p.data_pagamento));
+    // SOMENTE pagamentos de clientes cujo recebível pertence ao escopo filtrado
+    const pagsCliente = pagsAll.filter((p) => p.recebivel_id && recIdsFiltrados.has(p.recebivel_id) && inDateRange(p.data_pagamento));
 
     const st = (r: any) => String(r.status ?? "");
 
@@ -169,9 +171,9 @@ function Dashboard() {
       months.push({ key, label: formatMonth(d), entradas: 0, saidas: 0 });
     }
     const monthIdx = new Map(months.map((m, i) => [m.key, i]));
-    // Entradas = somente pagamentos de clientes
+    // Entradas = somente pagamentos de clientes dentro do escopo filtrado
     for (const p of pagsAll) {
-      if (!p.recebivel_id) continue;
+      if (!p.recebivel_id || !recIdsFiltrados.has(p.recebivel_id)) continue;
       const idx = monthIdx.get((p.data_pagamento ?? "").slice(0, 7));
       if (idx !== undefined) months[idx].entradas += Number(p.valor ?? 0);
     }
@@ -326,7 +328,7 @@ function Dashboard() {
           <div className="flex items-start gap-3">
             <Wallet className="size-5 text-primary mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-display font-semibold mb-1">Bem-vindo ao PRODUZ Hub!</h3>
+              <h3 className="font-display font-semibold mb-1">Bem-vindo ao Rotas!</h3>
               <p className="text-sm text-muted-foreground">
                 Você ainda não cadastrou nenhum dado. Comece adicionando uma <strong>empresa</strong>, um <strong>contrato</strong> ou uma <strong>despesa</strong> para ver seus indicadores e gráficos ganharem vida.
               </p>

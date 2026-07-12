@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency } from "@/lib/format";
+import { getBrandName } from "@/lib/brand";
 
 type Periodo = { from?: string; to?: string };
 
@@ -48,13 +49,14 @@ function timestamp() {
 }
 
 function headerBar(doc: jsPDF, title: string, subtitle: string) {
+  const brand = getBrandName();
   const w = doc.internal.pageSize.getWidth();
   doc.setFillColor(...BRAND_DARK);
   doc.rect(0, 0, w, 22, "F");
   doc.setTextColor(...BRAND_ORANGE);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("PRODUZ Hub", 12, 13);
+  doc.text(brand, 12, 13);
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
@@ -66,6 +68,7 @@ function headerBar(doc: jsPDF, title: string, subtitle: string) {
 }
 
 function footer(doc: jsPDF) {
+  const brand = getBrandName();
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
   const pages = doc.getNumberOfPages();
@@ -74,7 +77,7 @@ function footer(doc: jsPDF) {
     doc.setFontSize(8);
     doc.setTextColor(140, 140, 140);
     doc.text(
-      `PRODUZ Hub · Relatório Gerencial · página ${i} de ${pages}`,
+      `${brand} · Relatório Gerencial · página ${i} de ${pages}`,
       w / 2,
       h - 6,
       { align: "center" },

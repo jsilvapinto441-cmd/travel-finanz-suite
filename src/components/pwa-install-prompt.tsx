@@ -82,7 +82,7 @@ export function PWAInstallPrompt() {
             <Download className="size-5 text-primary-foreground" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-display font-semibold text-sm">Instalar PRODUZ Hub</div>
+            <div className="font-display font-semibold text-sm">Instalar Rotas</div>
             {deferred ? (
               <p className="mt-1 text-xs text-muted-foreground">
                 Acesse mais rápido instalando o app na sua tela inicial.

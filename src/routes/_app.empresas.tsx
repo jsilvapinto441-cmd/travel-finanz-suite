@@ -30,7 +30,7 @@ function Page() {
     <PageContainer>
       <PageHeader
         title="Empresas"
-        description="Gerencie as 5 empresas do grupo PRODUZ."
+        description="Gerencie as empresas do grupo."
         actions={
           <ExportButton<Empresa>
             title="Empresas"

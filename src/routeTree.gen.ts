@@ -18,6 +18,7 @@ import { Route as ApiAiExtractRouteImport } from './routes/api/ai-extract'
 import { Route as ApiAiChatRouteImport } from './routes/api/ai-chat'
 import { Route as AppRecebiveisRouteImport } from './routes/_app.recebiveis'
 import { Route as AppPrestadoresMeiRouteImport } from './routes/_app.prestadores-mei'
+import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
 import { Route as AppMissoesRouteImport } from './routes/_app.missoes'
 import { Route as AppLucroRouteImport } from './routes/_app.lucro'
 import { Route as AppFuncionariosRouteImport } from './routes/_app.funcionarios'
@@ -75,6 +76,11 @@ const AppRecebiveisRoute = AppRecebiveisRouteImport.update({
 const AppPrestadoresMeiRoute = AppPrestadoresMeiRouteImport.update({
   id: '/prestadores-mei',
   path: '/prestadores-mei',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMissoesRoute = AppMissoesRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/funcionarios': typeof AppFuncionariosRoute
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
+  '/perfil': typeof AppPerfilRoute
   '/prestadores-mei': typeof AppPrestadoresMeiRoute
   '/recebiveis': typeof AppRecebiveisRoute
   '/api/ai-chat': typeof ApiAiChatRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/funcionarios': typeof AppFuncionariosRoute
   '/lucro': typeof AppLucroRoute
   '/missoes': typeof AppMissoesRoute
+  '/perfil': typeof AppPerfilRoute
   '/prestadores-mei': typeof AppPrestadoresMeiRoute
   '/recebiveis': typeof AppRecebiveisRoute
   '/api/ai-chat': typeof ApiAiChatRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/_app/funcionarios': typeof AppFuncionariosRoute
   '/_app/lucro': typeof AppLucroRoute
   '/_app/missoes': typeof AppMissoesRoute
+  '/_app/perfil': typeof AppPerfilRoute
   '/_app/prestadores-mei': typeof AppPrestadoresMeiRoute
   '/_app/recebiveis': typeof AppRecebiveisRoute
   '/api/ai-chat': typeof ApiAiChatRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/lucro'
     | '/missoes'
+    | '/perfil'
     | '/prestadores-mei'
     | '/recebiveis'
     | '/api/ai-chat'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/funcionarios'
     | '/lucro'
     | '/missoes'
+    | '/perfil'
     | '/prestadores-mei'
     | '/recebiveis'
     | '/api/ai-chat'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/_app/funcionarios'
     | '/_app/lucro'
     | '/_app/missoes'
+    | '/_app/perfil'
     | '/_app/prestadores-mei'
     | '/_app/recebiveis'
     | '/api/ai-chat'
@@ -372,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/prestadores-mei'
       fullPath: '/prestadores-mei'
       preLoaderRoute: typeof AppPrestadoresMeiRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/perfil': {
+      id: '/_app/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/missoes': {
@@ -489,6 +508,7 @@ interface AppRouteChildren {
   AppFuncionariosRoute: typeof AppFuncionariosRoute
   AppLucroRoute: typeof AppLucroRoute
   AppMissoesRoute: typeof AppMissoesRoute
+  AppPerfilRoute: typeof AppPerfilRoute
   AppPrestadoresMeiRoute: typeof AppPrestadoresMeiRoute
   AppRecebiveisRoute: typeof AppRecebiveisRoute
 }
@@ -507,6 +527,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFuncionariosRoute: AppFuncionariosRoute,
   AppLucroRoute: AppLucroRoute,
   AppMissoesRoute: AppMissoesRoute,
+  AppPerfilRoute: AppPerfilRoute,
   AppPrestadoresMeiRoute: AppPrestadoresMeiRoute,
   AppRecebiveisRoute: AppRecebiveisRoute,
 }
