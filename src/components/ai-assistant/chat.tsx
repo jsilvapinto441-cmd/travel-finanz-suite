@@ -40,7 +40,7 @@ import {
   startAudioRecorder,
   type AudioRecorderHandle,
 } from "@/components/ai-assistant/utils";
-import logo from "@/assets/produz-logo-white.png";
+
 
 type UIMsg = {
   id: string;
