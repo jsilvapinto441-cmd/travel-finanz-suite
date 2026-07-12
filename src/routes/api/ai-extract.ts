@@ -30,7 +30,7 @@ const CATEGORIAS_DESPESA = [
   "outros",
 ] as const;
 
-const EXTRACT_INSTRUCTION = `Você é o extrator do Assistente Financeiro da plataforma PRODUZ Hub.
+const EXTRACT_INSTRUCTION = `Você é o extrator do Assistente Financeiro da plataforma Rotas.
 Analise TODO o conteúdo (todas as linhas, todas as páginas, todas as abas) e identifique o MÓDULO destino mais provável, além de TODOS os registros contidos.
 
 Módulos possíveis: ${JSON.stringify(MODULES)}.
