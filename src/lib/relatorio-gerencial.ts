@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency } from "@/lib/format";
+import { getBrandName } from "@/lib/brand";
 
 type Periodo = { from?: string; to?: string };
 
