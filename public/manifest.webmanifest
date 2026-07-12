@@ -1,7 +1,7 @@
 {
-  "name": "PRODUZ Hub",
-  "short_name": "PRODUZ",
-  "description": "Sistema interno de gestão administrativa e financeira da PRODUZ.",
+  "name": "Rotas",
+  "short_name": "Rotas",
+  "description": "Sistema interno de gestão administrativa e financeira Rotas.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
