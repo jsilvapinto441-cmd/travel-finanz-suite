@@ -59,7 +59,7 @@ export function exportToPDF<T>({
   doc.setTextColor(249, 115, 22);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("PRODUZ Hub", 12, 11);
+  doc.text(getBrandName(), 12, 11);
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
