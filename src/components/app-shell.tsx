@@ -65,14 +65,31 @@ export function AppShell() {
     i.to === "/" ? location.pathname === "/" : location.pathname.startsWith(i.to),
   )?.label ?? "Rotas";
 
+  const { name: empresaNome, logo: empresaLogo } = useBrand();
+  const showEmpresa = empresaNome && empresaNome !== "Rotas";
+
+  const CompanyBadge = ({ compact = false }: { compact?: boolean }) => (
+    <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-2.5 py-1 max-w-[55vw] md:max-w-xs">
+      {empresaLogo ? (
+        <img src={empresaLogo} alt="" className="size-6 rounded-full object-cover shrink-0" />
+      ) : (
+        <div className="size-6 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+          <Building2 className="size-3.5 text-primary" />
+        </div>
+      )}
+      {!compact && (
+        <span className="text-xs font-semibold truncate">{empresaNome}</span>
+      )}
+    </div>
+  );
+
   const SidebarContent = (
     <>
-      <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center gap-2.5">
-        <div className="size-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
-          <Zap className="size-5 text-primary" fill="currentColor" />
-        </div>
-        <span className="font-display text-2xl font-bold tracking-tight">Rotas</span>
+      <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center gap-2">
+        <span className="font-display text-2xl font-bold tracking-tight">ROTAS</span>
+        <Zap className="size-6 text-primary" fill="currentColor" strokeWidth={0} />
       </div>
+
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const active =
