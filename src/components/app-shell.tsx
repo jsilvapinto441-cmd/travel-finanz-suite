@@ -11,6 +11,9 @@ import { useIdleTimeout } from "@/lib/idle-timeout";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AssistantFAB } from "@/components/ai-assistant";
+import { useBrand } from "@/lib/brand";
+
+
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -62,14 +65,31 @@ export function AppShell() {
     i.to === "/" ? location.pathname === "/" : location.pathname.startsWith(i.to),
   )?.label ?? "Rotas";
 
+  const { name: empresaNome, logo: empresaLogo } = useBrand();
+  const showEmpresa = empresaNome && empresaNome !== "Rotas";
+
+  const CompanyBadge = ({ compact = false }: { compact?: boolean }) => (
+    <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-2.5 py-1 max-w-[55vw] md:max-w-xs">
+      {empresaLogo ? (
+        <img src={empresaLogo} alt="" className="size-6 rounded-full object-cover shrink-0" />
+      ) : (
+        <div className="size-6 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+          <Building2 className="size-3.5 text-primary" />
+        </div>
+      )}
+      {!compact && (
+        <span className="text-xs font-semibold truncate">{empresaNome}</span>
+      )}
+    </div>
+  );
+
   const SidebarContent = (
     <>
-      <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center gap-2.5">
-        <div className="size-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
-          <Zap className="size-5 text-primary" fill="currentColor" />
-        </div>
-        <span className="font-display text-2xl font-bold tracking-tight">Rotas</span>
+      <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center gap-2">
+        <span className="font-display text-2xl font-bold tracking-tight">ROTAS</span>
+        <Zap className="size-6 text-primary" fill="currentColor" strokeWidth={0} />
       </div>
+
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const active =
@@ -136,7 +156,14 @@ export function AppShell() {
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
+        {/* Top bar desktop — mostra empresa vinculada ao usuário logado */}
+        {showEmpresa && (
+          <header className="hidden md:flex sticky top-0 z-30 items-center justify-end gap-3 px-6 h-14 border-b border-border bg-background/80 backdrop-blur shrink-0">
+            <CompanyBadge />
+          </header>
+        )}
         {/* Top bar mobile — respeita safe-area do notch */}
+
         <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 pt-[env(safe-area-inset-top)] border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0"
           style={{ height: "calc(3.5rem + env(safe-area-inset-top))" }}
         >
@@ -165,9 +192,14 @@ export function AppShell() {
           <span className="absolute left-1/2 -translate-x-1/2 top-[env(safe-area-inset-top)] h-14 flex items-center max-w-[50%] truncate text-sm font-semibold text-center pointer-events-none">
             {currentLabel}
           </span>
-          <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
-            {initials}
-          </div>
+          {showEmpresa ? (
+            <CompanyBadge />
+          ) : (
+            <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
+              {initials}
+            </div>
+          )}
+
         </header>
 
         <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
