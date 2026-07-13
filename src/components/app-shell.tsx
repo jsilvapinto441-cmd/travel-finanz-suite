@@ -185,9 +185,14 @@ export function AppShell() {
           <span className="absolute left-1/2 -translate-x-1/2 top-[env(safe-area-inset-top)] h-14 flex items-center max-w-[50%] truncate text-sm font-semibold text-center pointer-events-none">
             {currentLabel}
           </span>
-          <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
-            {initials}
-          </div>
+          {showEmpresa ? (
+            <CompanyBadge />
+          ) : (
+            <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
+              {initials}
+            </div>
+          )}
+
         </header>
 
         <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
