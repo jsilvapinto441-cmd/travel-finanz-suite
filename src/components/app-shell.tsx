@@ -156,7 +156,14 @@ export function AppShell() {
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
+        {/* Top bar desktop — mostra empresa vinculada ao usuário logado */}
+        {showEmpresa && (
+          <header className="hidden md:flex sticky top-0 z-30 items-center justify-end gap-3 px-6 h-14 border-b border-border bg-background/80 backdrop-blur shrink-0">
+            <CompanyBadge />
+          </header>
+        )}
         {/* Top bar mobile — respeita safe-area do notch */}
+
         <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 pt-[env(safe-area-inset-top)] border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0"
           style={{ height: "calc(3.5rem + env(safe-area-inset-top))" }}
         >
