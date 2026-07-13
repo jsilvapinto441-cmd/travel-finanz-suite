@@ -11,6 +11,9 @@ import { useIdleTimeout } from "@/lib/idle-timeout";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AssistantFAB } from "@/components/ai-assistant";
+import { useBrand } from "@/lib/brand";
+import { Building2 as CompanyIcon } from "lucide-react";
+
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
