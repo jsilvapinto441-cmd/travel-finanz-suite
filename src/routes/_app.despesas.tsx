@@ -240,7 +240,7 @@ function Page() {
           <ExportButton<any>
             title="Despesas" filename="despesas" rows={filtered as any}
             columns={[
-              { header: "ID", accessor: (r: T) => r.id },
+              
               { header: "Descrição", accessor: (r: T) => r.descricao },
               { header: "Categoria", accessor: (r: T) => r.categoria_personalizada ?? r.categoria.replace(/_/g, " ") },
               { header: "Empresa", accessor: (r: T) => nomeById(empresas, r.empresa_id) },

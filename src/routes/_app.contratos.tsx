@@ -236,7 +236,16 @@ function ContratoForm({
           <SelectField label="Frequência" value={freq} onChange={(v) => setValues({ ...values, frequencia: v })} options={FREQS} />
           <NumberField label="Dia do vencimento" value={values.dia_vencimento ?? 10} onChange={(v) => setValues({ ...values, dia_vencimento: Math.min(31, Math.max(1, Math.floor(v || 1))) })} step="1" />
           <SelectField label="Método de pagamento" value={values.metodo_pagamento ?? ""} onChange={(v) => setValues({ ...values, metodo_pagamento: v })} options={METODOS_PAGAMENTO} />
+          {values.metodo_pagamento === "boleto" && (
+            <TextField
+              label="Data prevista do boleto"
+              type="date"
+              value={values.data_inicio}
+              onChange={(v) => setValues({ ...values, data_inicio: v })}
+            />
+          )}
         </div>
+
 
         {previewBase.length > 0 && (
           <div className="rounded-lg border border-border overflow-hidden animate-in fade-in slide-in-from-top-1">
