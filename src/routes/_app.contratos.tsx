@@ -135,6 +135,30 @@ function ContratoForm({
     }));
   }, [saldo, parcelas, freq, dia, inicio]);
 
+  // Ao editar um contrato existente, hidratar __overrides com as datas/valores reais
+  // das parcelas já persistidas em recebiveis, para refletir edições manuais anteriores.
+  const contratoId = values.id;
+  const hydratedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!contratoId) { hydratedFor.current = null; return; }
+    if (hydratedFor.current === contratoId) return;
+    hydratedFor.current = contratoId;
+    (async () => {
+      const { data } = await supabase
+        .from("recebiveis")
+        .select("numero_parcela, data_vencimento, valor_total")
+        .eq("contrato_id", contratoId)
+        .gt("numero_parcela", 0);
+      if (!data || data.length === 0) return;
+      const ov = data.map((p: any) => ({
+        i: Number(p.numero_parcela),
+        valor: Number(p.valor_total),
+        venc: p.data_vencimento as string,
+      }));
+      setValues((v) => ({ ...v, __overrides: ov }));
+    })();
+  }, [contratoId, setValues]);
+
   const overrides = values.__overrides ?? [];
   const getOverride = (i: number) => overrides.find((o) => o.i === i);
   const setOverride = (i: number, patch: Partial<{ valor: number; venc: string }>) => {
