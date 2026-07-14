@@ -421,6 +421,8 @@ function Page() {
         }
         onAfterSave={async (savedId, values) => {
           await applyOverrides(savedId, (values as T).__overrides);
+          qc.invalidateQueries({ queryKey: ["recebiveis"] });
+          qc.invalidateQueries({ queryKey: ["recebiveis-min-por-contrato"] });
         }}
         columns={[
           { key: "numero", label: "Nº" },
