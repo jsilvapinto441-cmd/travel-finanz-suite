@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
@@ -134,6 +134,30 @@ function ContratoForm({
       venc: addToDate(base, freq, i + 1),
     }));
   }, [saldo, parcelas, freq, dia, inicio]);
+
+  // Ao editar um contrato existente, hidratar __overrides com as datas/valores reais
+  // das parcelas já persistidas em recebiveis, para refletir edições manuais anteriores.
+  const contratoId = values.id;
+  const hydratedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!contratoId) { hydratedFor.current = null; return; }
+    if (hydratedFor.current === contratoId) return;
+    hydratedFor.current = contratoId;
+    (async () => {
+      const { data } = await supabase
+        .from("recebiveis")
+        .select("numero_parcela, data_vencimento, valor_total")
+        .eq("contrato_id", contratoId)
+        .gt("numero_parcela", 0);
+      if (!data || data.length === 0) return;
+      const ov = data.map((p: any) => ({
+        i: Number(p.numero_parcela),
+        valor: Number(p.valor_total),
+        venc: p.data_vencimento as string,
+      }));
+      setValues((v) => ({ ...v, __overrides: ov }));
+    })();
+  }, [contratoId, setValues]);
 
   const overrides = values.__overrides ?? [];
   const getOverride = (i: number) => overrides.find((o) => o.i === i);
@@ -281,6 +305,7 @@ function ContratoForm({
 }
 
 function Page() {
+  const qc = useQueryClient();
   const { data: empresas } = useEmpresas();
   const { data: missoes } = useMissoes();
 
@@ -396,6 +421,8 @@ function Page() {
         }
         onAfterSave={async (savedId, values) => {
           await applyOverrides(savedId, (values as T).__overrides);
+          qc.invalidateQueries({ queryKey: ["recebiveis"] });
+          qc.invalidateQueries({ queryKey: ["recebiveis-min-por-contrato"] });
         }}
         columns={[
           { key: "numero", label: "Nº" },
