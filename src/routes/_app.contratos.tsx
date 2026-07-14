@@ -305,6 +305,7 @@ function ContratoForm({
 }
 
 function Page() {
+  const qc = useQueryClient();
   const { data: empresas } = useEmpresas();
   const { data: missoes } = useMissoes();
 
