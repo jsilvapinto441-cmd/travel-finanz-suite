@@ -25,6 +25,7 @@ import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
 import { CircleDollarSign, CalendarClock, Target, Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import { EmpresaFilter } from "@/components/empresa-filter";
+import { matchesQuery } from "@/lib/search-match";
 import { ExportButton } from "@/components/export-button";
 import { KpiCard } from "@/components/kpi-card";
 import { useContasBancariasComEmpresa } from "@/lib/bancos";
