@@ -249,11 +249,7 @@ function Page() {
     if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
     if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
     if (search) {
-      const q = search.toLowerCase();
-      rows = rows.filter((r) =>
-        (r.pagador ?? "").toLowerCase().includes(q) ||
-        (r.numero_fatura ?? "").toLowerCase().includes(q)
-      );
+      rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return rows;
   }, [data, search, empresaFilter, missaoFilter, dataDe, dataAte]);
