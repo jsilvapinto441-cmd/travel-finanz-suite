@@ -35,6 +35,7 @@ import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
 import { useContasBancariasComEmpresa, type ContaBancariaComEmpresa } from "@/lib/bancos";
 import { EmpresaFilter } from "@/components/empresa-filter";
 import { Target } from "lucide-react";
+import { matchesQuery } from "@/lib/search-match";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
