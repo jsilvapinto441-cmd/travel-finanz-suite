@@ -25,6 +25,7 @@ import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
 import { CircleDollarSign, CalendarClock, Target, Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import { EmpresaFilter } from "@/components/empresa-filter";
+import { matchesQuery } from "@/lib/search-match";
 import { ExportButton } from "@/components/export-button";
 import { KpiCard } from "@/components/kpi-card";
 import { useContasBancariasComEmpresa } from "@/lib/bancos";
@@ -178,8 +179,7 @@ function Page() {
     if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
     if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
     if (search) {
-      const q = search.toLowerCase();
-      rows = rows.filter((r) => (r.descricao ?? "").toLowerCase().includes(q));
+      rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return rows;
   }, [data, empresaFilter, missaoFilter, dataDe, dataAte, search]);
@@ -269,7 +269,7 @@ function Page() {
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-sm">
               <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Buscar por descrição..."
+              <Input className="pl-9" placeholder="Buscar em todos os campos..."
                 value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
             </div>
             {canEdit && (
