@@ -78,12 +78,17 @@ export function useContasBancariasComEmpresa(opts: { ativas?: boolean } = {}) {
       if (opts.ativas) q = q.eq("ativo", true);
       const { data: contas, error } = await q;
       if (error) throw error;
-      const { data: empresas } = await supabase
-        .from("empresas")
-        .select("id, nome, conta_bancaria_id");
+      const { data: vinculos } = await supabase
+        .from("empresa_contas_bancarias" as any)
+        .select("conta_bancaria_id, empresas(nome)");
       const empresaPorConta = new Map<string, string>();
-      for (const e of (empresas ?? []) as any[]) {
-        if (e.conta_bancaria_id) empresaPorConta.set(e.conta_bancaria_id, e.nome);
+      for (const v of (vinculos ?? []) as any[]) {
+        const nome = v.empresas?.nome as string | undefined;
+        if (!nome) continue;
+        // preserva a primeira empresa vinculada (mais antiga)
+        if (!empresaPorConta.has(v.conta_bancaria_id)) {
+          empresaPorConta.set(v.conta_bancaria_id, nome);
+        }
       }
       return ((contas ?? []) as unknown as ContaBancaria[]).map((c) => {
         const empresaNome = empresaPorConta.get(c.id) ?? null;
