@@ -53,7 +53,7 @@ const CATEGORIAS = [
   { value: "impostos", label: "Impostos" },
   { value: "funcionarios", label: "Funcionário" },
   { value: "prestador_mei", label: "MEI (Prestador de serviço)" },
-  { value: "consolidadora", label: "Consolidador" },
+  { value: "consolidadora", label: "Consolidadora" },
   { value: "fornecedor", label: "Fornecedor" },
   { value: "aluguel", label: "Aluguel" }, { value: "luz", label: "Luz" },
   { value: "condominio", label: "Condomínio" }, { value: "telefone", label: "Telefone" },
