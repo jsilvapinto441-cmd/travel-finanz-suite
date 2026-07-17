@@ -44,10 +44,12 @@ function Page() {
 
   const { data: vinculos = [] } = useQuery({
     queryKey: ["empresa-contas-vinculos"],
-    queryFn: async () =>
-      ((await supabase
+    queryFn: async () => {
+      const { data } = await supabase
         .from("empresa_contas_bancarias" as any)
-        .select("empresa_id, conta_bancaria_id")).data ?? []) as Vinculo[],
+        .select("empresa_id, conta_bancaria_id");
+      return (data ?? []) as unknown as Vinculo[];
+    },
     staleTime: 10_000,
   });
 
