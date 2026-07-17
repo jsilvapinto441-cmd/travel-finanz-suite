@@ -538,6 +538,52 @@ export type Database = {
           },
         ]
       }
+      empresa_contas_bancarias: {
+        Row: {
+          conta_bancaria_id: string
+          created_at: string
+          empresa_id: string
+          id: string
+          owner_id: string
+        }
+        Insert: {
+          conta_bancaria_id: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          owner_id: string
+        }
+        Update: {
+          conta_bancaria_id?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_contas_bancarias_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "empresa_contas_bancarias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "empresa_contas_bancarias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "lucro_por_empresa"
+            referencedColumns: ["empresa_id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ativo: boolean

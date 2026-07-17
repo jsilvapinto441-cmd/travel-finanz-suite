@@ -1,36 +1,70 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
 import { TextField, SelectField } from "@/components/form-fields";
 import { ExportButton } from "@/components/export-button";
 import { useContasBancarias, contaLabel } from "@/lib/bancos";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { X, Landmark, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/empresas")({ component: Page });
 
-type Empresa = { id: string; nome: string; razao_social: string | null; cnpj: string | null; cor: string | null; ativo: boolean; conta_bancaria_id: string | null };
+type Empresa = {
+  id: string;
+  nome: string;
+  razao_social: string | null;
+  cnpj: string | null;
+  cor: string | null;
+  ativo: boolean;
+  conta_bancaria_id: string | null;
+};
+
+type Vinculo = { empresa_id: string; conta_bancaria_id: string };
 
 function Page() {
+  const qc = useQueryClient();
+
   const { data: empresas = [] } = useQuery({
     queryKey: ["empresas-export"],
-    queryFn: async () => (await supabase.from("empresas").select("id,nome,razao_social,cnpj,cor,ativo,conta_bancaria_id").order("nome")).data ?? [],
+    queryFn: async () =>
+      (await supabase
+        .from("empresas")
+        .select("id,nome,razao_social,cnpj,cor,ativo,conta_bancaria_id")
+        .order("nome")).data ?? [],
     staleTime: 30_000,
   });
 
   const { data: contas = [] } = useContasBancarias();
   const contaMap = new Map(contas.map((c) => [c.id, contaLabel(c)]));
 
-  const contaOptions = [
-    { value: "__none__", label: "Nenhuma conta" },
-    ...contas.map((c) => ({ value: c.id, label: contaLabel(c) })),
-  ];
+  const { data: vinculos = [] } = useQuery({
+    queryKey: ["empresa-contas-vinculos"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("empresa_contas_bancarias" as any)
+        .select("empresa_id, conta_bancaria_id");
+      return (data ?? []) as unknown as Vinculo[];
+    },
+    staleTime: 10_000,
+  });
+
+  const contasPorEmpresa = new Map<string, string[]>();
+  for (const v of vinculos) {
+    const arr = contasPorEmpresa.get(v.empresa_id) ?? [];
+    arr.push(v.conta_bancaria_id);
+    contasPorEmpresa.set(v.empresa_id, arr);
+  }
 
   return (
     <PageContainer>
       <PageHeader
         title="Empresas"
-        description="Gerencie as empresas do grupo."
+        description="Gerencie as empresas do grupo. Vincule uma ou várias contas bancárias já cadastradas no módulo Bancos."
         actions={
           <ExportButton<Empresa>
             title="Empresas"
@@ -40,38 +74,226 @@ function Page() {
               { header: "Nome", accessor: "nome" },
               { header: "Razão Social", accessor: "razao_social" },
               { header: "CNPJ", accessor: "cnpj" },
-              { header: "Banco Principal", accessor: (r) => contaMap.get(r.conta_bancaria_id ?? "") ?? "—" },
+              {
+                header: "Contas Bancárias",
+                accessor: (r) =>
+                  (contasPorEmpresa.get(r.id) ?? [])
+                    .map((cid) => contaMap.get(cid))
+                    .filter(Boolean)
+                    .join(" | ") || "—",
+              },
               { header: "Status", accessor: (r) => (r.ativo ? "Ativa" : "Inativa") },
             ]}
           />
         }
       />
       <DataTable<Empresa>
-        table="empresas" title="Empresa" searchFields={["nome", "cnpj"]} orderBy="nome" ascending
+        table="empresas"
+        title="Empresa"
+        searchFields={["nome", "cnpj"]}
+        orderBy="nome"
+        ascending
         columns={[
-          { key: "cor", label: "", render: (r) => <span className="inline-block size-3 rounded-full" style={{ background: r.cor ?? "#0d7a5f" }} />, className: "w-8" },
+          {
+            key: "cor",
+            label: "",
+            render: (r) => (
+              <span
+                className="inline-block size-3 rounded-full"
+                style={{ background: r.cor ?? "#0d7a5f" }}
+              />
+            ),
+            className: "w-8",
+          },
           { key: "nome", label: "Nome", render: (r) => <span className="font-medium">{r.nome}</span> },
           { key: "razao_social", label: "Razão Social" },
           { key: "cnpj", label: "CNPJ" },
-          { key: "banco", label: "Banco Principal", render: (r) => <span className="text-sm text-muted-foreground">{contaMap.get(r.conta_bancaria_id ?? "") ?? "—"}</span> },
+          {
+            key: "contas",
+            label: "Contas Bancárias",
+            render: (r) => {
+              const ids = contasPorEmpresa.get(r.id) ?? [];
+              if (!ids.length) return <span className="text-muted-foreground">—</span>;
+              return (
+                <div className="flex flex-wrap gap-1">
+                  {ids.map((cid) => (
+                    <Badge key={cid} variant="secondary" className="text-[10px]">
+                      {contaMap.get(cid) ?? "?"}
+                    </Badge>
+                  ))}
+                </div>
+              );
+            },
+          },
         ]}
         renderForm={({ values, setValues }) => (
-          <div className="grid grid-cols-2 gap-4">
-            <TextField label="Nome" value={values.nome} onChange={(v) => setValues({ ...values, nome: v })} required />
-            <TextField label="Cor" value={values.cor ?? "#0d7a5f"} onChange={(v) => setValues({ ...values, cor: v })} type="color" />
-            <TextField label="Razão Social" value={values.razao_social} onChange={(v) => setValues({ ...values, razao_social: v })} />
-            <TextField label="CNPJ" value={values.cnpj} onChange={(v) => setValues({ ...values, cnpj: v })} />
-            <div className="col-span-2">
-              <SelectField
-                label="Conta Bancária Principal"
-                value={values.conta_bancaria_id ?? "__none__"}
-                onChange={(v) => setValues({ ...values, conta_bancaria_id: v === "__none__" ? null : v })}
-                options={contaOptions}
-              />
-            </div>
-          </div>
+          <EmpresaForm
+            values={values}
+            setValues={setValues}
+            initialContas={values.id ? contasPorEmpresa.get(values.id) ?? [] : []}
+          />
         )}
+        onAfterSave={async (id, values) => {
+          const selecionadas: string[] = (values as any).__contas ?? [];
+          // Buscar vínculos atuais
+          const { data: atuais } = await supabase
+            .from("empresa_contas_bancarias" as any)
+            .select("id, conta_bancaria_id")
+            .eq("empresa_id", id);
+          const atuaisIds = new Set(((atuais ?? []) as any[]).map((r) => r.conta_bancaria_id));
+          const novasIds = new Set(selecionadas);
+
+          const paraRemover = ((atuais ?? []) as any[]).filter(
+            (r) => !novasIds.has(r.conta_bancaria_id),
+          );
+          const paraInserir = selecionadas.filter((cid) => !atuaisIds.has(cid));
+
+          if (paraRemover.length) {
+            const ids = paraRemover.map((r) => r.id);
+            const { error } = await supabase
+              .from("empresa_contas_bancarias" as any)
+              .delete()
+              .in("id", ids);
+            if (error) toast.error("Erro ao remover conta vinculada: " + error.message);
+          }
+          if (paraInserir.length) {
+            const rows = paraInserir.map((cid) => ({ empresa_id: id, conta_bancaria_id: cid }));
+            const { error } = await supabase
+              .from("empresa_contas_bancarias" as any)
+              .insert(rows);
+            if (error) toast.error("Erro ao vincular conta: " + error.message);
+          }
+
+          // Sincroniza conta_bancaria_id "principal" (primeira selecionada) para compat
+          const principal = selecionadas[0] ?? null;
+          if (principal !== ((values as any).conta_bancaria_id ?? null)) {
+            await supabase.from("empresas").update({ conta_bancaria_id: principal }).eq("id", id);
+          }
+
+          qc.invalidateQueries({ queryKey: ["empresa-contas-vinculos"] });
+          qc.invalidateQueries({ queryKey: ["contas-bancarias-empresa"] });
+          qc.invalidateQueries({ queryKey: ["empresas-export"] });
+        }}
       />
     </PageContainer>
+  );
+}
+
+function EmpresaForm({
+  values,
+  setValues,
+  initialContas,
+}: {
+  values: any;
+  setValues: (v: any) => void;
+  initialContas: string[];
+}) {
+  const { data: contas = [] } = useContasBancarias({ ativas: true });
+  const [selecionadas, setSelecionadas] = useState<string[]>(
+    (values.__contas as string[] | undefined) ?? initialContas,
+  );
+  const [addingId, setAddingId] = useState<string>("");
+
+  // Hidrata no primeiro render por empresa
+  useEffect(() => {
+    if (!values.__contas) {
+      setValues({ ...values, __contas: initialContas });
+      setSelecionadas(initialContas);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.id]);
+
+  const sync = (next: string[]) => {
+    setSelecionadas(next);
+    setValues({ ...values, __contas: next });
+  };
+
+  const disponiveis = contas.filter((c) => !selecionadas.includes(c.id));
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <TextField
+        label="Nome"
+        value={values.nome}
+        onChange={(v) => setValues({ ...values, nome: v })}
+        required
+      />
+      <TextField
+        label="Cor"
+        value={values.cor ?? "#0d7a5f"}
+        onChange={(v) => setValues({ ...values, cor: v })}
+        type="color"
+      />
+      <TextField
+        label="Razão Social"
+        value={values.razao_social}
+        onChange={(v) => setValues({ ...values, razao_social: v })}
+      />
+      <TextField
+        label="CNPJ"
+        value={values.cnpj}
+        onChange={(v) => setValues({ ...values, cnpj: v })}
+      />
+
+      <div className="col-span-2 space-y-2 rounded-md border border-border/60 bg-muted/20 p-3">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Landmark className="size-4 text-primary" />
+          Contas Bancárias Vinculadas
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Selecione contas já cadastradas no módulo Bancos. Uma empresa pode ter várias contas
+          vinculadas.
+        </p>
+
+        <div className="flex flex-wrap gap-2 min-h-[2rem]">
+          {selecionadas.length === 0 && (
+            <span className="text-xs text-muted-foreground italic">Nenhuma conta vinculada</span>
+          )}
+          {selecionadas.map((cid) => {
+            const c = contas.find((x) => x.id === cid);
+            return (
+              <Badge key={cid} variant="secondary" className="gap-1 pr-1 py-1">
+                <span className="text-xs">{c ? contaLabel(c) : cid}</span>
+                <button
+                  type="button"
+                  className="ml-1 rounded hover:bg-destructive/20 p-0.5"
+                  onClick={() => sync(selecionadas.filter((x) => x !== cid))}
+                  aria-label="Remover conta"
+                >
+                  <X className="size-3" />
+                </button>
+              </Badge>
+            );
+          })}
+        </div>
+
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <SelectField
+              label="Adicionar conta"
+              value={addingId || "__none__"}
+              onChange={(v) => setAddingId(v === "__none__" ? "" : v)}
+              options={[
+                { value: "__none__", label: disponiveis.length ? "Selecione…" : "Nenhuma conta disponível" },
+                ...disponiveis.map((c) => ({ value: c.id, label: contaLabel(c) })),
+              ]}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!addingId}
+            onClick={() => {
+              if (!addingId) return;
+              sync([...selecionadas, addingId]);
+              setAddingId("");
+            }}
+          >
+            <Plus className="size-4 mr-1" /> Vincular
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

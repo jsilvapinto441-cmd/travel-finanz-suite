@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate, Outlet, useRouterState } from "@tanstac
 import { useAuth } from "@/lib/auth-context";
 import {
   LayoutDashboard, Building2, Target, FileText, ArrowDownLeft, ArrowUpRight,
-  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, X, Zap, UserCircle,
+  Users, Truck, Package, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, X, Zap, UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,8 @@ const nav = [
   { to: "/despesas", label: "Despesas", icon: ArrowUpRight },
   { to: "/funcionarios", label: "Funcionários", icon: Users },
   { to: "/prestadores-mei", label: "Prestadores de Serviços (MEI)", icon: Users },
-  { to: "/consolidadoras", label: "Consolidadores", icon: Truck },
+  { to: "/consolidadoras", label: "Consolidadoras", icon: Truck },
+  { to: "/fornecedores", label: "Fornecedores", icon: Package },
   { to: "/lucro", label: "Lucros", icon: TrendingUp },
   { to: "/perfil", label: "Login", icon: UserCircle },
   { to: "/admin", label: "Administração", icon: ShieldCheck, adminOnly: true },

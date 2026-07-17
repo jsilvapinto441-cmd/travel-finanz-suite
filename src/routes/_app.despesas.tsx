@@ -53,7 +53,7 @@ const CATEGORIAS = [
   { value: "impostos", label: "Impostos" },
   { value: "funcionarios", label: "Funcionário" },
   { value: "prestador_mei", label: "MEI (Prestador de serviço)" },
-  { value: "consolidadora", label: "Consolidador" },
+  { value: "consolidadora", label: "Consolidadora" },
   { value: "fornecedor", label: "Fornecedor" },
   { value: "aluguel", label: "Aluguel" }, { value: "luz", label: "Luz" },
   { value: "condominio", label: "Condomínio" }, { value: "telefone", label: "Telefone" },
@@ -65,7 +65,7 @@ const CATEGORIAS = [
 const DYNAMIC_CATEGORIES: Record<string, { label: string; field: "funcionario_id" | "prestador_mei_id" | "consolidadora_id" | "fornecedor_id" }> = {
   funcionarios: { label: "Funcionário", field: "funcionario_id" },
   prestador_mei: { label: "MEI", field: "prestador_mei_id" },
-  consolidadora: { label: "Consolidador", field: "consolidadora_id" },
+  consolidadora: { label: "Consolidadora", field: "consolidadora_id" },
   fornecedor: { label: "Fornecedor", field: "fornecedor_id" },
 };
 

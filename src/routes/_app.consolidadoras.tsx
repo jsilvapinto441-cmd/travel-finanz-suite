@@ -9,7 +9,7 @@ function Page() {
       table="consolidadoras"
       title="Consolidadora"
       pageTitle="Consolidadoras"
-      description="Cadastro das consolidadoras. O valor contratado é apenas informativo — o custo é contabilizado quando uma despesa é lançada na categoria Consolidador."
+      description="Cadastro das consolidadoras. O valor contratado é apenas informativo — o custo é contabilizado quando uma despesa é lançada na categoria Consolidadora."
       filename="consolidadoras"
     />
   );
