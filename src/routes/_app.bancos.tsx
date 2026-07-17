@@ -53,15 +53,22 @@ function Page() {
   const { canEdit, isAdmin } = useAuth();
   const { data, isLoading } = useContasBancarias();
   const { data: saldos } = useSaldosBancarios();
-  const { data: empresas } = useQuery({
-    queryKey: ["empresas-por-conta"],
+  const { data: vinculos } = useQuery({
+    queryKey: ["empresa-contas-vinculos"],
     queryFn: async () =>
-      (await supabase.from("empresas").select("id, nome, conta_bancaria_id").order("nome")).data ??
-      [],
+      (await supabase
+        .from("empresa_contas_bancarias" as any)
+        .select("conta_bancaria_id, empresas(nome)")).data ?? [],
     staleTime: 30_000,
   });
 
-  const empresaPorConta = new Map((empresas ?? []).map((e) => [e.conta_bancaria_id, e.nome]));
+  const empresaPorConta = new Map<string, string>();
+  for (const v of (vinculos ?? []) as any[]) {
+    const nome = v.empresas?.nome as string | undefined;
+    if (!nome) continue;
+    const cur = empresaPorConta.get(v.conta_bancaria_id);
+    empresaPorConta.set(v.conta_bancaria_id, cur ? `${cur}, ${nome}` : nome);
+  }
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ContaBancaria | null>(null);
