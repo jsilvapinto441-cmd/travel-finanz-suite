@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate, Outlet, useRouterState } from "@tanstac
 import { useAuth } from "@/lib/auth-context";
 import {
   LayoutDashboard, Building2, Target, FileText, ArrowDownLeft, ArrowUpRight,
-  Users, Truck, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, X, Zap, UserCircle,
+  Users, Truck, Package, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, X, Zap, UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
