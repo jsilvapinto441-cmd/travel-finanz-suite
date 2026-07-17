@@ -65,7 +65,7 @@ const CATEGORIAS = [
 const DYNAMIC_CATEGORIES: Record<string, { label: string; field: "funcionario_id" | "prestador_mei_id" | "consolidadora_id" | "fornecedor_id" }> = {
   funcionarios: { label: "Funcionário", field: "funcionario_id" },
   prestador_mei: { label: "MEI", field: "prestador_mei_id" },
-  consolidadora: { label: "Consolidador", field: "consolidadora_id" },
+  consolidadora: { label: "Consolidadora", field: "consolidadora_id" },
   fornecedor: { label: "Fornecedor", field: "fornecedor_id" },
 };
 
