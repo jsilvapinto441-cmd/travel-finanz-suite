@@ -193,6 +193,16 @@ function Page() {
       .reduce((acc, r) => acc + Math.max(0, Number(r.valor) - Number(r.valor_pago ?? 0)), 0);
   }, [filtered]);
 
+  const totaisPeriodo = useMemo(() => {
+    let total = 0, pago = 0;
+    for (const r of filtered) {
+      if (r.status === "cancelado") continue;
+      total += Number(r.valor ?? 0);
+      pago += Number(r.valor_pago ?? 0);
+    }
+    return { total, pago, restante: Math.max(total - pago, 0) };
+  }, [filtered]);
+
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
       const clean = sanitizeUpdatePayload("despesas", payload);
