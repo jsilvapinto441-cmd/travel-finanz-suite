@@ -260,6 +260,16 @@ function Page() {
     [filtered, contratos]
   );
 
+  const totaisPeriodo = useMemo(() => {
+    let total = 0, recebido = 0;
+    for (const r of filtered) {
+      if (r.status === "cancelado") continue;
+      total += Number(r.valor_parcela ?? r.valor_total ?? 0);
+      recebido += Number(r.valor_pago ?? 0);
+    }
+    return { total, recebido, restante: Math.max(total - recebido, 0) };
+  }, [filtered]);
+
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
       const clean = sanitizeUpdatePayload("recebiveis", payload);
