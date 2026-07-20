@@ -193,6 +193,16 @@ function Page() {
       .reduce((acc, r) => acc + Math.max(0, Number(r.valor) - Number(r.valor_pago ?? 0)), 0);
   }, [filtered]);
 
+  const totaisPeriodo = useMemo(() => {
+    let total = 0, pago = 0;
+    for (const r of filtered) {
+      if (r.status === "cancelado") continue;
+      total += Number(r.valor ?? 0);
+      pago += Number(r.valor_pago ?? 0);
+    }
+    return { total, pago, restante: Math.max(total - pago, 0) };
+  }, [filtered]);
+
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
       const clean = sanitizeUpdatePayload("despesas", payload);
@@ -252,6 +262,7 @@ function Page() {
               { header: "Valor pago", accessor: (r: T) => formatCurrency(Number(r.valor_pago ?? 0)) },
               { header: "Parcela", accessor: (r: T) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
               { header: "Vencimento", accessor: (r: T) => formatDate(r.data_vencimento) },
+              { header: "Data de Pagamento", accessor: (r: T) => formatDate(r.data_pagamento) },
               { header: "Status", accessor: (r: T) => r.status },
             ]}
           />
@@ -289,7 +300,23 @@ function Page() {
             <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" title="Vencimento — de" />
             <Input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" title="Vencimento — até" />
           </div>
+          <div className="md:hidden grid grid-cols-3 gap-2 rounded-lg border border-border bg-muted/20 p-3 text-xs">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
+              <div className="font-semibold tabular-nums">{formatCurrency(totaisPeriodo.total)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Pago</div>
+              <div className="font-semibold tabular-nums text-success">{formatCurrency(totaisPeriodo.pago)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Restante</div>
+              <div className="font-semibold tabular-nums text-primary">{formatCurrency(totaisPeriodo.restante)}</div>
+            </div>
+          </div>
         </div>
+
+
 
         {isLoading ? (
           <div className="p-4 space-y-2">

@@ -179,6 +179,36 @@ export function PagamentoDialog(props: Props) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const updatePagamento = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Pagamento> }) => {
+      const { error } = await supabase
+        .from("registros_pagamento" as any)
+        .update(patch as any)
+        .eq("id", id);
+      if (error) throw error;
+      // Sincroniza também a movimentação já lançada (se houver) para refletir
+      // no fluxo de caixa/saldos sem duplicar registros.
+      const movPatch: Record<string, unknown> = {};
+      if (patch.data_pagamento !== undefined) movPatch.data_movimentacao = patch.data_pagamento;
+      if (patch.valor !== undefined) movPatch.valor = patch.valor;
+      if (Object.keys(movPatch).length) {
+        await supabase
+          .from("movimentacoes_financeiras" as any)
+          .update(movPatch as any)
+          .eq("registro_pagamento_id", id);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Pagamento atualizado");
+      qc.invalidateQueries({ queryKey: ["pagamentos", mode, target?.id] });
+      qc.invalidateQueries({ queryKey: ["recebiveis"] });
+      qc.invalidateQueries({ queryKey: ["despesas"] });
+      qc.invalidateQueries({ queryKey: ["fluxo-caixa"] });
+      qc.invalidateQueries({ queryKey: ["saldos-bancarios"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   async function abrirComprovante(path: string) {
     const { data, error } = await supabase.storage.from("anexos").createSignedUrl(path, 60);
     if (error) { toast.error(error.message); return; }
@@ -292,7 +322,20 @@ export function PagamentoDialog(props: Props) {
                     const conta = contas?.find((c) => c.id === p.conta_bancaria_id);
                     return (
                       <tr key={p.id} className="border-t border-border/60">
-                        <td className="px-3 py-2 tabular-nums">{formatDate(p.data_pagamento)}</td>
+                        <td className="px-3 py-2 tabular-nums">
+                          <input
+                            type="date"
+                            defaultValue={p.data_pagamento}
+                            onBlur={(e) => {
+                              const v = e.target.value;
+                              if (v && v !== p.data_pagamento) {
+                                updatePagamento.mutate({ id: p.id, patch: { data_pagamento: v } });
+                              }
+                            }}
+                            className="bg-transparent border border-transparent hover:border-border focus:border-primary rounded px-1 py-0.5 text-sm w-[120px]"
+                            title="Editar data — substitui a data anterior"
+                          />
+                        </td>
                         <td className="px-3 py-2 text-right font-medium tabular-nums">{formatCurrency(p.valor)}</td>
                         <td className="px-3 py-2 capitalize">{p.forma_pagamento}</td>
                         <td className="px-3 py-2 text-muted-foreground">{conta?.banco ?? "—"}</td>
