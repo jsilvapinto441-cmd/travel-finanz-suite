@@ -179,6 +179,36 @@ export function PagamentoDialog(props: Props) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const updatePagamento = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Pagamento> }) => {
+      const { error } = await supabase
+        .from("registros_pagamento" as any)
+        .update(patch as any)
+        .eq("id", id);
+      if (error) throw error;
+      // Sincroniza também a movimentação já lançada (se houver) para refletir
+      // no fluxo de caixa/saldos sem duplicar registros.
+      const movPatch: Record<string, unknown> = {};
+      if (patch.data_pagamento !== undefined) movPatch.data_movimentacao = patch.data_pagamento;
+      if (patch.valor !== undefined) movPatch.valor = patch.valor;
+      if (Object.keys(movPatch).length) {
+        await supabase
+          .from("movimentacoes_financeiras" as any)
+          .update(movPatch as any)
+          .eq("registro_pagamento_id", id);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Pagamento atualizado");
+      qc.invalidateQueries({ queryKey: ["pagamentos", mode, target?.id] });
+      qc.invalidateQueries({ queryKey: ["recebiveis"] });
+      qc.invalidateQueries({ queryKey: ["despesas"] });
+      qc.invalidateQueries({ queryKey: ["fluxo-caixa"] });
+      qc.invalidateQueries({ queryKey: ["saldos-bancarios"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   async function abrirComprovante(path: string) {
     const { data, error } = await supabase.storage.from("anexos").createSignedUrl(path, 60);
     if (error) { toast.error(error.message); return; }
