@@ -362,7 +362,22 @@ function Page() {
             <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" title="Vencimento — de" />
             <Input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" title="Vencimento — até" />
           </div>
+          <div className="md:hidden grid grid-cols-3 gap-2 rounded-lg border border-border bg-muted/20 p-3 text-xs">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total a Receber</div>
+              <div className="font-semibold tabular-nums">{formatCurrency(totaisPeriodo.total)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Recebido</div>
+              <div className="font-semibold tabular-nums text-success">{formatCurrency(totaisPeriodo.recebido)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Restante</div>
+              <div className="font-semibold tabular-nums text-primary">{formatCurrency(totaisPeriodo.restante)}</div>
+            </div>
+          </div>
         </div>
+
 
 
         {isLoading ? (
