@@ -322,7 +322,20 @@ export function PagamentoDialog(props: Props) {
                     const conta = contas?.find((c) => c.id === p.conta_bancaria_id);
                     return (
                       <tr key={p.id} className="border-t border-border/60">
-                        <td className="px-3 py-2 tabular-nums">{formatDate(p.data_pagamento)}</td>
+                        <td className="px-3 py-2 tabular-nums">
+                          <input
+                            type="date"
+                            defaultValue={p.data_pagamento}
+                            onBlur={(e) => {
+                              const v = e.target.value;
+                              if (v && v !== p.data_pagamento) {
+                                updatePagamento.mutate({ id: p.id, patch: { data_pagamento: v } });
+                              }
+                            }}
+                            className="bg-transparent border border-transparent hover:border-border focus:border-primary rounded px-1 py-0.5 text-sm w-[120px]"
+                            title="Editar data — substitui a data anterior"
+                          />
+                        </td>
                         <td className="px-3 py-2 text-right font-medium tabular-nums">{formatCurrency(p.valor)}</td>
                         <td className="px-3 py-2 capitalize">{p.forma_pagamento}</td>
                         <td className="px-3 py-2 text-muted-foreground">{conta?.banco ?? "—"}</td>
