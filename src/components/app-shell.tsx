@@ -70,12 +70,21 @@ export function AppShell() {
   const showEmpresa = empresaNome && empresaNome !== "Rotas";
 
   const CompanyBadge = ({ compact = false }: { compact?: boolean }) => (
-    <div className="flex items-center gap-2.5 rounded-full border border-border/60 bg-card/60 pl-1 pr-3 py-1 max-w-[70vw] md:max-w-sm">
+    <div className={cn(
+      "flex items-center gap-2.5 rounded-full border border-border/60 bg-card/60 py-1",
+      compact ? "pl-1 pr-1" : "pl-1 pr-3 max-w-[70vw] md:max-w-sm",
+    )}>
       {empresaLogo ? (
-        <img src={empresaLogo} alt="" className="size-10 md:size-11 rounded-full object-cover shrink-0 ring-1 ring-border/40" />
+        <img src={empresaLogo} alt="" className={cn(
+          "rounded-full object-cover shrink-0 ring-1 ring-border/40",
+          compact ? "size-8" : "size-10 md:size-11",
+        )} />
       ) : (
-        <div className="size-10 md:size-11 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
-          <Building2 className="size-5 text-primary" />
+        <div className={cn(
+          "rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0",
+          compact ? "size-8" : "size-10 md:size-11",
+        )}>
+          <Building2 className={cn(compact ? "size-4" : "size-5", "text-primary")} />
         </div>
       )}
       {!compact && (
@@ -83,6 +92,7 @@ export function AppShell() {
       )}
     </div>
   );
+
 
   const SidebarContent = (
     <>
