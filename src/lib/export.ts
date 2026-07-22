@@ -69,7 +69,7 @@ function timestamp() {
 }
 
 /** Exporta uma tabela genérica para PDF (paisagem, com cabeçalho laranja). */
-export function exportToPDF<T>({
+export async function exportToPDF<T>({
   title,
   subtitle,
   summary,
@@ -77,6 +77,7 @@ export function exportToPDF<T>({
   rows,
   filename,
   orientation = "landscape",
+  logoUrl,
 }: {
   title: string;
   subtitle?: string;
@@ -85,17 +86,34 @@ export function exportToPDF<T>({
   rows: T[];
   filename?: string;
   orientation?: "portrait" | "landscape";
+  logoUrl?: string | null;
 }) {
   const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
 
+  const resolvedLogo = logoUrl ?? getBrandLogo();
+  const logo = resolvedLogo ? await loadLogoDataUrl(resolvedLogo) : null;
+
   // Cabeçalho
   doc.setFillColor(15, 15, 15);
   doc.rect(0, 0, pageWidth, 18, "F");
+
+  let textStartX = 12;
+  if (logo) {
+    const imgH = 12;
+    const imgW = Math.min(24, (logo.w / logo.h) * imgH);
+    try {
+      doc.addImage(logo.dataUrl, logo.format, 8, 3, imgW, imgH);
+      textStartX = 8 + imgW + 4;
+    } catch {
+      // fallback: ignora logo se formato não suportado
+    }
+  }
+
   doc.setTextColor(249, 115, 22);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text(getBrandName(), 12, 11);
+  doc.text(getBrandName(), textStartX, 11);
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -105,6 +123,7 @@ export function exportToPDF<T>({
     11,
     { align: "right" },
   );
+
 
   // Título
   doc.setTextColor(15, 15, 15);
