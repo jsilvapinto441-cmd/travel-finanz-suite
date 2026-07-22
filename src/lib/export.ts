@@ -1,7 +1,41 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
-import { getBrandName } from "@/lib/brand";
+import { getBrandLogo, getBrandName } from "@/lib/brand";
+
+async function loadLogoDataUrl(url: string): Promise<{ dataUrl: string; format: "PNG" | "JPEG" | "WEBP"; w: number; h: number } | null> {
+  try {
+    let dataUrl: string;
+    let mime = "image/png";
+    if (url.startsWith("data:")) {
+      dataUrl = url;
+      mime = url.slice(5, url.indexOf(";")) || mime;
+    } else {
+      const res = await fetch(url, { mode: "cors" });
+      const blob = await res.blob();
+      mime = blob.type || mime;
+      dataUrl = await new Promise<string>((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result));
+        fr.onerror = () => reject(fr.error);
+        fr.readAsDataURL(blob);
+      });
+    }
+    const { w, h } = await new Promise<{ w: number; h: number }>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve({ w: 1, h: 1 });
+      img.src = dataUrl;
+    });
+    const format: "PNG" | "JPEG" | "WEBP" =
+      mime.includes("jpeg") || mime.includes("jpg") ? "JPEG"
+      : mime.includes("webp") ? "WEBP" : "PNG";
+    return { dataUrl, format, w, h };
+  } catch {
+    return null;
+  }
+}
+
 
 export type ExportColumn<T> = {
   header: string;
@@ -35,7 +69,7 @@ function timestamp() {
 }
 
 /** Exporta uma tabela genérica para PDF (paisagem, com cabeçalho laranja). */
-export function exportToPDF<T>({
+export async function exportToPDF<T>({
   title,
   subtitle,
   summary,
@@ -43,6 +77,7 @@ export function exportToPDF<T>({
   rows,
   filename,
   orientation = "landscape",
+  logoUrl,
 }: {
   title: string;
   subtitle?: string;
@@ -51,17 +86,34 @@ export function exportToPDF<T>({
   rows: T[];
   filename?: string;
   orientation?: "portrait" | "landscape";
+  logoUrl?: string | null;
 }) {
   const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
 
+  const resolvedLogo = logoUrl ?? getBrandLogo();
+  const logo = resolvedLogo ? await loadLogoDataUrl(resolvedLogo) : null;
+
   // Cabeçalho
   doc.setFillColor(15, 15, 15);
   doc.rect(0, 0, pageWidth, 18, "F");
+
+  let textStartX = 12;
+  if (logo) {
+    const imgH = 12;
+    const imgW = Math.min(24, (logo.w / logo.h) * imgH);
+    try {
+      doc.addImage(logo.dataUrl, logo.format, 8, 3, imgW, imgH);
+      textStartX = 8 + imgW + 4;
+    } catch {
+      // fallback: ignora logo se formato não suportado
+    }
+  }
+
   doc.setTextColor(249, 115, 22);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text(getBrandName(), 12, 11);
+  doc.text(getBrandName(), textStartX, 11);
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -71,6 +123,7 @@ export function exportToPDF<T>({
     11,
     { align: "right" },
   );
+
 
   // Título
   doc.setTextColor(15, 15, 15);
