@@ -175,7 +175,7 @@ export function AppShell() {
         )}
         {/* Top bar mobile — respeita safe-area do notch */}
 
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 pt-[env(safe-area-inset-top)] border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0"
+        <header className="md:hidden sticky top-0 z-30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 h-14 pt-[env(safe-area-inset-top)] border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0"
           style={{ height: "calc(3.5rem + env(safe-area-inset-top))" }}
         >
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -200,11 +200,16 @@ export function AppShell() {
               {SidebarContent}
             </SheetContent>
           </Sheet>
-          <span className="absolute left-1/2 -translate-x-1/2 top-[env(safe-area-inset-top)] h-14 flex items-center max-w-[50%] truncate text-sm font-semibold text-center pointer-events-none">
-            {currentLabel}
-          </span>
+
+          <div className="min-w-0 flex flex-col justify-center leading-tight">
+            <span className="truncate text-[15px] font-semibold">{currentLabel}</span>
+            {showEmpresa && (
+              <span className="truncate text-[11px] text-sidebar-foreground/60">{empresaNome}</span>
+            )}
+          </div>
+
           {showEmpresa ? (
-            <CompanyBadge />
+            <CompanyBadge compact />
           ) : (
             <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
               {initials}
@@ -212,6 +217,7 @@ export function AppShell() {
           )}
 
         </header>
+
 
         <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
           <Outlet />
