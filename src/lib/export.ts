@@ -134,11 +134,15 @@ export function exportToExcel<T>({
   columns,
   rows,
   filename,
+  subtitle,
+  summary,
 }: {
   sheetName?: string;
   columns: ExportColumn<T>[];
   rows: T[];
   filename: string;
+  subtitle?: string;
+  summary?: { label: string; value: string }[];
 }) {
   const headers = columns.map((c) => c.header);
   const data = rows.map((row) => {
@@ -154,6 +158,17 @@ export function exportToExcel<T>({
     );
     return { wch: Math.min(Math.max(maxLen + 2, 10), 40) };
   });
+
+  // Anexa bloco de resumo/totais ao final da planilha
+  if ((summary && summary.length > 0) || subtitle) {
+    const extras: (string | number)[][] = [[]];
+    if (subtitle) extras.push([subtitle]);
+    if (summary && summary.length > 0) {
+      extras.push(["Resumo"]);
+      for (const item of summary) extras.push([item.label, item.value]);
+    }
+    XLSX.utils.sheet_add_aoa(ws, extras, { origin: -1 });
+  }
 
   const wb = XLSX.utils.book_new();
   wb.Props = {
