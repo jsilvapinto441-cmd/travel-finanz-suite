@@ -10,6 +10,8 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import { useContasBancariasComEmpresa } from "@/lib/bancos";
 import { Link } from "@tanstack/react-router";
+import { validateDateString } from "@/lib/date-validation";
+
 
 type Recebivel = {
   id: string;
@@ -324,14 +326,20 @@ export function PagamentoDialog(props: Props) {
                       <tr key={p.id} className="border-t border-border/60">
                         <td className="px-3 py-2 tabular-nums">
                           <input
-                            type="date"
+                            type="date" min="2000-01-01" max="2100-12-31"
                             defaultValue={p.data_pagamento}
                             onBlur={(e) => {
                               const v = e.target.value;
-                              if (v && v !== p.data_pagamento) {
-                                updatePagamento.mutate({ id: p.id, patch: { data_pagamento: v } });
+                              if (!v || v === p.data_pagamento) return;
+                              const res = validateDateString(v);
+                              if (!res.ok) {
+                                toast.error(res.message);
+                                e.target.value = p.data_pagamento;
+                                return;
                               }
+                              updatePagamento.mutate({ id: p.id, patch: { data_pagamento: v } });
                             }}
+
                             className="bg-transparent border border-transparent hover:border-border focus:border-primary rounded px-1 py-0.5 text-sm w-[120px]"
                             title="Editar data — substitui a data anterior"
                           />
