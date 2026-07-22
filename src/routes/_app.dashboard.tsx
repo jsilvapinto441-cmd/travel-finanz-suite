@@ -5,6 +5,8 @@ import { PageContainer, PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/date-picker";
+
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatMonth } from "@/lib/format";
