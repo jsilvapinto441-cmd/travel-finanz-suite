@@ -340,11 +340,11 @@ function Dashboard() {
       <Card className="p-4 mb-6 flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Período inicial</Label>
-          <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} className="w-[170px]" />
+          <Input type="date" min="2000-01-01" max="2100-12-31" value={dataIni} onChange={(e) => setDataIni(e.target.value)} className="w-[170px]" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Período final</Label>
-          <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-[170px]" />
+          <Input type="date" min="2000-01-01" max="2100-12-31" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-[170px]" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Empresa</Label>

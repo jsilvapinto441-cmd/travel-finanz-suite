@@ -324,7 +324,7 @@ export function PagamentoDialog(props: Props) {
                       <tr key={p.id} className="border-t border-border/60">
                         <td className="px-3 py-2 tabular-nums">
                           <input
-                            type="date"
+                            type="date" min="2000-01-01" max="2100-12-31"
                             defaultValue={p.data_pagamento}
                             onBlur={(e) => {
                               const v = e.target.value;

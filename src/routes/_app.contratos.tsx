@@ -290,7 +290,7 @@ function ContratoForm({
                       </td>
                       <td className="px-3 py-2">
                         <Input
-                          type="date"
+                          type="date" min="2000-01-01" max="2100-12-31"
                           value={vencAtual}
                           onChange={(e) => setOverride(p.i, { venc: e.target.value })}
                           className="h-8 max-w-[170px]"
@@ -424,8 +424,8 @@ function Page() {
                 onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
                 options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]} />
             </div>
-            <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" placeholder="De" title="De" />
-            <Input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" placeholder="Até" title="Até" />
+            <Input type="date" min="2000-01-01" max="2100-12-31" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" placeholder="De" title="De" />
+            <Input type="date" min="2000-01-01" max="2100-12-31" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" placeholder="Até" title="Até" />
           </div>
         }
         onAfterSave={async (savedId, values) => {
