@@ -70,12 +70,21 @@ export function AppShell() {
   const showEmpresa = empresaNome && empresaNome !== "Rotas";
 
   const CompanyBadge = ({ compact = false }: { compact?: boolean }) => (
-    <div className="flex items-center gap-2.5 rounded-full border border-border/60 bg-card/60 pl-1 pr-3 py-1 max-w-[70vw] md:max-w-sm">
+    <div className={cn(
+      "flex items-center gap-2.5 rounded-full border border-border/60 bg-card/60 py-1",
+      compact ? "pl-1 pr-1" : "pl-1 pr-3 max-w-[70vw] md:max-w-sm",
+    )}>
       {empresaLogo ? (
-        <img src={empresaLogo} alt="" className="size-10 md:size-11 rounded-full object-cover shrink-0 ring-1 ring-border/40" />
+        <img src={empresaLogo} alt="" className={cn(
+          "rounded-full object-cover shrink-0 ring-1 ring-border/40",
+          compact ? "size-8" : "size-10 md:size-11",
+        )} />
       ) : (
-        <div className="size-10 md:size-11 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
-          <Building2 className="size-5 text-primary" />
+        <div className={cn(
+          "rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0",
+          compact ? "size-8" : "size-10 md:size-11",
+        )}>
+          <Building2 className={cn(compact ? "size-4" : "size-5", "text-primary")} />
         </div>
       )}
       {!compact && (
@@ -83,6 +92,7 @@ export function AppShell() {
       )}
     </div>
   );
+
 
   const SidebarContent = (
     <>
@@ -165,7 +175,7 @@ export function AppShell() {
         )}
         {/* Top bar mobile — respeita safe-area do notch */}
 
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-4 h-14 pt-[env(safe-area-inset-top)] border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0"
+        <header className="md:hidden sticky top-0 z-30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 h-14 pt-[env(safe-area-inset-top)] border-b border-sidebar-border bg-sidebar text-sidebar-foreground shrink-0"
           style={{ height: "calc(3.5rem + env(safe-area-inset-top))" }}
         >
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -190,11 +200,16 @@ export function AppShell() {
               {SidebarContent}
             </SheetContent>
           </Sheet>
-          <span className="absolute left-1/2 -translate-x-1/2 top-[env(safe-area-inset-top)] h-14 flex items-center max-w-[50%] truncate text-sm font-semibold text-center pointer-events-none">
-            {currentLabel}
-          </span>
+
+          <div className="min-w-0 flex flex-col justify-center leading-tight">
+            <span className="truncate text-[15px] font-semibold">{currentLabel}</span>
+            {showEmpresa && (
+              <span className="truncate text-[11px] text-sidebar-foreground/60">{empresaNome}</span>
+            )}
+          </div>
+
           {showEmpresa ? (
-            <CompanyBadge />
+            <CompanyBadge compact />
           ) : (
             <div className="size-9 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold shrink-0">
               {initials}
@@ -202,6 +217,7 @@ export function AppShell() {
           )}
 
         </header>
+
 
         <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
           <Outlet />
