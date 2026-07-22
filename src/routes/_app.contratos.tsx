@@ -425,8 +425,9 @@ function Page() {
                 onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
                 options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]} />
             </div>
-            <Input type="date" min="2000-01-01" max="2100-12-31" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" placeholder="De" title="De" />
-            <Input type="date" min="2000-01-01" max="2100-12-31" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" placeholder="Até" title="Até" />
+            <DatePicker value={dataDe} onChange={setDataDe} className="h-9 w-[150px]" aria-label="De" />
+            <DatePicker value={dataAte} onChange={setDataAte} className="h-9 w-[150px]" aria-label="Até" />
+
           </div>
         }
         onAfterSave={async (savedId, values) => {
