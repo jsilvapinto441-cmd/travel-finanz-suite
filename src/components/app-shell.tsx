@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AssistantFAB } from "@/components/ai-assistant";
 import { useBrand } from "@/lib/brand";
+import rotasLogo from "@/assets/rotas-logo.png.asset.json";
 
 
 
@@ -96,9 +97,8 @@ export function AppShell() {
 
   const SidebarContent = (
     <>
-      <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center gap-2">
-        <span className="font-display text-2xl font-bold tracking-tight">ROTAS</span>
-        <Zap className="size-6 text-primary" fill="currentColor" strokeWidth={0} />
+      <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center">
+        <img src={rotasLogo.url} alt="ROTAS" className="h-10 w-auto object-contain" />
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
