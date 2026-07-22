@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AssistantFAB } from "@/components/ai-assistant";
 import { useBrand } from "@/lib/brand";
+import rotasLogo from "@/assets/rotas-logo.png.asset.json";
 
 
 
