@@ -104,7 +104,7 @@ export function AssistantChat({
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-sidebar text-sidebar-foreground">
+      <div className="flex items-center gap-3 px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))] border-b border-border bg-sidebar text-sidebar-foreground">
         <div className="size-7 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
           <Zap className="size-4 text-primary" fill="currentColor" />
         </div>
