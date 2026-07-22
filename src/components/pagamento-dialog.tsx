@@ -328,10 +328,16 @@ export function PagamentoDialog(props: Props) {
                             defaultValue={p.data_pagamento}
                             onBlur={(e) => {
                               const v = e.target.value;
-                              if (v && v !== p.data_pagamento) {
-                                updatePagamento.mutate({ id: p.id, patch: { data_pagamento: v } });
+                              if (!v || v === p.data_pagamento) return;
+                              const res = validateDateString(v);
+                              if (!res.ok) {
+                                toast.error(res.message);
+                                e.target.value = p.data_pagamento;
+                                return;
                               }
+                              updatePagamento.mutate({ id: p.id, patch: { data_pagamento: v } });
                             }}
+
                             className="bg-transparent border border-transparent hover:border-border focus:border-primary rounded px-1 py-0.5 text-sm w-[120px]"
                             title="Editar data — substitui a data anterior"
                           />
