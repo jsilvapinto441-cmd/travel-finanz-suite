@@ -2,7 +2,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type ReactNode, useState, useEffect } from "react";
+import { type ReactNode, useState, useEffect, useRef } from "react";
+import { validateDateString, MIN_DATE, MAX_DATE } from "@/lib/date-validation";
+
 
 export function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
