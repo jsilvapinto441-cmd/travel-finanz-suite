@@ -250,6 +250,13 @@ function Page() {
         actions={
           <ExportButton<any>
             title="Despesas" filename="despesas" rows={filtered as any}
+            subtitle={`Período: ${dataDe ? formatDate(dataDe) : "início"} até ${dataAte ? formatDate(dataAte) : "hoje"}${empresaFilter ? " · empresa filtrada" : ""}${missaoFilter ? " · missão filtrada" : ""}`}
+            summary={[
+              { label: "Registros", value: String(filtered.length) },
+              { label: "Total a pagar", value: formatCurrency(totaisPeriodo.total) },
+              { label: "Pago", value: formatCurrency(totaisPeriodo.pago) },
+              { label: "Restante", value: formatCurrency(totaisPeriodo.restante) },
+            ]}
             columns={[
               
               { header: "Descrição", accessor: (r: T) => r.descricao },
