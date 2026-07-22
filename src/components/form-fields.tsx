@@ -2,8 +2,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type ReactNode, useState, useEffect, useRef } from "react";
-import { validateDateString, MIN_DATE, MAX_DATE } from "@/lib/date-validation";
+import { type ReactNode, useState, useEffect } from "react";
+import { validateDateString } from "@/lib/date-validation";
+import { DatePicker } from "@/components/date-picker";
 
 
 export function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
@@ -21,38 +22,32 @@ export function TextField({
   label: string; value: any; onChange: (v: string) => void;
   type?: string; required?: boolean; placeholder?: string;
 }) {
-  const isDate = type === "date";
-  const [touched, setTouched] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dateError = isDate ? validateDateString(value) : { ok: true as const };
-  const showError = isDate && touched && !dateError.ok;
-
-  useEffect(() => {
-    if (!isDate || !inputRef.current) return;
-    inputRef.current.setCustomValidity(dateError.ok ? "" : dateError.message);
-  }, [isDate, dateError.ok, "message" in dateError ? dateError.message : ""]);
-
+  if (type === "date") {
+    const res = validateDateString(value);
+    const showError = !res.ok;
+    return (
+      <Field label={label}>
+        <DatePicker value={value ?? ""} onChange={onChange} required={required} invalid={showError} />
+        {showError && !res.ok && (
+          <p className="text-xs text-destructive mt-1">{res.message}</p>
+        )}
+      </Field>
+    );
+  }
   return (
     <Field label={label}>
       <Input
-        ref={inputRef}
         type={type}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
-        onBlur={() => { if (isDate) setTouched(true); }}
         required={required}
         placeholder={placeholder}
-        min={isDate ? MIN_DATE : undefined}
-        max={isDate ? MAX_DATE : undefined}
-        aria-invalid={showError || undefined}
-        className={showError ? "border-destructive focus-visible:ring-destructive" : undefined}
       />
-      {showError && !dateError.ok && (
-        <p className="text-xs text-destructive mt-1">{dateError.message}</p>
-      )}
     </Field>
   );
 }
+
+
 
 
 export function NumberField({

@@ -1,3 +1,4 @@
+import { DatePicker } from "@/components/date-picker";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -289,12 +290,12 @@ function ContratoForm({
                         />
                       </td>
                       <td className="px-3 py-2">
-                        <Input
-                          type="date" min="2000-01-01" max="2100-12-31"
+                        <DatePicker
                           value={vencAtual}
-                          onChange={(e) => setOverride(p.i, { venc: e.target.value })}
+                          onChange={(v) => setOverride(p.i, { venc: v })}
                           className="h-8 max-w-[170px]"
                         />
+
                       </td>
                     </tr>
                   );
@@ -424,8 +425,9 @@ function Page() {
                 onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
                 options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]} />
             </div>
-            <Input type="date" min="2000-01-01" max="2100-12-31" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" placeholder="De" title="De" />
-            <Input type="date" min="2000-01-01" max="2100-12-31" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" placeholder="Até" title="Até" />
+            <DatePicker value={dataDe} onChange={setDataDe} className="h-9 w-[150px]" aria-label="De" />
+            <DatePicker value={dataAte} onChange={setDataAte} className="h-9 w-[150px]" aria-label="Até" />
+
           </div>
         }
         onAfterSave={async (savedId, values) => {

@@ -1,3 +1,4 @@
+import { DatePicker } from "@/components/date-picker";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -361,8 +362,9 @@ function Page() {
             </div>
             <div className="grid grid-cols-2 gap-2 sm:contents">
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground sm:hidden col-span-2 -mb-1">Vencimento</label>
-              <Input type="date" min="2000-01-01" max="2100-12-31" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-full sm:w-[150px]" title="Vencimento — de" />
-              <Input type="date" min="2000-01-01" max="2100-12-31" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-full sm:w-[150px]" title="Vencimento — até" />
+              <DatePicker value={dataDe} onChange={setDataDe} className="h-9 w-full sm:w-[150px]" aria-label="Vencimento — de" />
+              <DatePicker value={dataAte} onChange={setDataAte} className="h-9 w-full sm:w-[150px]" aria-label="Vencimento — até" />
+
               {(dataDe || dataAte) && (
                 <button
                   type="button"
