@@ -130,10 +130,7 @@ function LoginPage() {
 
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center justify-center mb-8 gap-3">
-          <div className="flex items-center gap-2">
-            <span className="font-display text-3xl font-bold tracking-tight">ROTAS</span>
-            <Zap className="size-7 text-primary" fill="currentColor" strokeWidth={0} />
-          </div>
+          <img src={rotasLogo.url} alt="ROTAS" className="h-16 w-auto object-contain" />
 
           <div className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground">
             Gestão Premium
