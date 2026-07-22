@@ -38,6 +38,7 @@ function timestamp() {
 export function exportToPDF<T>({
   title,
   subtitle,
+  summary,
   columns,
   rows,
   filename,
@@ -45,6 +46,7 @@ export function exportToPDF<T>({
 }: {
   title: string;
   subtitle?: string;
+  summary?: { label: string; value: string }[];
   columns: ExportColumn<T>[];
   rows: T[];
   filename?: string;
@@ -75,11 +77,35 @@ export function exportToPDF<T>({
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.text(title, 12, 28);
+  let cursorY = 34;
   if (subtitle) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text(subtitle, 12, 34);
+    doc.text(subtitle, 12, cursorY);
+    cursorY += 6;
+  }
+
+  // Bloco de totais / resumo
+  if (summary && summary.length > 0) {
+    const boxH = 14;
+    const boxY = cursorY;
+    doc.setFillColor(249, 246, 241);
+    doc.setDrawColor(249, 115, 22);
+    doc.roundedRect(10, boxY, pageWidth - 20, boxH, 1.5, 1.5, "FD");
+    const colW = (pageWidth - 20) / summary.length;
+    summary.forEach((item, i) => {
+      const x = 10 + i * colW + 4;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(item.label.toUpperCase(), x, boxY + 5);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(20, 20, 20);
+      doc.text(item.value, x, boxY + 11);
+    });
+    cursorY = boxY + boxH + 4;
   }
 
   const head = [columns.map((c) => c.header)];
@@ -88,7 +114,7 @@ export function exportToPDF<T>({
   autoTable(doc, {
     head,
     body,
-    startY: subtitle ? 40 : 34,
+    startY: cursorY,
     styles: { fontSize: 9, cellPadding: 2.5, textColor: [30, 30, 30] },
     headStyles: {
       fillColor: [249, 115, 22],
