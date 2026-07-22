@@ -314,7 +314,14 @@ function Page() {
           <ExportButton<T>
             title="Recebíveis"
             filename="recebiveis"
-            rows={(data ?? []) as T[]}
+            rows={filtered}
+            subtitle={`Período: ${dataDe ? formatDate(dataDe) : "início"} até ${dataAte ? formatDate(dataAte) : "hoje"}${empresaFilter ? " · empresa filtrada" : ""}${missaoFilter ? " · missão filtrada" : ""}`}
+            summary={[
+              { label: "Registros", value: String(filtered.length) },
+              { label: "Total a receber", value: formatCurrency(totaisPeriodo.total) },
+              { label: "Recebido", value: formatCurrency(totaisPeriodo.recebido) },
+              { label: "Restante", value: formatCurrency(totaisPeriodo.restante) },
+            ]}
             columns={[
               { header: "Cliente", accessor: "pagador" },
               { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
