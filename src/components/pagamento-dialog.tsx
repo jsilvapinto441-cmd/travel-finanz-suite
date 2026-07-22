@@ -10,6 +10,8 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import { useContasBancariasComEmpresa } from "@/lib/bancos";
 import { Link } from "@tanstack/react-router";
+import { validateDateString } from "@/lib/date-validation";
+
 
 type Recebivel = {
   id: string;
