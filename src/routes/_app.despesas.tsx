@@ -269,11 +269,20 @@ function Page() {
         }
       />
 
-      <KpiCard
-        label="Total a pagar hoje" value={formatCurrency(totalHoje)}
-        hint={empresaFilter ? "Filtrado pela empresa selecionada" : "Todas as empresas"}
-        icon={<CalendarClock className="size-5" />} tone="warning"
-      />
+      {(dataDe || dataAte) ? (
+        <KpiCard
+          label="Total a pagar no período"
+          value={formatCurrency(totaisPeriodo.restante)}
+          hint={`${dataDe ? formatDate(dataDe) : "início"} → ${dataAte ? formatDate(dataAte) : "hoje"}${empresaFilter ? " · empresa filtrada" : ""}`}
+          icon={<CalendarClock className="size-5" />} tone="warning"
+        />
+      ) : (
+        <KpiCard
+          label="Total a pagar hoje" value={formatCurrency(totalHoje)}
+          hint={empresaFilter ? "Filtrado pela empresa selecionada" : "Todas as empresas"}
+          icon={<CalendarClock className="size-5" />} tone="warning"
+        />
+      )}
 
       <Card className="overflow-hidden">
         <div className="p-4 flex flex-col gap-3 border-b">
@@ -289,16 +298,28 @@ function Page() {
               </Button>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-1 sm:flex sm:flex-wrap sm:items-center gap-2">
             <EmpresaFilter value={empresaFilter} onChange={setEmpresaFilter} />
-            <div className="flex items-center gap-2 min-w-[200px]">
+            <div className="flex items-center gap-2 sm:min-w-[200px]">
               <Target className="size-4 text-muted-foreground shrink-0" />
               <SelectField label="" value={missaoFilter === "" ? "__all__" : missaoFilter}
                 onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
                 options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]} />
             </div>
-            <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-[150px]" title="Vencimento — de" />
-            <Input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-[150px]" title="Vencimento — até" />
+            <div className="grid grid-cols-2 gap-2 sm:contents">
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground sm:hidden col-span-2 -mb-1">Vencimento</label>
+              <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} className="h-9 w-full sm:w-[150px]" title="Vencimento — de" />
+              <Input type="date" value={dataAte} onChange={(e) => setDataAte(e.target.value)} className="h-9 w-full sm:w-[150px]" title="Vencimento — até" />
+              {(dataDe || dataAte) && (
+                <button
+                  type="button"
+                  onClick={() => { setDataDe(""); setDataAte(""); }}
+                  className="col-span-2 sm:col-auto text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                >
+                  Limpar período
+                </button>
+              )}
+            </div>
           </div>
           <div className="md:hidden grid grid-cols-3 gap-2 rounded-lg border border-border bg-muted/20 p-3 text-xs">
             <div>
