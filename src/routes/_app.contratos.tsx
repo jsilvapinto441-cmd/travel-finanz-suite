@@ -290,12 +290,12 @@ function ContratoForm({
                         />
                       </td>
                       <td className="px-3 py-2">
-                        <Input
-                          type="date" min="2000-01-01" max="2100-12-31"
+                        <DatePicker
                           value={vencAtual}
-                          onChange={(e) => setOverride(p.i, { venc: e.target.value })}
+                          onChange={(v) => setOverride(p.i, { venc: v })}
                           className="h-8 max-w-[170px]"
                         />
+
                       </td>
                     </tr>
                   );
