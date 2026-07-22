@@ -269,11 +269,20 @@ function Page() {
         }
       />
 
-      <KpiCard
-        label="Total a pagar hoje" value={formatCurrency(totalHoje)}
-        hint={empresaFilter ? "Filtrado pela empresa selecionada" : "Todas as empresas"}
-        icon={<CalendarClock className="size-5" />} tone="warning"
-      />
+      {(dataDe || dataAte) ? (
+        <KpiCard
+          label="Total a pagar no período"
+          value={formatCurrency(totaisPeriodo.restante)}
+          hint={`${dataDe ? formatDate(dataDe) : "início"} → ${dataAte ? formatDate(dataAte) : "hoje"}${empresaFilter ? " · empresa filtrada" : ""}`}
+          icon={<CalendarClock className="size-5" />} tone="warning"
+        />
+      ) : (
+        <KpiCard
+          label="Total a pagar hoje" value={formatCurrency(totalHoje)}
+          hint={empresaFilter ? "Filtrado pela empresa selecionada" : "Todas as empresas"}
+          icon={<CalendarClock className="size-5" />} tone="warning"
+        />
+      )}
 
       <Card className="overflow-hidden">
         <div className="p-4 flex flex-col gap-3 border-b">
