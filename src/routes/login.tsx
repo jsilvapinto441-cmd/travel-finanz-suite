@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import rotasLogo from "@/assets/rotas-logo-white.png.asset.json";
+import rotasLogo from "@/assets/rotas-logo-transparent.png.asset.json";
 import { z } from "zod";
 import { audit } from "@/lib/audit";
 import {
