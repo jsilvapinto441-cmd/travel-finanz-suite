@@ -186,8 +186,10 @@ export function AppShell() {
             </SheetTrigger>
             <SheetContent
               side="left"
+              hideClose
               className="w-[85vw] max-w-80 p-0 flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
             >
+
               <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
               <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border md:hidden">
                 <span className="text-sm font-semibold">Menu</span>
