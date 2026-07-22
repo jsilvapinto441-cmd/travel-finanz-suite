@@ -21,13 +21,39 @@ export function TextField({
   label: string; value: any; onChange: (v: string) => void;
   type?: string; required?: boolean; placeholder?: string;
 }) {
+  const isDate = type === "date";
+  const [touched, setTouched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dateError = isDate ? validateDateString(value) : { ok: true as const };
+  const showError = isDate && touched && !dateError.ok;
+
+  useEffect(() => {
+    if (!isDate || !inputRef.current) return;
+    inputRef.current.setCustomValidity(dateError.ok ? "" : dateError.message);
+  }, [isDate, dateError.ok, "message" in dateError ? dateError.message : ""]);
+
   return (
     <Field label={label}>
-      <Input type={type} value={value ?? ""} onChange={(e) => onChange(e.target.value)}
-        required={required} placeholder={placeholder} />
+      <Input
+        ref={inputRef}
+        type={type}
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => { if (isDate) setTouched(true); }}
+        required={required}
+        placeholder={placeholder}
+        min={isDate ? MIN_DATE : undefined}
+        max={isDate ? MAX_DATE : undefined}
+        aria-invalid={showError || undefined}
+        className={showError ? "border-destructive focus-visible:ring-destructive" : undefined}
+      />
+      {showError && !dateError.ok && (
+        <p className="text-xs text-destructive mt-1">{dateError.message}</p>
+      )}
     </Field>
   );
 }
+
 
 export function NumberField({
   label, value, onChange, step = "0.01", required, min, max,
