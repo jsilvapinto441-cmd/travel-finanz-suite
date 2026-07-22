@@ -40,9 +40,9 @@ export function ExportButton<T>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={() =>
-            exportToPDF({ title, subtitle, summary, columns, rows, filename })
-          }
+          onClick={() => {
+            void exportToPDF({ title, subtitle, summary, columns, rows, filename });
+          }}
         >
           <FileText className="size-4 mr-2" />
           PDF
