@@ -344,7 +344,7 @@ function Dashboard() {
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Período final</Label>
-          <Input type="date" min="2000-01-01" max="2100-12-31" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-[170px]" />
+          <DatePicker value={dataFim} onChange={setDataFim} className="w-[170px]" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Empresa</Label>
