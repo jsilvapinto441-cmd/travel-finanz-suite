@@ -86,7 +86,7 @@ function Page() {
         actions={
           <ExportButton<Mov>
             title="Fluxo de Caixa"
-            subtitle={`Período: ${from} a ${to}`}
+            subtitle={formatPeriodoLabel(from, to)}
             filename="fluxo_caixa"
             rows={data ?? []}
             columns={[
