@@ -260,10 +260,9 @@ function Page() {
             columns={[
               
               { header: "Descrição", accessor: (r: T) => r.descricao },
-              { header: "Categoria", accessor: (r: T) => r.categoria_personalizada ?? r.categoria.replace(/_/g, " ") },
+              { header: "Categoria", accessor: (r: T) => categoriaLabel(r.categoria, r.categoria_personalizada) },
               { header: "Empresa", accessor: (r: T) => nomeById(empresas, r.empresa_id) },
               { header: "Missão", accessor: (r: T) => nomeById(missoes, r.missao_id) },
-              { header: "Contrato", accessor: (r: T) => contratoLabel(r.contrato_id) },
               { header: "Fornecedor", accessor: (r: T) => nomeById(fornecedores, r.fornecedor_id) },
               { header: "Banco", accessor: (r: T) => r.banco ?? "—" },
               { header: "Valor", accessor: (r: T) => formatCurrency(Number(r.valor)) },
@@ -273,6 +272,7 @@ function Page() {
               { header: "Data de Pagamento", accessor: (r: T) => formatDate(r.data_pagamento) },
               { header: "Status", accessor: (r: T) => r.status },
             ]}
+
           />
         }
       />
