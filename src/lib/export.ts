@@ -168,15 +168,17 @@ export async function exportToPDF<T>({
     head,
     body,
     startY: cursorY,
-    styles: { fontSize: 9, cellPadding: 2.5, textColor: [30, 30, 30] },
+    styles: { fontSize: 7, cellPadding: 1.5, textColor: [30, 30, 30] },
     headStyles: {
       fillColor: [249, 115, 22],
       textColor: [255, 255, 255],
       fontStyle: "bold",
+      fontSize: 7.5,
     },
     alternateRowStyles: { fillColor: [248, 248, 248] },
     margin: { left: 10, right: 10 },
   });
+
 
   doc.save(`${sanitize(filename ?? title)}_${timestamp()}.pdf`);
 }
