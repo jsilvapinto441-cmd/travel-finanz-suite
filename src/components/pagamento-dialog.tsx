@@ -298,9 +298,9 @@ export function PagamentoDialog(props: Props) {
             </Field>
           </div>
           <div className="col-span-2 flex justify-end">
-            <Button type="submit" disabled={createPagamento.isPending || uploading} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button type="submit" disabled={createPagamento.isPending || uploading || restante <= 0} className="bg-primary text-primary-foreground hover:bg-primary/90">
               {(createPagamento.isPending || uploading) && <Loader2 className="size-4 animate-spin mr-2" />}
-              {mode === "despesa" ? "Registrar pagamento" : "Registrar recebimento"}
+              {restante <= 0 ? "Já quitado" : (mode === "despesa" ? "Registrar pagamento" : "Registrar recebimento")}
             </Button>
           </div>
         </form>
