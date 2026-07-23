@@ -328,20 +328,7 @@ export function PagamentoDialog(props: Props) {
                     const conta = contas?.find((c) => c.id === p.conta_bancaria_id);
                     return (
                       <tr key={p.id} className="border-t border-border/60">
-                        <td className="px-3 py-2 tabular-nums">
-                          <DatePicker
-                            value={p.data_pagamento}
-                            onChange={(v) => {
-                              if (!v || v === p.data_pagamento) return;
-                              const res = validateDateString(v);
-                              if (!res.ok) { toast.error(res.message); return; }
-                              updatePagamento.mutate({ id: p.id, patch: { data_pagamento: v } });
-                            }}
-                            className="h-8 w-[150px]"
-                            aria-label="Editar data do pagamento"
-                          />
-
-                        </td>
+                        <td className="px-3 py-2 tabular-nums">{formatDate(p.data_pagamento)}</td>
                         <td className="px-3 py-2 text-right font-medium tabular-nums">{formatCurrency(p.valor)}</td>
                         <td className="px-3 py-2 capitalize">{p.forma_pagamento}</td>
                         <td className="px-3 py-2 text-muted-foreground">{conta?.banco ?? "—"}</td>
@@ -352,6 +339,13 @@ export function PagamentoDialog(props: Props) {
                               <Paperclip className="size-3 mr-1" /> ver
                             </Button>
                           ) : "—"}
+                        </td>
+                        <td className="px-2 py-2 text-right">
+                          <Button size="icon" variant="ghost" className="size-8"
+                            title="Editar pagamento"
+                            onClick={() => setEditing(p)}>
+                            <Pencil className="size-3.5" />
+                          </Button>
                         </td>
                         {isAdmin && (
                           <td className="px-2 py-2 text-right">
