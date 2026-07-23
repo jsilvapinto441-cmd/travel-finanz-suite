@@ -119,6 +119,7 @@ export function PagamentoDialog(props: Props) {
     mutationFn: async () => {
       if (!target) return;
       if (!valor || valor <= 0) throw new Error("Valor inválido");
+      if (restante <= 0) throw new Error("Este item já está quitado. Edite um pagamento existente no histórico abaixo.");
 
       let comprovante_path: string | null = null;
       if (comprovante && user) {
