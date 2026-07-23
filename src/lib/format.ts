@@ -16,3 +16,16 @@ export function formatMonth(d: string | Date): string {
   const dt = typeof d === "string" ? new Date(d) : d;
   return dt.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
 }
+
+/** Retorna a descrição do período de apuração no formato "Período: dd/MM/yyyy a dd/MM/yyyy". */
+export function formatPeriodoLabel(
+  from?: string | Date | null,
+  to?: string | Date | null,
+): string {
+  const fromFmt = from ? formatDate(from) : null;
+  const toFmt = to ? formatDate(to) : null;
+  if (fromFmt && toFmt) return `Período: ${fromFmt} a ${toFmt}`;
+  if (fromFmt) return `Período: a partir de ${fromFmt}`;
+  if (toFmt) return `Período: até ${toFmt}`;
+  return "Período: completo";
+}
