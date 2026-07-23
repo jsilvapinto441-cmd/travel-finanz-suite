@@ -384,7 +384,7 @@ function Page() {
                       <div className="font-medium truncate flex items-center gap-2">
                         {g.titulo}
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                          · {g.categoria.replace(/_/g, " ")}
+                          · {categoriaLabel(g.categoria)}
                         </span>
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
