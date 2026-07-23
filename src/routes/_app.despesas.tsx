@@ -255,7 +255,7 @@ function Page() {
               { label: "Registros", value: String(filtered.length) },
               { label: "Total a pagar", value: formatCurrency(totaisPeriodo.total) },
               { label: "Pago", value: formatCurrency(totaisPeriodo.pago) },
-              { label: "Restante", value: formatCurrency(totaisPeriodo.restante) },
+              { label: "A pagar", value: formatCurrency(totaisPeriodo.restante) },
             ]}
             columns={[
               
@@ -340,7 +340,7 @@ function Page() {
               <div className="font-semibold tabular-nums text-success">{formatCurrency(totaisPeriodo.pago)}</div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Restante</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">A pagar</div>
               <div className="font-semibold tabular-nums text-primary">{formatCurrency(totaisPeriodo.restante)}</div>
             </div>
           </div>
@@ -379,7 +379,7 @@ function Page() {
                       <div className="text-sm font-semibold">{formatCurrency(g.total)}</div>
                       <div className="text-[11px] text-muted-foreground">
                         {g.pago > 0 && <span className="text-success">Pago {formatCurrency(g.pago)} · </span>}
-                        Restante <span className="text-primary">{formatCurrency(g.restante)}</span>
+                        A pagar <span className="text-primary">{formatCurrency(g.restante)}</span>
                       </div>
                     </div>
                   </div>
