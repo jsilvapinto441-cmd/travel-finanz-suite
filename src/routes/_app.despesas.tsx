@@ -62,6 +62,26 @@ const CATEGORIAS = [
   { value: "outros", label: "Outros" },
 ];
 
+const CATEGORIA_SINGULAR: Record<string, string> = {
+  impostos: "Imposto",
+  funcionarios: "Funcionário",
+  prestador_mei: "MEI",
+  consolidadora: "Consolidadora",
+  fornecedor: "Fornecedor",
+  aluguel: "Aluguel",
+  luz: "Luz",
+  condominio: "Condomínio",
+  telefone: "Telefone",
+  parcelamento_simples: "Parcelamento Simples",
+  avulso: "Avulso",
+  outros: "Outros",
+};
+
+function categoriaLabel(categoria: string, personalizada?: string | null): string {
+  if (personalizada) return personalizada.charAt(0).toUpperCase() + personalizada.slice(1);
+  return CATEGORIA_SINGULAR[categoria] ?? (categoria.charAt(0).toUpperCase() + categoria.slice(1).replace(/_/g, " "));
+}
+
 // Categorias que exibem um campo dinâmico de seleção (cadastro correspondente).
 const DYNAMIC_CATEGORIES: Record<string, { label: string; field: "funcionario_id" | "prestador_mei_id" | "consolidadora_id" | "fornecedor_id" }> = {
   funcionarios: { label: "Funcionário", field: "funcionario_id" },
