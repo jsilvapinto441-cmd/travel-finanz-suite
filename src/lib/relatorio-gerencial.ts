@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency } from "@/lib/format";
 import { getBrandName } from "@/lib/brand";
+import { formatPeriodoLabel } from "@/lib/format";
 
 type Periodo = { from?: string; to?: string };
 
@@ -176,9 +177,7 @@ export function exportRelatorioGerencial(d: RelatorioGerencialData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
 
-  const periodoLabel = d.periodo.from || d.periodo.to
-    ? `Período: ${d.periodo.from || "início"} a ${d.periodo.to || "hoje"}`
-    : "Período: completo";
+  const periodoLabel = formatPeriodoLabel(d.periodo.from, d.periodo.to);
 
   headerBar(doc, "Relatório Gerencial", `Empresa: ${d.empresaNome}`);
 

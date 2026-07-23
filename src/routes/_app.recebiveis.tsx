@@ -20,7 +20,7 @@ import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/components/ui/accordion";
 import { useEmpresas, useMissoes, useContratos, nomeById } from "@/lib/lookups";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPeriodoLabel } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
@@ -315,7 +315,7 @@ function Page() {
             title="Recebíveis"
             filename="recebiveis"
             rows={filtered}
-            subtitle={`Período: ${dataDe ? formatDate(dataDe) : "início"} até ${dataAte ? formatDate(dataAte) : "hoje"}${empresaFilter ? " · empresa filtrada" : ""}${missaoFilter ? " · missão filtrada" : ""}`}
+            subtitle={`${formatPeriodoLabel(dataDe, dataAte)}${empresaFilter ? " · empresa filtrada" : ""}${missaoFilter ? " · missão filtrada" : ""}`}
             summary={[
               { label: "Registros", value: String(filtered.length) },
               { label: "Total a receber", value: formatCurrency(totaisPeriodo.total) },

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { SelectField, TextField } from "@/components/form-fields";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPeriodoLabel } from "@/lib/format";
 import { useContasBancarias } from "@/lib/bancos";
 import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
@@ -86,7 +86,7 @@ function Page() {
         actions={
           <ExportButton<Mov>
             title="Fluxo de Caixa"
-            subtitle={`Período: ${from} a ${to}`}
+            subtitle={formatPeriodoLabel(from, to)}
             filename="fluxo_caixa"
             rows={data ?? []}
             columns={[
