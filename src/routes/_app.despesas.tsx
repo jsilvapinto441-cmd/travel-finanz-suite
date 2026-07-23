@@ -20,7 +20,7 @@ import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/components/ui/accordion";
 import { useEmpresas, useMissoes, useContratos, useFornecedores, useFuncionarios, usePrestadoresMei, useConsolidadoras, nomeById } from "@/lib/lookups";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPeriodoLabel } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
