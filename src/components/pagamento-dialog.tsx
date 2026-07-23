@@ -86,6 +86,7 @@ export function PagamentoDialog(props: Props) {
   const [comprovante, setComprovante] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState<Pagamento | null>(null);
 
   useEffect(() => {
     if (open && target) {
