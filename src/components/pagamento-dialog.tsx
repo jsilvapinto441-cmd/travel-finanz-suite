@@ -1,10 +1,9 @@
-import { DatePicker } from "@/components/date-picker";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2, Paperclip, X } from "lucide-react";
+import { Loader2, Trash2, Paperclip, X, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { CurrencyField, SelectField, TextField, TextAreaField, Field } from "@/components/form-fields";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -86,6 +85,7 @@ export function PagamentoDialog(props: Props) {
   const [comprovante, setComprovante] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState<Pagamento | null>(null);
 
   useEffect(() => {
     if (open && target) {
@@ -118,6 +118,7 @@ export function PagamentoDialog(props: Props) {
     mutationFn: async () => {
       if (!target) return;
       if (!valor || valor <= 0) throw new Error("Valor inválido");
+      if (restante <= 0) throw new Error("Este item já está quitado. Edite um pagamento existente no histórico abaixo.");
 
       let comprovante_path: string | null = null;
       if (comprovante && user) {
@@ -296,9 +297,9 @@ export function PagamentoDialog(props: Props) {
             </Field>
           </div>
           <div className="col-span-2 flex justify-end">
-            <Button type="submit" disabled={createPagamento.isPending || uploading} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button type="submit" disabled={createPagamento.isPending || uploading || restante <= 0} className="bg-primary text-primary-foreground hover:bg-primary/90">
               {(createPagamento.isPending || uploading) && <Loader2 className="size-4 animate-spin mr-2" />}
-              {mode === "despesa" ? "Registrar pagamento" : "Registrar recebimento"}
+              {restante <= 0 ? "Já quitado" : (mode === "despesa" ? "Registrar pagamento" : "Registrar recebimento")}
             </Button>
           </div>
         </form>
@@ -317,6 +318,7 @@ export function PagamentoDialog(props: Props) {
                     <th className="text-left px-3 py-2 font-medium">Forma</th>
                     <th className="text-left px-3 py-2 font-medium">Conta</th>
                     <th className="text-left px-3 py-2 font-medium">Comp.</th>
+                    <th className="w-10" />
                     {isAdmin && <th className="w-10" />}
                   </tr>
                 </thead>
@@ -325,20 +327,7 @@ export function PagamentoDialog(props: Props) {
                     const conta = contas?.find((c) => c.id === p.conta_bancaria_id);
                     return (
                       <tr key={p.id} className="border-t border-border/60">
-                        <td className="px-3 py-2 tabular-nums">
-                          <DatePicker
-                            value={p.data_pagamento}
-                            onChange={(v) => {
-                              if (!v || v === p.data_pagamento) return;
-                              const res = validateDateString(v);
-                              if (!res.ok) { toast.error(res.message); return; }
-                              updatePagamento.mutate({ id: p.id, patch: { data_pagamento: v } });
-                            }}
-                            className="h-8 w-[150px]"
-                            aria-label="Editar data do pagamento"
-                          />
-
-                        </td>
+                        <td className="px-3 py-2 tabular-nums">{formatDate(p.data_pagamento)}</td>
                         <td className="px-3 py-2 text-right font-medium tabular-nums">{formatCurrency(p.valor)}</td>
                         <td className="px-3 py-2 capitalize">{p.forma_pagamento}</td>
                         <td className="px-3 py-2 text-muted-foreground">{conta?.banco ?? "—"}</td>
@@ -349,6 +338,13 @@ export function PagamentoDialog(props: Props) {
                               <Paperclip className="size-3 mr-1" /> ver
                             </Button>
                           ) : "—"}
+                        </td>
+                        <td className="px-2 py-2 text-right">
+                          <Button size="icon" variant="ghost" className="size-8"
+                            title="Editar pagamento"
+                            onClick={() => setEditing(p)}>
+                            <Pencil className="size-3.5" />
+                          </Button>
                         </td>
                         {isAdmin && (
                           <td className="px-2 py-2 text-right">
@@ -373,6 +369,94 @@ export function PagamentoDialog(props: Props) {
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
         </DialogFooter>
+
+        <EditPagamentoDialog
+          pagamento={editing}
+          onOpenChange={(v) => { if (!v) setEditing(null); }}
+          formas={FORMAS}
+          contaOptions={contaOptions}
+          onSave={async (patch) => {
+            if (!editing) return;
+            await updatePagamento.mutateAsync({ id: editing.id, patch });
+            setEditing(null);
+          }}
+          saving={updatePagamento.isPending}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditPagamentoDialog({
+  pagamento, onOpenChange, formas, contaOptions, onSave, saving,
+}: {
+  pagamento: Pagamento | null;
+  onOpenChange: (v: boolean) => void;
+  formas: { value: string; label: string }[];
+  contaOptions: { value: string; label: string }[];
+  onSave: (patch: Partial<Pagamento>) => Promise<void>;
+  saving: boolean;
+}) {
+  const [data, setData] = useState("");
+  const [valor, setValor] = useState<number>(0);
+  const [forma, setForma] = useState("");
+  const [contaId, setContaId] = useState("");
+  const [obs, setObs] = useState("");
+
+  useEffect(() => {
+    if (pagamento) {
+      setData(pagamento.data_pagamento);
+      setValor(Number(pagamento.valor ?? 0));
+      setForma(pagamento.forma_pagamento);
+      setContaId(pagamento.conta_bancaria_id ?? "");
+      setObs(pagamento.observacao ?? "");
+    }
+  }, [pagamento?.id]); // eslint-disable-line
+
+  return (
+    <Dialog open={!!pagamento} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Editar pagamento</DialogTitle>
+          <DialogDescription>Ajuste os dados deste lançamento. As alterações substituem o registro atual.</DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const res = validateDateString(data);
+            if (!res.ok) { toast.error(res.message); return; }
+            if (!valor || valor <= 0) { toast.error("Valor inválido"); return; }
+            await onSave({
+              data_pagamento: data,
+              valor,
+              forma_pagamento: forma,
+              conta_bancaria_id: contaId || null,
+              observacao: obs || null,
+            });
+          }}
+          className="grid grid-cols-2 gap-3"
+        >
+          <TextField label="Data do pagamento" type="date" value={data} onChange={setData} required />
+          <CurrencyField label="Valor" value={valor} onChange={setValor} required />
+          <SelectField label="Forma de pagamento" value={forma} onChange={setForma} options={formas} />
+          <SelectField
+            label="Conta bancária"
+            value={contaId}
+            onChange={setContaId}
+            options={contaOptions.length ? contaOptions : [{ value: "", label: "Nenhuma conta cadastrada" }]}
+            placeholder="Selecionar conta..."
+          />
+          <div className="col-span-2">
+            <TextAreaField label="Observação" value={obs} onChange={setObs} />
+          </div>
+          <DialogFooter className="col-span-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button type="submit" disabled={saving} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              {saving && <Loader2 className="size-4 animate-spin mr-2" />}
+              Salvar alterações
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
