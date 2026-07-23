@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2, Paperclip, X } from "lucide-react";
+import { Loader2, Trash2, Paperclip, X, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { CurrencyField, SelectField, TextField, TextAreaField, Field } from "@/components/form-fields";
 import { formatCurrency, formatDate } from "@/lib/format";
