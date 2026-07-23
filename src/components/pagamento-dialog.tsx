@@ -370,6 +370,94 @@ export function PagamentoDialog(props: Props) {
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
         </DialogFooter>
+
+        <EditPagamentoDialog
+          pagamento={editing}
+          onOpenChange={(v) => { if (!v) setEditing(null); }}
+          formas={FORMAS}
+          contaOptions={contaOptions}
+          onSave={async (patch) => {
+            if (!editing) return;
+            await updatePagamento.mutateAsync({ id: editing.id, patch });
+            setEditing(null);
+          }}
+          saving={updatePagamento.isPending}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditPagamentoDialog({
+  pagamento, onOpenChange, formas, contaOptions, onSave, saving,
+}: {
+  pagamento: Pagamento | null;
+  onOpenChange: (v: boolean) => void;
+  formas: { value: string; label: string }[];
+  contaOptions: { value: string; label: string }[];
+  onSave: (patch: Partial<Pagamento>) => Promise<void>;
+  saving: boolean;
+}) {
+  const [data, setData] = useState("");
+  const [valor, setValor] = useState<number>(0);
+  const [forma, setForma] = useState("");
+  const [contaId, setContaId] = useState("");
+  const [obs, setObs] = useState("");
+
+  useEffect(() => {
+    if (pagamento) {
+      setData(pagamento.data_pagamento);
+      setValor(Number(pagamento.valor ?? 0));
+      setForma(pagamento.forma_pagamento);
+      setContaId(pagamento.conta_bancaria_id ?? "");
+      setObs(pagamento.observacao ?? "");
+    }
+  }, [pagamento?.id]); // eslint-disable-line
+
+  return (
+    <Dialog open={!!pagamento} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Editar pagamento</DialogTitle>
+          <DialogDescription>Ajuste os dados deste lançamento. As alterações substituem o registro atual.</DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const res = validateDateString(data);
+            if (!res.ok) { toast.error(res.message); return; }
+            if (!valor || valor <= 0) { toast.error("Valor inválido"); return; }
+            await onSave({
+              data_pagamento: data,
+              valor,
+              forma_pagamento: forma,
+              conta_bancaria_id: contaId || null,
+              observacao: obs || null,
+            });
+          }}
+          className="grid grid-cols-2 gap-3"
+        >
+          <TextField label="Data do pagamento" type="date" value={data} onChange={setData} required />
+          <CurrencyField label="Valor" value={valor} onChange={setValor} required />
+          <SelectField label="Forma de pagamento" value={forma} onChange={setForma} options={formas} />
+          <SelectField
+            label="Conta bancária"
+            value={contaId}
+            onChange={setContaId}
+            options={contaOptions.length ? contaOptions : [{ value: "", label: "Nenhuma conta cadastrada" }]}
+            placeholder="Selecionar conta..."
+          />
+          <div className="col-span-2">
+            <TextAreaField label="Observação" value={obs} onChange={setObs} />
+          </div>
+          <DialogFooter className="col-span-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button type="submit" disabled={saving} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              {saving && <Loader2 className="size-4 animate-spin mr-2" />}
+              Salvar alterações
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
