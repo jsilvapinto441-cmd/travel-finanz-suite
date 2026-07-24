@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/format";
 import { ExportButton } from "@/components/export-button";
 import { useContasBancariasComEmpresa } from "@/lib/bancos";
-import { useEmpresas, nomeById } from "@/lib/lookups";
+import { useEmpresas, useMissoes, nomeById } from "@/lib/lookups";
 import { EmpresaFilter } from "@/components/empresa-filter";
 
 export type ParceiroRow = {
   id: string;
   nome: string;
   empresa_id: string | null;
+  missao_id?: string | null;
   cnpj: string | null;
   telefone: string | null;
   email: string | null;
@@ -31,12 +32,16 @@ interface Props {
   pageTitle: string;
   description: string;
   filename: string;
+  /** Exibe campo e filtro de Missão (usado em Fornecedores). */
+  showMissao?: boolean;
 }
 
-export function CadastroParceiro({ table, title, pageTitle, description, filename }: Props) {
+export function CadastroParceiro({ table, title, pageTitle, description, filename, showMissao }: Props) {
   const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
   const { data: empresas } = useEmpresas();
+  const { data: missoes } = useMissoes();
   const [empresaFilter, setEmpresaFilter] = useState("");
+  const [missaoFilter, setMissaoFilter] = useState("");
 
   const { data: allRows = [] } = useQuery({
     queryKey: [`${table}-export`],
@@ -44,7 +49,11 @@ export function CadastroParceiro({ table, title, pageTitle, description, filenam
       ((await (supabase as any).from(table).select("*").order("nome")).data ?? []) as ParceiroRow[],
     staleTime: 30_000,
   });
-  const exportRows = allRows.filter((r) => !empresaFilter || r.empresa_id === empresaFilter);
+  const exportRows = allRows.filter(
+    (r) =>
+      (!empresaFilter || r.empresa_id === empresaFilter) &&
+      (!showMissao || !missaoFilter || r.missao_id === missaoFilter),
+  );
 
   return (
     <PageContainer>
@@ -59,6 +68,9 @@ export function CadastroParceiro({ table, title, pageTitle, description, filenam
             columns={[
               { header: "Nome", accessor: "nome" },
               { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
+              ...(showMissao
+                ? [{ header: "Missão", accessor: (r: ParceiroRow) => nomeById(missoes, r.missao_id ?? null) }]
+                : []),
               { header: "CNPJ", accessor: (r) => r.cnpj ?? "—" },
               { header: "Telefone", accessor: (r) => r.telefone ?? "—" },
               { header: "E-mail", accessor: (r) => r.email ?? "—" },
@@ -77,8 +89,27 @@ export function CadastroParceiro({ table, title, pageTitle, description, filenam
         orderBy="nome"
         ascending
         defaultValues={{ ativo: true, valor_contratado: 0 }}
-        filter={(row) => !empresaFilter || row.empresa_id === empresaFilter}
-        toolbar={<EmpresaFilter value={empresaFilter} onChange={setEmpresaFilter} />}
+        filter={(row) =>
+          (!empresaFilter || row.empresa_id === empresaFilter) &&
+          (!showMissao || !missaoFilter || row.missao_id === missaoFilter)
+        }
+        toolbar={
+          <div className="flex flex-wrap items-center gap-2">
+            <EmpresaFilter value={empresaFilter} onChange={setEmpresaFilter} />
+            {showMissao && (
+              <select
+                value={missaoFilter}
+                onChange={(e) => setMissaoFilter(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">Todas as missões</option>
+                {(missoes ?? []).map((m) => (
+                  <option key={m.id} value={m.id}>{m.nome}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        }
         columns={[
           {
             key: "nome", label: "Nome",
@@ -90,6 +121,9 @@ export function CadastroParceiro({ table, title, pageTitle, description, filenam
             ),
           },
           { key: "empresa", label: "Empresa", render: (r) => nomeById(empresas, r.empresa_id) },
+          ...(showMissao
+            ? [{ key: "missao", label: "Missão", render: (r: ParceiroRow) => nomeById(missoes, r.missao_id ?? null) }]
+            : []),
           { key: "cnpj", label: "CNPJ", render: (r) => r.cnpj ?? "—" },
           { key: "telefone", label: "Telefone", render: (r) => r.telefone ?? "—" },
           { key: "email", label: "E-mail", render: (r) => r.email ?? "—" },
@@ -105,6 +139,11 @@ export function CadastroParceiro({ table, title, pageTitle, description, filenam
             <SelectField label="Empresa" value={values.empresa_id ?? ""}
               onChange={(v) => setValues({ ...values, empresa_id: v })}
               options={(empresas ?? []).map((e) => ({ value: e.id, label: e.nome }))} />
+            {showMissao && (
+              <SelectField label="Missão" value={values.missao_id ?? ""}
+                onChange={(v) => setValues({ ...values, missao_id: v || null })}
+                options={(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))} />
+            )}
             <TextField label="CNPJ" value={values.cnpj}
               onChange={(v) => setValues({ ...values, cnpj: v })} />
             <TextField label="Telefone" value={values.telefone}

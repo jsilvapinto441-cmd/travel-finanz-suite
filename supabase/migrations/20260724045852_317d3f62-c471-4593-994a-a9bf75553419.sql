@@ -1,0 +1,1 @@
+ALTER TABLE public.fornecedores ADD COLUMN IF NOT EXISTS missao_id uuid REFERENCES public.missoes(id) ON DELETE SET NULL;
