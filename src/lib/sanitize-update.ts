@@ -6,6 +6,8 @@ const GLOBAL_STRIP = ["id", "created_at", "updated_at", "owner_id"] as const;
 
 const PER_TABLE_STRIP: Record<string, string[]> = {
   contratos: ["valor_saldo"],
+  despesas: ["registros_pagamento"],
+  recebiveis: ["registros_pagamento"],
 };
 
 export function sanitizeUpdatePayload<T extends Record<string, unknown>>(
