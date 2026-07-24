@@ -259,7 +259,7 @@ export function exportRelatorioGerencial(d: RelatorioGerencialData) {
   // Página 2: lucro por empresa
   if (d.empresasLucro && d.empresasLucro.length) {
     doc.addPage();
-    headerBar(doc, "Relatório Gerencial", `Empresa: ${d.empresaNome}`);
+    headerBar(doc, "Relatório Gerencial", `Empresa: ${d.empresaNome}${missaoLabel}`);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(...BRAND_DARK);
