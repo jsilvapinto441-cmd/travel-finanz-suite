@@ -303,7 +303,7 @@ function Page() {
               { header: "Parcela", accessor: (r: T) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
               { header: "Vencimento", accessor: (r: T) => formatDate(r.data_vencimento) },
               { header: "Data de Pagamento", accessor: (r: T) => formatDate(r.data_pagamento) },
-              { header: "Status", accessor: (r: T) => r.status },
+              { header: "Status", accessor: (r: T) => formatStatus(r.status) },
             ]}
 
           />

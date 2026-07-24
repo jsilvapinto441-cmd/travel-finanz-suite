@@ -338,7 +338,7 @@ function Page() {
               { header: "Vencimento", accessor: (r) => formatDate(r.data_vencimento) },
               { header: "Recebimento", accessor: (r) => formatDate(r.data_recebimento) },
               { header: "Categoria", accessor: "categoria" },
-              { header: "Status", accessor: "status" },
+              { header: "Status", accessor: (r) => formatStatus(r.status) },
             ]}
           />
         }
