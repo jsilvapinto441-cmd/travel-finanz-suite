@@ -11,6 +11,7 @@ function Page() {
       pageTitle="Fornecedores"
       description="Cadastro de fornecedores. O valor contratado é apenas informativo — o custo é contabilizado quando uma despesa é lançada."
       filename="fornecedores"
+      showMissao
     />
   );
 }
