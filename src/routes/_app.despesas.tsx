@@ -302,7 +302,12 @@ function Page() {
               { header: "Valor pago", accessor: (r: T) => formatCurrency(Number(r.valor_pago ?? 0)) },
               { header: "Parcela", accessor: (r: T) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
               { header: "Vencimento", accessor: (r: T) => formatDate(r.data_vencimento) },
-              { header: "Data de Pagamento", accessor: (r: T) => formatDate(r.data_pagamento) },
+              { header: "Data de Pagamento", accessor: (r: T) => {
+                const pgtos = ((r as any).registros_pagamento ?? []) as Array<{ data_pagamento: string | null }>;
+                const datas = pgtos.map((p) => p.data_pagamento).filter(Boolean) as string[];
+                const ultima = datas.length ? datas.sort().at(-1)! : null;
+                return formatDate(ultima);
+              } },
               { header: "Status", accessor: (r: T) => formatStatus(r.status) },
             ]}
 
