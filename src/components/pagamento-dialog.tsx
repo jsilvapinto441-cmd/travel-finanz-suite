@@ -360,15 +360,18 @@ export function PagamentoDialog(props: Props) {
                             <Pencil className="size-3.5" />
                           </Button>
                         </td>
-                        {isAdmin && (
-                          <td className="px-2 py-2 text-right">
-                            <Button size="icon" variant="ghost"
-                              className="text-destructive hover:bg-destructive/10"
-                              onClick={() => removePagamento.mutate(p.id)}>
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </td>
-                        )}
+                        <td className="px-2 py-2 text-right">
+                          <Button size="icon" variant="ghost"
+                            title="Excluir pagamento"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                              if (confirm("Excluir este pagamento? O valor voltará a ficar em aberto.")) {
+                                removePagamento.mutate(p.id);
+                              }
+                            }}>
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </td>
                       </tr>
                     );
                   })}
