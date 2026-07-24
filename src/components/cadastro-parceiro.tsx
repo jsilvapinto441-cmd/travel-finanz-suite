@@ -55,6 +55,22 @@ export function CadastroParceiro({ table, title, pageTitle, description, filenam
       (!showMissao || !missaoFilter || r.missao_id === missaoFilter),
   );
 
+  const totalContratado = exportRows.reduce((sum, r) => sum + Number(r.valor_contratado ?? 0), 0);
+  const totalAtivos = exportRows.filter((r) => r.ativo).reduce((sum, r) => sum + Number(r.valor_contratado ?? 0), 0);
+
+  const empresaNome = empresaFilter ? nomeById(empresas, empresaFilter) : "Todas";
+  const missaoNome = missaoFilter ? nomeById(missoes, missaoFilter) : "Todas";
+
+  const summary = [
+    { label: "Registros", value: String(exportRows.length) },
+    { label: "Somatório geral", value: formatCurrency(totalContratado) },
+    { label: "Somatório (ativos)", value: formatCurrency(totalAtivos) },
+  ];
+  const exportFilters = [
+    { label: "Empresa", value: empresaNome },
+    ...(showMissao ? [{ label: "Missão", value: missaoNome }] : []),
+  ];
+
   return (
     <PageContainer>
       <PageHeader
@@ -65,6 +81,8 @@ export function CadastroParceiro({ table, title, pageTitle, description, filenam
             title={pageTitle}
             filename={filename}
             rows={exportRows}
+            summary={summary}
+            filters={exportFilters}
             columns={[
               { header: "Nome", accessor: "nome" },
               { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
@@ -81,6 +99,21 @@ export function CadastroParceiro({ table, title, pageTitle, description, filenam
           />
         }
       />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Registros filtrados</div>
+          <div className="text-lg font-semibold tabular-nums">{exportRows.length}</div>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Somatório geral</div>
+          <div className="text-lg font-semibold tabular-nums text-primary">{formatCurrency(totalContratado)}</div>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Somatório (ativos)</div>
+          <div className="text-lg font-semibold tabular-nums">{formatCurrency(totalAtivos)}</div>
+        </div>
+      </div>
 
       <DataTable<ParceiroRow>
         table={table}
