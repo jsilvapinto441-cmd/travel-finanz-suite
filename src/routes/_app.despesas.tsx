@@ -347,7 +347,15 @@ function Page() {
                 onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
                 options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]} />
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:contents">
+            <div className="sm:min-w-[180px]">
+              <SelectField label="" value={statusFilter === "" ? "__all__" : statusFilter}
+                onChange={(v) => setStatusFilter(v === "__all__" ? "" : (v as "em_aberto" | "pago"))}
+                options={[
+                  { value: "__all__", label: "Todos os status" },
+                  { value: "em_aberto", label: "Somente em aberto" },
+                  { value: "pago", label: "Somente pagas" },
+                ]} />
+            </div>
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground sm:hidden col-span-2 -mb-1">Vencimento</label>
               <DatePicker value={dataDe} onChange={setDataDe} className="h-9 w-full sm:w-[150px]" aria-label="Vencimento — de" />
               <DatePicker value={dataAte} onChange={setDataAte} className="h-9 w-full sm:w-[150px]" aria-label="Vencimento — até" />
