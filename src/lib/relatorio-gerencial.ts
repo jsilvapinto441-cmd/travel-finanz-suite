@@ -8,7 +8,9 @@ type Periodo = { from?: string; to?: string };
 
 export type RelatorioGerencialData = {
   empresaNome: string;
+  missaoNome?: string;
   periodo: Periodo;
+
   kpis: {
     totalContratado: number;
     totalRecebido: number;
@@ -178,8 +180,9 @@ export function exportRelatorioGerencial(d: RelatorioGerencialData) {
   const w = doc.internal.pageSize.getWidth();
 
   const periodoLabel = formatPeriodoLabel(d.periodo.from, d.periodo.to);
+  const missaoLabel = d.missaoNome ? ` · Missão: ${d.missaoNome}` : "";
 
-  headerBar(doc, "Relatório Gerencial", `Empresa: ${d.empresaNome}`);
+  headerBar(doc, "Relatório Gerencial", `Empresa: ${d.empresaNome}${missaoLabel}`);
 
   // Título grande
   doc.setTextColor(...BRAND_DARK);
@@ -189,7 +192,8 @@ export function exportRelatorioGerencial(d: RelatorioGerencialData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(120, 120, 120);
-  doc.text(periodoLabel, 12, 40);
+  doc.text(periodoLabel + (d.missaoNome ? `  ·  Missão: ${d.missaoNome}` : ""), 12, 40);
+
 
   // KPIs (grid 4x2)
   const k = d.kpis;
@@ -255,7 +259,7 @@ export function exportRelatorioGerencial(d: RelatorioGerencialData) {
   // Página 2: lucro por empresa
   if (d.empresasLucro && d.empresasLucro.length) {
     doc.addPage();
-    headerBar(doc, "Relatório Gerencial", `Empresa: ${d.empresaNome}`);
+    headerBar(doc, "Relatório Gerencial", `Empresa: ${d.empresaNome}${missaoLabel}`);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(...BRAND_DARK);
