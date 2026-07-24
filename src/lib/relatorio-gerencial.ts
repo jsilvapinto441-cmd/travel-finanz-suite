@@ -8,7 +8,9 @@ type Periodo = { from?: string; to?: string };
 
 export type RelatorioGerencialData = {
   empresaNome: string;
+  missaoNome?: string;
   periodo: Periodo;
+
   kpis: {
     totalContratado: number;
     totalRecebido: number;
