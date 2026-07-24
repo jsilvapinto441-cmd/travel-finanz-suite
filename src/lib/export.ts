@@ -73,6 +73,7 @@ export async function exportToPDF<T>({
   title,
   subtitle,
   summary,
+  filters,
   columns,
   rows,
   filename,
@@ -82,6 +83,7 @@ export async function exportToPDF<T>({
   title: string;
   subtitle?: string;
   summary?: { label: string; value: string }[];
+  filters?: { label: string; value: string }[];
   columns: ExportColumn<T>[];
   rows: T[];
   filename?: string;
@@ -139,6 +141,31 @@ export async function exportToPDF<T>({
     cursorY += 6;
   }
 
+  // Bloco de filtros aplicados
+  const activeFilters = (filters ?? []).filter((f) => f.value && f.value.trim() !== "");
+  if (activeFilters.length > 0) {
+    const lineH = 5;
+    const boxH = 6 + activeFilters.length * lineH;
+    doc.setFillColor(255, 250, 244);
+    doc.setDrawColor(249, 115, 22);
+    doc.roundedRect(10, cursorY, pageWidth - 20, boxH, 1.5, 1.5, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(249, 115, 22);
+    doc.text("FILTROS APLICADOS", 14, cursorY + 4);
+    activeFilters.forEach((f, i) => {
+      const y = cursorY + 4 + (i + 1) * lineH;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`${f.label}:`, 14, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(20, 20, 20);
+      doc.text(f.value, 14 + doc.getTextWidth(`${f.label}:`) + 2, y);
+    });
+    cursorY += boxH + 4;
+  }
+
   // Bloco de totais / resumo
   if (summary && summary.length > 0) {
     const boxH = 14;
@@ -191,6 +218,7 @@ export function exportToExcel<T>({
   filename,
   subtitle,
   summary,
+  filters,
 }: {
   sheetName?: string;
   columns: ExportColumn<T>[];
@@ -198,6 +226,7 @@ export function exportToExcel<T>({
   filename: string;
   subtitle?: string;
   summary?: { label: string; value: string }[];
+  filters?: { label: string; value: string }[];
 }) {
   const headers = columns.map((c) => c.header);
   const data = rows.map((row) => {
@@ -214,10 +243,16 @@ export function exportToExcel<T>({
     return { wch: Math.min(Math.max(maxLen + 2, 10), 40) };
   });
 
-  // Anexa bloco de resumo/totais ao final da planilha
-  if ((summary && summary.length > 0) || subtitle) {
+  // Anexa filtros / subtítulo / resumo ao final da planilha
+  const activeFilters = (filters ?? []).filter((f) => f.value && f.value.trim() !== "");
+  if (activeFilters.length > 0 || (summary && summary.length > 0) || subtitle) {
     const extras: (string | number)[][] = [[]];
     if (subtitle) extras.push([subtitle]);
+    if (activeFilters.length > 0) {
+      extras.push(["Filtros aplicados"]);
+      for (const f of activeFilters) extras.push([f.label, f.value]);
+      extras.push([]);
+    }
     if (summary && summary.length > 0) {
       extras.push(["Resumo"]);
       for (const item of summary) extras.push([item.label, item.value]);

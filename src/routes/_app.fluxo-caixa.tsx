@@ -87,6 +87,10 @@ function Page() {
           <ExportButton<Mov>
             title="Fluxo de Caixa"
             subtitle={formatPeriodoLabel(from, to)}
+            filters={[
+              { label: "Conta", value: contaId === "__all__" ? "Todas as contas" : contaNome(contaId) },
+              { label: "Período", value: formatPeriodoLabel(from, to).replace(/^Período:\s*/i, "") },
+            ]}
             filename="fluxo_caixa"
             rows={data ?? []}
             columns={[

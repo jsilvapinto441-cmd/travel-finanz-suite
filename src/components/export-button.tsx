@@ -16,6 +16,7 @@ export function ExportButton<T>({
   title,
   subtitle,
   summary,
+  filters,
   filename,
   columns,
   rows,
@@ -24,6 +25,7 @@ export function ExportButton<T>({
   title: string;
   subtitle?: string;
   summary?: { label: string; value: string }[];
+  filters?: { label: string; value: string }[];
   filename?: string;
   columns: ExportColumn<T>[];
   rows: T[];
@@ -41,7 +43,7 @@ export function ExportButton<T>({
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           onClick={() => {
-            void exportToPDF({ title, subtitle, summary, columns, rows, filename });
+            void exportToPDF({ title, subtitle, summary, filters, columns, rows, filename });
           }}
         >
           <FileText className="size-4 mr-2" />
@@ -56,6 +58,7 @@ export function ExportButton<T>({
               filename: filename ?? title,
               subtitle,
               summary,
+              filters,
             })
           }
         >
