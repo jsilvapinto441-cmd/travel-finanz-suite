@@ -195,6 +195,9 @@ export function PagamentoDialog(props: Props) {
       const movPatch: Record<string, unknown> = {};
       if (patch.data_pagamento !== undefined) movPatch.data_movimentacao = patch.data_pagamento;
       if (patch.valor !== undefined) movPatch.valor = patch.valor;
+      if (patch.forma_pagamento !== undefined) movPatch.forma_pagamento = patch.forma_pagamento;
+      if (patch.conta_bancaria_id !== undefined) movPatch.conta_bancaria_id = patch.conta_bancaria_id;
+      if (patch.observacao !== undefined) movPatch.observacao = patch.observacao;
       if (Object.keys(movPatch).length) {
         await supabase
           .from("movimentacoes_financeiras" as any)
@@ -251,6 +254,7 @@ export function PagamentoDialog(props: Props) {
           </div>
         </div>
 
+        {restante > 0 ? (
         <form
           onSubmit={(e) => { e.preventDefault(); createPagamento.mutate(); }}
           className="grid grid-cols-2 gap-3"
@@ -297,12 +301,22 @@ export function PagamentoDialog(props: Props) {
             </Field>
           </div>
           <div className="col-span-2 flex justify-end">
-            <Button type="submit" disabled={createPagamento.isPending || uploading || restante <= 0} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button type="submit" disabled={createPagamento.isPending || uploading} className="bg-primary text-primary-foreground hover:bg-primary/90">
               {(createPagamento.isPending || uploading) && <Loader2 className="size-4 animate-spin mr-2" />}
-              {restante <= 0 ? "Já quitado" : (mode === "despesa" ? "Registrar pagamento" : "Registrar recebimento")}
+              {mode === "despesa" ? "Registrar pagamento" : "Registrar recebimento"}
             </Button>
           </div>
         </form>
+        ) : (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+            <div className="font-medium text-primary mb-1">
+              {mode === "despesa" ? "Despesa já quitada" : "Recebimento concluído"}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              Para alterar a data, valor, forma de pagamento ou banco, use o botão <Pencil className="inline size-3 mx-0.5" /> na coluna de ações do histórico abaixo.
+            </div>
+          </div>
+        )}
 
         <div>
           <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
