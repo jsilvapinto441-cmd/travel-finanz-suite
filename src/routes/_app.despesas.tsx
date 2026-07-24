@@ -280,6 +280,7 @@ function Page() {
             filters={[
               { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },
               { label: "Missão", value: missaoFilter ? nomeById(missoes, missaoFilter) : "Todas as missões" },
+              { label: "Status", value: statusFilter === "pago" ? "Somente pagas" : statusFilter === "em_aberto" ? "Somente em aberto" : "Todos os status" },
               { label: "Período", value: formatPeriodoLabel(dataDe, dataAte).replace(/^Período:\s*/i, "") },
               { label: "Busca", value: search || "" },
             ]}
