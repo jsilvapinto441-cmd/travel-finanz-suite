@@ -315,7 +315,13 @@ function Page() {
             title="Recebíveis"
             filename="recebiveis"
             rows={filtered}
-            subtitle={`${formatPeriodoLabel(dataDe, dataAte)}${empresaFilter ? " · empresa filtrada" : ""}${missaoFilter ? " · missão filtrada" : ""}`}
+            subtitle={formatPeriodoLabel(dataDe, dataAte)}
+            filters={[
+              { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },
+              { label: "Missão", value: missaoFilter ? nomeById(missoes, missaoFilter) : "Todas as missões" },
+              { label: "Período", value: formatPeriodoLabel(dataDe, dataAte).replace(/^Período:\s*/i, "") },
+              { label: "Busca", value: search || "" },
+            ]}
             summary={[
               { label: "Registros", value: String(filtered.length) },
               { label: "Total a receber", value: formatCurrency(totaisPeriodo.total) },
