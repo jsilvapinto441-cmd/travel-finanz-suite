@@ -170,6 +170,24 @@ function ContratoForm({
     const isEmpty = merged.valor === undefined && !merged.venc;
     setValues({ ...values, __overrides: isEmpty ? others : [...others, merged] });
   };
+  // Ao alterar a data de uma parcela, propaga +30 dias para as parcelas seguintes.
+  const setVencCascade = (i: number, venc: string) => {
+    const total = previewBase.length;
+    const map = new Map<number, { i: number; valor?: number; venc?: string }>(
+      overrides.map((o) => [o.i, { ...o }]),
+    );
+    const cur = map.get(i) ?? { i };
+    map.set(i, { ...cur, i, venc });
+    for (let k = i + 1; k <= total; k++) {
+      const novoVenc = addDays(venc, 30 * (k - i));
+      const prev = map.get(k) ?? { i: k };
+      map.set(k, { ...prev, i: k, venc: novoVenc });
+    }
+    const next = Array.from(map.values()).filter(
+      (o) => o.valor !== undefined || !!o.venc,
+    );
+    setValues({ ...values, __overrides: next });
+  };
 
   const qtdDias = values.data_embarque && values.data_retorno
     ? Math.max(1, diffDays(values.data_embarque, values.data_retorno))
