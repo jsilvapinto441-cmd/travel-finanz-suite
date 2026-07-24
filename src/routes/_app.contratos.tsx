@@ -99,6 +99,14 @@ function addDays(base: string, days: number): string {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 }
 
+function addMonths(base: string, months: number): string {
+  const [y, m, d] = base.split("-").map(Number);
+  const dt = new Date(y, m - 1 + months, d);
+  // Se o dia "estourar" (ex: 31/01 + 1 mês), ajusta para o último dia do mês alvo
+  if (dt.getDate() !== d) dt.setDate(0);
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+}
+
 function ContratoForm({
   values, setValues, empresas, missoes,
 }: {
