@@ -188,7 +188,7 @@ function Page() {
   const { data = [], isLoading } = useQuery({
     queryKey: ["despesas"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("despesas").select("*").order("data_vencimento", { ascending: false });
+      const { data, error } = await supabase.from("despesas").select("*, registros_pagamento(data_pagamento)").order("data_vencimento", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as T[];
     },
