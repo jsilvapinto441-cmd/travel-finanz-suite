@@ -640,6 +640,7 @@ export type Database = {
           email: string | null
           empresa_id: string | null
           id: string
+          missao_id: string | null
           nome: string
           observacoes: string | null
           owner_id: string
@@ -656,6 +657,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string | null
           id?: string
+          missao_id?: string | null
           nome: string
           observacoes?: string | null
           owner_id?: string
@@ -672,6 +674,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string | null
           id?: string
+          missao_id?: string | null
           nome?: string
           observacoes?: string | null
           owner_id?: string
@@ -694,6 +697,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "lucro_por_empresa"
             referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "fornecedores_missao_id_fkey"
+            columns: ["missao_id"]
+            isOneToOne: false
+            referencedRelation: "missoes"
+            referencedColumns: ["id"]
           },
         ]
       }
