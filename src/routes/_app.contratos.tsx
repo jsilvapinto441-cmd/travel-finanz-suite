@@ -310,7 +310,7 @@ function ContratoForm({
                       <td className="px-3 py-2">
                         <DatePicker
                           value={vencAtual}
-                          onChange={(v) => setOverride(p.i, { venc: v })}
+                          onChange={(v) => setVencCascade(p.i, v)}
                           className="h-8 max-w-[170px]"
                         />
 
