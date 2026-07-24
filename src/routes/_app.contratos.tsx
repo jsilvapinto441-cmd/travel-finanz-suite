@@ -170,6 +170,24 @@ function ContratoForm({
     const isEmpty = merged.valor === undefined && !merged.venc;
     setValues({ ...values, __overrides: isEmpty ? others : [...others, merged] });
   };
+  // Ao alterar a data de uma parcela, propaga +30 dias para as parcelas seguintes.
+  const setVencCascade = (i: number, venc: string) => {
+    const total = previewBase.length;
+    const map = new Map<number, { i: number; valor?: number; venc?: string }>(
+      overrides.map((o) => [o.i, { ...o }]),
+    );
+    const cur = map.get(i) ?? { i };
+    map.set(i, { ...cur, i, venc });
+    for (let k = i + 1; k <= total; k++) {
+      const novoVenc = addDays(venc, 30 * (k - i));
+      const prev = map.get(k) ?? { i: k };
+      map.set(k, { ...prev, i: k, venc: novoVenc });
+    }
+    const next = Array.from(map.values()).filter(
+      (o) => o.valor !== undefined || !!o.venc,
+    );
+    setValues({ ...values, __overrides: next });
+  };
 
   const qtdDias = values.data_embarque && values.data_retorno
     ? Math.max(1, diffDays(values.data_embarque, values.data_retorno))
@@ -292,7 +310,7 @@ function ContratoForm({
                       <td className="px-3 py-2">
                         <DatePicker
                           value={vencAtual}
-                          onChange={(v) => setOverride(p.i, { venc: v })}
+                          onChange={(v) => setVencCascade(p.i, v)}
                           className="h-8 max-w-[170px]"
                         />
 
@@ -303,7 +321,7 @@ function ContratoForm({
               </tbody>
             </table>
             <div className="px-4 py-2 text-[11px] text-muted-foreground border-t border-border bg-muted/20">
-              Edite valores e datas conforme necessário. As alterações são aplicadas às parcelas geradas ao salvar. Parcelas com pagamento registrado são preservadas.
+              Edite valores e datas conforme necessário. Ao alterar a data de uma parcela, as parcelas seguintes são reajustadas automaticamente com intervalo de 30 dias. As alterações são aplicadas às parcelas geradas ao salvar. Parcelas com pagamento registrado são preservadas.
             </div>
           </div>
         )}
