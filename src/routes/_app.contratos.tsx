@@ -178,7 +178,7 @@ function ContratoForm({
     const isEmpty = merged.valor === undefined && !merged.venc;
     setValues({ ...values, __overrides: isEmpty ? others : [...others, merged] });
   };
-  // Ao alterar a data de uma parcela, propaga +30 dias para as parcelas seguintes
+  // Ao alterar a data de uma parcela, propaga +1 mês para as parcelas seguintes
   // que ainda não foram ajustadas manualmente. Parcelas já com override de data
   // permanecem intactas — o usuário mantém o controle individual.
   const setVencCascade = (i: number, venc: string) => {
@@ -191,7 +191,7 @@ function ContratoForm({
     for (let k = i + 1; k <= total; k++) {
       const prev = map.get(k);
       if (prev?.venc) continue; // respeita edição manual anterior
-      const novoVenc = addDays(venc, 30 * (k - i));
+      const novoVenc = addMonths(venc, k - i);
       map.set(k, { ...(prev ?? { i: k }), i: k, venc: novoVenc });
     }
     const next = Array.from(map.values()).filter(
