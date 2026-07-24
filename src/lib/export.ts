@@ -218,6 +218,7 @@ export function exportToExcel<T>({
   filename,
   subtitle,
   summary,
+  filters,
 }: {
   sheetName?: string;
   columns: ExportColumn<T>[];
@@ -225,6 +226,7 @@ export function exportToExcel<T>({
   filename: string;
   subtitle?: string;
   summary?: { label: string; value: string }[];
+  filters?: { label: string; value: string }[];
 }) {
   const headers = columns.map((c) => c.header);
   const data = rows.map((row) => {
@@ -241,10 +243,16 @@ export function exportToExcel<T>({
     return { wch: Math.min(Math.max(maxLen + 2, 10), 40) };
   });
 
-  // Anexa bloco de resumo/totais ao final da planilha
-  if ((summary && summary.length > 0) || subtitle) {
+  // Anexa filtros / subtítulo / resumo ao final da planilha
+  const activeFilters = (filters ?? []).filter((f) => f.value && f.value.trim() !== "");
+  if (activeFilters.length > 0 || (summary && summary.length > 0) || subtitle) {
     const extras: (string | number)[][] = [[]];
     if (subtitle) extras.push([subtitle]);
+    if (activeFilters.length > 0) {
+      extras.push(["Filtros aplicados"]);
+      for (const f of activeFilters) extras.push([f.label, f.value]);
+      extras.push([]);
+    }
     if (summary && summary.length > 0) {
       extras.push(["Resumo"]);
       for (const item of summary) extras.push([item.label, item.value]);
