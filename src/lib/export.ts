@@ -73,6 +73,7 @@ export async function exportToPDF<T>({
   title,
   subtitle,
   summary,
+  filters,
   columns,
   rows,
   filename,
@@ -82,6 +83,7 @@ export async function exportToPDF<T>({
   title: string;
   subtitle?: string;
   summary?: { label: string; value: string }[];
+  filters?: { label: string; value: string }[];
   columns: ExportColumn<T>[];
   rows: T[];
   filename?: string;
@@ -137,6 +139,31 @@ export async function exportToPDF<T>({
     doc.setTextColor(100, 100, 100);
     doc.text(subtitle, 12, cursorY);
     cursorY += 6;
+  }
+
+  // Bloco de filtros aplicados
+  const activeFilters = (filters ?? []).filter((f) => f.value && f.value.trim() !== "");
+  if (activeFilters.length > 0) {
+    const lineH = 5;
+    const boxH = 6 + activeFilters.length * lineH;
+    doc.setFillColor(255, 250, 244);
+    doc.setDrawColor(249, 115, 22);
+    doc.roundedRect(10, cursorY, pageWidth - 20, boxH, 1.5, 1.5, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(249, 115, 22);
+    doc.text("FILTROS APLICADOS", 14, cursorY + 4);
+    activeFilters.forEach((f, i) => {
+      const y = cursorY + 4 + (i + 1) * lineH;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`${f.label}:`, 14, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(20, 20, 20);
+      doc.text(f.value, 14 + doc.getTextWidth(`${f.label}:`) + 2, y);
+    });
+    cursorY += boxH + 4;
   }
 
   // Bloco de totais / resumo
