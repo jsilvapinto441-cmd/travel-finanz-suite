@@ -195,6 +195,9 @@ export function PagamentoDialog(props: Props) {
       const movPatch: Record<string, unknown> = {};
       if (patch.data_pagamento !== undefined) movPatch.data_movimentacao = patch.data_pagamento;
       if (patch.valor !== undefined) movPatch.valor = patch.valor;
+      if (patch.forma_pagamento !== undefined) movPatch.forma_pagamento = patch.forma_pagamento;
+      if (patch.conta_bancaria_id !== undefined) movPatch.conta_bancaria_id = patch.conta_bancaria_id;
+      if (patch.observacao !== undefined) movPatch.observacao = patch.observacao;
       if (Object.keys(movPatch).length) {
         await supabase
           .from("movimentacoes_financeiras" as any)
