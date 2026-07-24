@@ -237,7 +237,7 @@ function Page() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recebiveis")
-        .select("*")
+        .select("*, registros_pagamento(data_pagamento)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as T[];
