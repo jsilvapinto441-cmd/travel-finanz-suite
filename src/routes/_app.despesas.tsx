@@ -356,6 +356,7 @@ function Page() {
                   { value: "pago", label: "Somente pagas" },
                 ]} />
             </div>
+            <div className="grid grid-cols-2 gap-2 sm:contents">
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground sm:hidden col-span-2 -mb-1">Vencimento</label>
               <DatePicker value={dataDe} onChange={setDataDe} className="h-9 w-full sm:w-[150px]" aria-label="Vencimento — de" />
               <DatePicker value={dataAte} onChange={setDataAte} className="h-9 w-full sm:w-[150px]" aria-label="Vencimento — até" />
