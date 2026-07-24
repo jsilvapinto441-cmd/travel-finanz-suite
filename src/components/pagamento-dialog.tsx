@@ -333,7 +333,7 @@ export function PagamentoDialog(props: Props) {
                     <th className="text-left px-3 py-2 font-medium">Conta</th>
                     <th className="text-left px-3 py-2 font-medium">Comp.</th>
                     <th className="w-10" />
-                    {isAdmin && <th className="w-10" />}
+                    <th className="w-10" />
                   </tr>
                 </thead>
                 <tbody>
