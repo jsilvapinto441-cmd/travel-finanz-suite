@@ -99,6 +99,14 @@ function addDays(base: string, days: number): string {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 }
 
+function addMonths(base: string, months: number): string {
+  const [y, m, d] = base.split("-").map(Number);
+  const dt = new Date(y, m - 1 + months, d);
+  // Se o dia "estourar" (ex: 31/01 + 1 mês), ajusta para o último dia do mês alvo
+  if (dt.getDate() !== d) dt.setDate(0);
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+}
+
 function ContratoForm({
   values, setValues, empresas, missoes,
 }: {
@@ -170,7 +178,7 @@ function ContratoForm({
     const isEmpty = merged.valor === undefined && !merged.venc;
     setValues({ ...values, __overrides: isEmpty ? others : [...others, merged] });
   };
-  // Ao alterar a data de uma parcela, propaga +30 dias para as parcelas seguintes
+  // Ao alterar a data de uma parcela, propaga +1 mês para as parcelas seguintes
   // que ainda não foram ajustadas manualmente. Parcelas já com override de data
   // permanecem intactas — o usuário mantém o controle individual.
   const setVencCascade = (i: number, venc: string) => {
@@ -183,7 +191,7 @@ function ContratoForm({
     for (let k = i + 1; k <= total; k++) {
       const prev = map.get(k);
       if (prev?.venc) continue; // respeita edição manual anterior
-      const novoVenc = addDays(venc, 30 * (k - i));
+      const novoVenc = addMonths(venc, k - i);
       map.set(k, { ...(prev ?? { i: k }), i: k, venc: novoVenc });
     }
     const next = Array.from(map.values()).filter(
@@ -324,7 +332,7 @@ function ContratoForm({
               </tbody>
             </table>
             <div className="px-4 py-2 text-[11px] text-muted-foreground border-t border-border bg-muted/20">
-              Edite valores e datas conforme necessário. Ao alterar a data de uma parcela, as parcelas seguintes são reajustadas automaticamente com intervalo de 30 dias. As alterações são aplicadas às parcelas geradas ao salvar. Parcelas com pagamento registrado são preservadas.
+              Edite valores e datas conforme necessário. Ao alterar a data de uma parcela, as parcelas seguintes são reajustadas automaticamente para o mesmo dia do mês seguinte. As alterações são aplicadas às parcelas geradas ao salvar. Parcelas com pagamento registrado são preservadas.
             </div>
           </div>
         )}
