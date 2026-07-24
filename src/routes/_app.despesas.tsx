@@ -198,13 +198,18 @@ function Page() {
     let rows = data as T[];
     if (empresaFilter) rows = rows.filter((r) => r.empresa_id === empresaFilter);
     if (missaoFilter) rows = rows.filter((r) => r.missao_id === missaoFilter);
+    if (statusFilter === "pago") {
+      rows = rows.filter((r) => r.status === "pago");
+    } else if (statusFilter === "em_aberto") {
+      rows = rows.filter((r) => r.status !== "pago" && r.status !== "cancelado");
+    }
     if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
     if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return rows;
-  }, [data, empresaFilter, missaoFilter, dataDe, dataAte, search]);
+  }, [data, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, search]);
 
   const groups = useMemo(() => buildGroups(filtered), [filtered]);
 
