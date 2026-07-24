@@ -336,7 +336,12 @@ function Page() {
               { header: "Valor", accessor: (r) => formatCurrency(Number(r.valor_parcela ?? r.valor_total)) },
               { header: "Pago", accessor: (r) => formatCurrency(Number(r.valor_pago ?? 0)) },
               { header: "Vencimento", accessor: (r) => formatDate(r.data_vencimento) },
-              { header: "Recebimento", accessor: (r) => formatDate(r.data_recebimento) },
+              { header: "Recebimento", accessor: (r) => {
+                const pgtos = ((r as any).registros_pagamento ?? []) as Array<{ data_pagamento: string | null }>;
+                const datas = pgtos.map((p) => p.data_pagamento).filter(Boolean) as string[];
+                const ultima = datas.length ? datas.sort().at(-1)! : null;
+                return formatDate(ultima);
+              } },
               { header: "Categoria", accessor: "categoria" },
               { header: "Status", accessor: (r) => formatStatus(r.status) },
             ]}
