@@ -321,7 +321,7 @@ function ContratoForm({
               </tbody>
             </table>
             <div className="px-4 py-2 text-[11px] text-muted-foreground border-t border-border bg-muted/20">
-              Edite valores e datas conforme necessário. As alterações são aplicadas às parcelas geradas ao salvar. Parcelas com pagamento registrado são preservadas.
+              Edite valores e datas conforme necessário. Ao alterar a data de uma parcela, as parcelas seguintes são reajustadas automaticamente com intervalo de 30 dias. As alterações são aplicadas às parcelas geradas ao salvar. Parcelas com pagamento registrado são preservadas.
             </div>
           </div>
         )}
