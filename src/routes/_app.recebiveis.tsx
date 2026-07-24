@@ -20,7 +20,7 @@ import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/components/ui/accordion";
 import { useEmpresas, useMissoes, useContratos, nomeById } from "@/lib/lookups";
-import { formatCurrency, formatDate, formatPeriodoLabel } from "@/lib/format";
+import { formatCurrency, formatDate, formatPeriodoLabel, formatStatus } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
@@ -338,7 +338,7 @@ function Page() {
               { header: "Vencimento", accessor: (r) => formatDate(r.data_vencimento) },
               { header: "Recebimento", accessor: (r) => formatDate(r.data_recebimento) },
               { header: "Categoria", accessor: "categoria" },
-              { header: "Status", accessor: "status" },
+              { header: "Status", accessor: (r) => formatStatus(r.status) },
             ]}
           />
         }

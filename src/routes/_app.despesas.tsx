@@ -20,7 +20,7 @@ import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/components/ui/accordion";
 import { useEmpresas, useMissoes, useContratos, useFornecedores, useFuncionarios, usePrestadoresMei, useConsolidadoras, nomeById } from "@/lib/lookups";
-import { formatCurrency, formatDate, formatPeriodoLabel } from "@/lib/format";
+import { formatCurrency, formatDate, formatPeriodoLabel, formatStatus } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
@@ -303,7 +303,7 @@ function Page() {
               { header: "Parcela", accessor: (r: T) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
               { header: "Vencimento", accessor: (r: T) => formatDate(r.data_vencimento) },
               { header: "Data de Pagamento", accessor: (r: T) => formatDate(r.data_pagamento) },
-              { header: "Status", accessor: (r: T) => r.status },
+              { header: "Status", accessor: (r: T) => formatStatus(r.status) },
             ]}
 
           />
