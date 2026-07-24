@@ -279,9 +279,15 @@ function Dashboard() {
                   empresaId === "all"
                     ? "Todas as empresas"
                     : empresas?.find((e) => e.id === empresaId)?.nome ?? "—";
+                const missaoNome =
+                  missaoId === "all"
+                    ? "Todas as missões"
+                    : missoes?.find((m) => m.id === missaoId)?.nome ?? "—";
                 exportRelatorioGerencial({
                   empresaNome,
+                  missaoNome,
                   periodo: { from: dataIni, to: dataFim },
+
                   kpis: {
                     totalContratado,
                     totalRecebido,
