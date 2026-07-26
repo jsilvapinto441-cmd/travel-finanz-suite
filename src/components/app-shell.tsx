@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtimeSync } from "@/lib/use-realtime-sync";
 import {
   LayoutDashboard, Building2, Target, FileText, ArrowDownLeft, ArrowUpRight,
   Users, Truck, Package, TrendingUp, ShieldCheck, LogOut, Settings, Menu, Landmark, X, Zap, UserCircle,
@@ -47,6 +48,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const { user, signOut, isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  useRealtimeSync(!!user);
 
   const initials = (user?.email ?? "?").slice(0, 2).toUpperCase();
   const roleLabel = isAdmin ? "Administrador" : "Usuário";
