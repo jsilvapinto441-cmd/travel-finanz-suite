@@ -217,6 +217,7 @@ function Page() {
 
   const [empresaFilter, setEmpresaFilter] = useState("");
   const [missaoFilter, setMissaoFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | "em_aberto" | "pago">("");
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
 
@@ -248,13 +249,18 @@ function Page() {
     let rows = data ?? [];
     if (empresaFilter) rows = rows.filter((r) => r.empresa_id === empresaFilter);
     if (missaoFilter) rows = rows.filter((r) => r.missao_id === missaoFilter);
+    if (statusFilter === "pago") {
+      rows = rows.filter((r) => r.status === "pago");
+    } else if (statusFilter === "em_aberto") {
+      rows = rows.filter((r) => r.status !== "pago" && r.status !== "cancelado");
+    }
     if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
     if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return rows;
-  }, [data, search, empresaFilter, missaoFilter, dataDe, dataAte]);
+  }, [data, search, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte]);
 
   const groups = useMemo(
     () => buildGroups(filtered, contratos ?? []),
@@ -319,6 +325,7 @@ function Page() {
             filters={[
               { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },
               { label: "Missão", value: missaoFilter ? nomeById(missoes, missaoFilter) : "Todas as missões" },
+              { label: "Status", value: statusFilter === "pago" ? "Somente recebidas" : statusFilter === "em_aberto" ? "Somente em aberto" : "Todos os status" },
               { label: "Período", value: formatPeriodoLabel(dataDe, dataAte).replace(/^Período:\s*/i, "") },
               { label: "Busca", value: search || "" },
             ]}
@@ -376,6 +383,18 @@ function Page() {
                 value={missaoFilter === "" ? "__all__" : missaoFilter}
                 onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
                 options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]}
+              />
+            </div>
+            <div className="sm:min-w-[180px]">
+              <SelectField
+                label=""
+                value={statusFilter === "" ? "__all__" : statusFilter}
+                onChange={(v) => setStatusFilter(v === "__all__" ? "" : (v as "em_aberto" | "pago"))}
+                options={[
+                  { value: "__all__", label: "Todos os status" },
+                  { value: "em_aberto", label: "Somente em aberto" },
+                  { value: "pago", label: "Somente recebidas" },
+                ]}
               />
             </div>
             <div className="grid grid-cols-2 gap-2 sm:contents">
