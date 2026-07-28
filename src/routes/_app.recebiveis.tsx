@@ -88,40 +88,30 @@ function RecebivelForm({
 
   return (
     <div className="space-y-5">
-      {linked ? (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3 animate-in fade-in">
-          <div className="flex items-center justify-between">
-            <div className="text-xs uppercase tracking-wider text-primary font-semibold">Recebível vinculado a contrato</div>
+      <div className={`rounded-lg border p-4 space-y-3 ${linked ? "border-primary/30 bg-primary/5" : "border-border"}`}>
+        <div className="flex items-center justify-between">
+          <div className={`text-xs uppercase tracking-wider font-semibold ${linked ? "text-primary" : "text-muted-foreground"}`}>
+            {linked ? "Recebível vinculado a contrato" : "Recebível avulso"}
+          </div>
+          {linked && (
             <Link to="/contratos" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
               <ExternalLink className="size-3" /> Ver contrato
             </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <ReadOnlyField label="Contrato" value={`${linkedContrato!.numero ?? "—"} ${linkedContrato!.cliente}`} />
-            <ReadOnlyField label="Pagador" value={values.pagador ?? ""} />
-            <ReadOnlyField label="Empresa" value={nomeById(empresas, values.empresa_id ?? null)} />
-            <ReadOnlyField label="Missão" value={nomeById(missoes, values.missao_id ?? null)} />
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            Para alterar valor, parcelas ou datas, edite o contrato. Pagamentos são registrados pelo botão "Pagamento" na lista.
-          </p>
+          )}
         </div>
-      ) : (
-        <div className="rounded-lg border border-border p-4 space-y-3">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Recebível avulso</div>
-          <div className="grid grid-cols-2 gap-3">
-            <TextField label="Pagador" value={values.pagador} onChange={(v) => setValues({ ...values, pagador: v })} required />
-            <SelectField label="Empresa" value={values.empresa_id ?? ""} onChange={(v) => setValues({ ...values, empresa_id: v })}
-              options={empresas.map((e) => ({ value: e.id, label: e.nome }))} />
-            <SelectField label="Missão" value={values.missao_id ?? ""} onChange={(v) => setValues({ ...values, missao_id: v })}
-              options={missoes.map((e) => ({ value: e.id, label: e.nome }))} />
-            <SelectField label="Contrato (opcional)" value={values.contrato_id ?? ""} onChange={(v) => setValues({ ...values, contrato_id: v })}
-              options={contratos.map((c) => ({ value: c.id, label: `${c.numero ?? ""} ${c.cliente}` }))} />
-            <CurrencyField label="Valor" value={values.valor_total} onChange={(v) => setValues({ ...values, valor_total: v, valor_parcela: v })} />
-            <TextField label="Vencimento" type="date" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} />
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <SelectField label="Contrato (opcional)" value={values.contrato_id ?? ""} onChange={(v) => setValues({ ...values, contrato_id: v || null })}
+            options={contratos.map((c) => ({ value: c.id, label: `${c.numero ?? ""} ${c.cliente}` }))} placeholder="Sem contrato" />
+          <TextField label="Pagador" value={values.pagador} onChange={(v) => setValues({ ...values, pagador: v })} required />
+          <SelectField label="Empresa" value={values.empresa_id ?? ""} onChange={(v) => setValues({ ...values, empresa_id: v || null })}
+            options={empresas.map((e) => ({ value: e.id, label: e.nome }))} />
+          <SelectField label="Missão" value={values.missao_id ?? ""} onChange={(v) => setValues({ ...values, missao_id: v || null })}
+            options={missoes.map((e) => ({ value: e.id, label: e.nome }))} />
+          <CurrencyField label="Valor" value={values.valor_total} onChange={(v) => setValues({ ...values, valor_total: v, valor_parcela: v })} />
+          <TextField label="Vencimento" type="date" value={values.data_vencimento} onChange={(v) => setValues({ ...values, data_vencimento: v })} />
         </div>
-      )}
+      </div>
+
 
       <div className="grid grid-cols-2 gap-3">
         <TextField label="Nº Fatura" value={values.numero_fatura} onChange={(v) => setValues({ ...values, numero_fatura: v })} />
