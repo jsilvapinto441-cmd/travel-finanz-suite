@@ -33,6 +33,7 @@ import { Route as AppConfiguracoesRouteImport } from './routes/_app.configuracoe
 import { Route as AppBancosRouteImport } from './routes/_app.bancos'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -153,6 +154,11 @@ const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
   path: '/api/public/version',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/api/ai-chat': typeof ApiAiChatRoute
   '/api/ai-extract': typeof ApiAiExtractRoute
   '/api/ai-transcribe': typeof ApiAiTranscribeRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/version': typeof ApiPublicVersionRoute
 }
 export interface FileRoutesByTo {
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/api/ai-chat': typeof ApiAiChatRoute
   '/api/ai-extract': typeof ApiAiExtractRoute
   '/api/ai-transcribe': typeof ApiAiTranscribeRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/version': typeof ApiPublicVersionRoute
 }
 export interface FileRoutesById {
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/api/ai-chat': typeof ApiAiChatRoute
   '/api/ai-extract': typeof ApiAiExtractRoute
   '/api/ai-transcribe': typeof ApiAiTranscribeRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/version': typeof ApiPublicVersionRoute
 }
 export interface FileRouteTypes {
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/api/ai-chat'
     | '/api/ai-extract'
     | '/api/ai-transcribe'
+    | '/.lovable/oauth/consent'
     | '/api/public/version'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/api/ai-chat'
     | '/api/ai-extract'
     | '/api/ai-transcribe'
+    | '/.lovable/oauth/consent'
     | '/api/public/version'
   id:
     | '__root__'
@@ -307,6 +318,7 @@ export interface FileRouteTypes {
     | '/api/ai-chat'
     | '/api/ai-extract'
     | '/api/ai-transcribe'
+    | '/.lovable/oauth/consent'
     | '/api/public/version'
   fileRoutesById: FileRoutesById
 }
@@ -318,6 +330,7 @@ export interface RootRouteChildren {
   ApiAiChatRoute: typeof ApiAiChatRoute
   ApiAiExtractRoute: typeof ApiAiExtractRoute
   ApiAiTranscribeRoute: typeof ApiAiTranscribeRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
 }
 
@@ -491,6 +504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicVersionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -542,6 +562,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiChatRoute: ApiAiChatRoute,
   ApiAiExtractRoute: ApiAiExtractRoute,
   ApiAiTranscribeRoute: ApiAiTranscribeRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
 }
 export const routeTree = rootRouteImport
