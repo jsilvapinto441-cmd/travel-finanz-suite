@@ -16,6 +16,12 @@ import {
 } from "@/lib/rate-limit";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (s: Record<string, unknown>): { next?: string } => {
+    const n = s.next;
+    return typeof n === "string" && n.startsWith("/") && !n.startsWith("//")
+      ? { next: n }
+      : {};
+  },
   component: LoginPage,
 });
 
@@ -27,6 +33,11 @@ const nomeSchema = z.string().trim().min(2, "Nome muito curto").max(100);
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const goAfterAuth = () => {
+    if (next) window.location.href = next;
+    else navigate({ to: "/" });
+  };
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +47,7 @@ function LoginPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/" });
+      if (data.session) goAfterAuth();
     });
   }, [navigate]);
 
@@ -70,7 +81,7 @@ function LoginPage() {
         registerLoginSuccess(safeEmail);
         await audit("login", "auth");
         toast.success("Bem-vindo de volta");
-        navigate({ to: "/" });
+        goAfterAuth();
       } else if (mode === "signup") {
         nomeSchema.parse(nome);
         passwordSchema.parse(password);
@@ -78,7 +89,7 @@ function LoginPage() {
           email: safeEmail,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}${next ?? "/"}`,
             data: { nome },
           },
         });
