@@ -273,16 +273,34 @@ function Page() {
       if (editing) {
         const { error } = await supabase.from("recebiveis").update(clean as any).eq("id", editing.id);
         if (error) throw error;
+
+        // Mantém as demais parcelas do mesmo grupo consistentes (empresa,
+        // missão, contrato e pagador são atributos do grupo, não da parcela).
+        const shared: Record<string, unknown> = {};
+        for (const k of ["empresa_id", "missao_id", "contrato_id", "pagador"] as const) {
+          if (k in clean && (clean as any)[k] !== (editing as any)[k]) shared[k] = (clean as any)[k];
+        }
+        if (Object.keys(shared).length) {
+          const rootId = editing.parent_id ?? editing.id;
+          await supabase.from("recebiveis").update(shared as any).eq("id", rootId).neq("id", editing.id);
+          await supabase.from("recebiveis").update(shared as any).eq("parent_id", rootId).neq("id", editing.id);
+        }
       } else {
         const { error } = await supabase.from("recebiveis").insert(clean as any);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["recebiveis"] });
+      for (const key of [
+        ["recebiveis"], ["contratos"], ["despesas"], ["pagamentos"],
+        ["dash-recebiveis"], ["dash-pagamentos"], ["fluxo-caixa"], ["saldos-bancarios"],
+      ]) {
+        qc.invalidateQueries({ queryKey: key });
+      }
       toast.success(editing ? "Atualizado com sucesso" : "Criado com sucesso");
       setFormOpen(false); setEditing(null); setValues(defaultValues);
     },
+
     onError: (e: Error) => toast.error(e.message),
   });
 
