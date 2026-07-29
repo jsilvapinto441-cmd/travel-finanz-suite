@@ -35,8 +35,10 @@ import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
 import { useContasBancariasComEmpresa, type ContaBancariaComEmpresa } from "@/lib/bancos";
 import { EmpresaFilter } from "@/components/empresa-filter";
-import { Target } from "lucide-react";
+import { Target, CreditCard } from "lucide-react";
 import { matchesQuery } from "@/lib/search-match";
+import { MultiSelectFilter } from "@/components/multi-select-filter";
+import { FORMAS_PAGAMENTO_OPTIONS, formaPagamentoLabel, formaMatches } from "@/lib/formas-pagamento";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
