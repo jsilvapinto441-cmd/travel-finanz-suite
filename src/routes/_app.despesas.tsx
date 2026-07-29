@@ -180,6 +180,7 @@ function Page() {
   const [empresaFilter, setEmpresaFilter] = useState("");
   const [missaoFilter, setMissaoFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | "em_aberto" | "pago">("");
+  const [formaFilter, setFormaFilter] = useState<string[]>([]);
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
   const [searchInput, setSearchInput] = useState("");
