@@ -220,11 +220,14 @@ function Page() {
     }
     if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
     if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
+    if (formaFilter.length > 0) {
+      rows = rows.filter((r) => (r.registros_pagamento ?? []).some((p) => formaMatches(p.forma_pagamento, formaFilter)));
+    }
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return rows;
-  }, [data, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, search]);
+  }, [data, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter, search]);
 
   const groups = useMemo(() => buildGroups(filtered), [filtered]);
 
