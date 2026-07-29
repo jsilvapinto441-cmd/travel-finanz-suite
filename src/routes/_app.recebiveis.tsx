@@ -35,8 +35,10 @@ import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
 import { useContasBancariasComEmpresa, type ContaBancariaComEmpresa } from "@/lib/bancos";
 import { EmpresaFilter } from "@/components/empresa-filter";
-import { Target } from "lucide-react";
+import { Target, CreditCard } from "lucide-react";
 import { matchesQuery } from "@/lib/search-match";
+import { MultiSelectFilter } from "@/components/multi-select-filter";
+import { FORMAS_PAGAMENTO_OPTIONS, formaPagamentoLabel, formaMatches } from "@/lib/formas-pagamento";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
@@ -208,6 +210,7 @@ function Page() {
   const [empresaFilter, setEmpresaFilter] = useState("");
   const [missaoFilter, setMissaoFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | "em_aberto" | "pago">("");
+  const [formaFilter, setFormaFilter] = useState<string[]>([]);
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
 
@@ -228,7 +231,7 @@ function Page() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recebiveis")
-        .select("*, registros_pagamento(data_pagamento)")
+        .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as T[];
@@ -246,11 +249,17 @@ function Page() {
     }
     if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
     if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
+    if (formaFilter.length > 0) {
+      rows = rows.filter((r) =>
+        (((r as any).registros_pagamento ?? []) as { forma_pagamento: string | null }[])
+          .some((p) => formaMatches(p.forma_pagamento, formaFilter))
+      );
+    }
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return rows;
-  }, [data, search, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte]);
+  }, [data, search, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter]);
 
   const groups = useMemo(
     () => buildGroups(filtered, contratos ?? []),
@@ -325,42 +334,58 @@ function Page() {
         title="Recebíveis"
         description="Parcelas geradas pelos contratos + recebíveis avulsos."
         actions={
-          <ExportButton<T>
-            title="Recebíveis"
-            filename="recebiveis"
-            rows={filtered}
-            subtitle={formatPeriodoLabel(dataDe, dataAte)}
-            filters={[
-              { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },
-              { label: "Missão", value: missaoFilter ? nomeById(missoes, missaoFilter) : "Todas as missões" },
-              { label: "Status", value: statusFilter === "pago" ? "Somente recebidas" : statusFilter === "em_aberto" ? "Somente em aberto" : "Todos os status" },
-              { label: "Período", value: formatPeriodoLabel(dataDe, dataAte).replace(/^Período:\s*/i, "") },
-              { label: "Busca", value: search || "" },
-            ]}
-            summary={[
-              { label: "Registros", value: String(filtered.length) },
-              { label: "Total a receber", value: formatCurrency(totaisPeriodo.total) },
-              { label: "Recebido", value: formatCurrency(totaisPeriodo.recebido) },
-              { label: "A receber", value: formatCurrency(totaisPeriodo.restante) },
-            ]}
-            columns={[
-              { header: "Cliente", accessor: "pagador" },
-              { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
-              { header: "Fatura", accessor: "numero_fatura" },
-              { header: "Parcela", accessor: (r) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
-              { header: "Valor", accessor: (r) => formatCurrency(Number(r.valor_parcela ?? r.valor_total)) },
-              { header: "Pago", accessor: (r) => formatCurrency(Number(r.valor_pago ?? 0)) },
-              { header: "Vencimento", accessor: (r) => formatDate(r.data_vencimento) },
-              { header: "Recebimento", accessor: (r) => {
-                const pgtos = ((r as any).registros_pagamento ?? []) as Array<{ data_pagamento: string | null }>;
-                const datas = pgtos.map((p) => p.data_pagamento).filter(Boolean) as string[];
-                const ultima = datas.length ? datas.sort().at(-1)! : null;
-                return formatDate(ultima);
-              } },
-              { header: "Categoria", accessor: "categoria" },
-              { header: "Status", accessor: (r) => formatStatus(r.status) },
-            ]}
-          />
+          (() => {
+            type Pgto = { id: string; data_pagamento: string | null; valor: number; forma_pagamento: string | null; conta_bancaria_id: string | null };
+            type ExportRow = { rec: T; pagamento: Pgto | null };
+            const rows: ExportRow[] = [];
+            for (const rec of filtered) {
+              let pgtos = (((rec as any).registros_pagamento ?? []) as Pgto[]).slice();
+              if (formaFilter.length > 0) pgtos = pgtos.filter((p) => formaMatches(p.forma_pagamento, formaFilter));
+              pgtos.sort((a, b) => (a.data_pagamento ?? "").localeCompare(b.data_pagamento ?? ""));
+              if (pgtos.length === 0) rows.push({ rec, pagamento: null });
+              else for (const p of pgtos) rows.push({ rec, pagamento: p });
+            }
+            const contaLabelById = (id: string | null) =>
+              !id ? "—" : (contas ?? []).find((c) => c.id === id)?.label ?? "—";
+            return (
+              <ExportButton<ExportRow>
+                title="Recebíveis"
+                filename="recebiveis"
+                rows={rows}
+                subtitle={formatPeriodoLabel(dataDe, dataAte)}
+                filters={[
+                  { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },
+                  { label: "Missão", value: missaoFilter ? nomeById(missoes, missaoFilter) : "Todas as missões" },
+                  { label: "Status", value: statusFilter === "pago" ? "Somente recebidas" : statusFilter === "em_aberto" ? "Somente em aberto" : "Todos os status" },
+                  { label: "Forma de recebimento", value: formaFilter.length ? formaFilter.map(formaPagamentoLabel).join(", ") : "Todas" },
+                  { label: "Período", value: formatPeriodoLabel(dataDe, dataAte).replace(/^Período:\s*/i, "") },
+                  { label: "Busca", value: search || "" },
+                ]}
+                summary={[
+                  { label: "Registros", value: String(filtered.length) },
+                  { label: "Total a receber", value: formatCurrency(totaisPeriodo.total) },
+                  { label: "Recebido", value: formatCurrency(totaisPeriodo.recebido) },
+                  { label: "A receber", value: formatCurrency(totaisPeriodo.restante) },
+                ]}
+                columns={[
+                  { header: "Cliente", accessor: (r) => r.rec.pagador },
+                  { header: "Empresa", accessor: (r) => nomeById(empresas, r.rec.empresa_id) },
+                  { header: "Missão", accessor: (r) => nomeById(missoes, r.rec.missao_id) },
+                  { header: "Fatura", accessor: (r) => r.rec.numero_fatura ?? "—" },
+                  { header: "Parcela", accessor: (r) => r.rec.parcelas > 1 ? `${r.rec.numero_parcela}/${r.rec.parcelas}` : "Única" },
+                  { header: "Vencimento", accessor: (r) => formatDate(r.rec.data_vencimento) },
+                  { header: "Valor do contrato", accessor: (r) => formatCurrency(Number(r.rec.valor_parcela ?? r.rec.valor_total)) },
+                  { header: "Data do recebimento", accessor: (r) => r.pagamento ? formatDate(r.pagamento.data_pagamento) : "—" },
+                  { header: "Valor recebido", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor)) : formatCurrency(0) },
+                  { header: "Forma de recebimento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
+                  { header: "Conta", accessor: (r) => r.pagamento ? contaLabelById(r.pagamento.conta_bancaria_id) : "—" },
+                  { header: "Total recebido", accessor: (r) => formatCurrency(Number(r.rec.valor_pago ?? 0)) },
+                  { header: "Saldo a receber", accessor: (r) => formatCurrency(Math.max(Number(r.rec.valor_parcela ?? r.rec.valor_total) - Number(r.rec.valor_pago ?? 0), 0)) },
+                  { header: "Status", accessor: (r) => formatStatus(r.rec.status) },
+                ]}
+              />
+            );
+          })()
         }
       />
 
@@ -405,6 +430,14 @@ function Page() {
                 ]}
               />
             </div>
+            <MultiSelectFilter
+              label="Forma de recebimento"
+              placeholder="Todas"
+              icon={<CreditCard className="size-4 text-muted-foreground shrink-0" />}
+              options={FORMAS_PAGAMENTO_OPTIONS}
+              value={formaFilter}
+              onChange={setFormaFilter}
+            />
             <div className="grid grid-cols-2 gap-2 sm:contents">
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground sm:hidden col-span-2 -mb-1">Vencimento</label>
               <DatePicker value={dataDe} onChange={setDataDe} className="h-9 w-full sm:w-[150px]" aria-label="Vencimento — de" />
