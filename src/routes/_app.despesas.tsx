@@ -35,6 +35,9 @@ import { useDebounce } from "@/lib/use-debounce";
 import { toast } from "sonner";
 import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
+import { MultiSelectFilter } from "@/components/multi-select-filter";
+import { FORMAS_PAGAMENTO_OPTIONS, formaPagamentoLabel, formaMatches } from "@/lib/formas-pagamento";
+import { CreditCard } from "lucide-react";
 
 export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
