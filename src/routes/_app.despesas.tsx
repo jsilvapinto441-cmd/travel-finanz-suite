@@ -41,6 +41,14 @@ import { CreditCard } from "lucide-react";
 
 export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
+type Pagamento = {
+  id: string;
+  data_pagamento: string | null;
+  valor: number;
+  forma_pagamento: string | null;
+  conta_bancaria_id: string | null;
+};
+
 type T = {
   id: string; empresa_id: string | null; missao_id: string | null; contrato_id: string | null;
   fornecedor_id: string | null;
@@ -51,6 +59,7 @@ type T = {
   data_vencimento: string | null; data_pagamento: string | null; banco: string | null;
   status: string; observacoes: string | null;
   parent_id: string | null; numero_parcela: number; parcelas: number; frequencia: string;
+  registros_pagamento?: Pagamento[];
 };
 
 const CATEGORIAS = [
