@@ -231,7 +231,7 @@ function Page() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recebiveis")
-        .select("*, registros_pagamento(data_pagamento)")
+        .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as T[];
@@ -249,11 +249,17 @@ function Page() {
     }
     if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
     if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
+    if (formaFilter.length > 0) {
+      rows = rows.filter((r) =>
+        (((r as any).registros_pagamento ?? []) as { forma_pagamento: string | null }[])
+          .some((p) => formaMatches(p.forma_pagamento, formaFilter))
+      );
+    }
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return rows;
-  }, [data, search, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte]);
+  }, [data, search, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter]);
 
   const groups = useMemo(
     () => buildGroups(filtered, contratos ?? []),
