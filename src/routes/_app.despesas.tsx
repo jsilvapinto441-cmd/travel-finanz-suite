@@ -286,19 +286,47 @@ function Page() {
     return c ? `${c.numero ?? ""} ${c.cliente}`.trim() : "—";
   };
 
+  // Linhas expandidas: uma por pagamento (ou uma por despesa sem pagamentos).
+  type ExportRow = {
+    despesa: T;
+    pagamento: Pagamento | null;
+  };
+  const exportRows: ExportRow[] = useMemo(() => {
+    const out: ExportRow[] = [];
+    for (const d of filtered) {
+      let pgtos = (d.registros_pagamento ?? []).slice();
+      if (formaFilter.length > 0) {
+        pgtos = pgtos.filter((p) => formaMatches(p.forma_pagamento, formaFilter));
+      }
+      pgtos.sort((a, b) => (a.data_pagamento ?? "").localeCompare(b.data_pagamento ?? ""));
+      if (pgtos.length === 0) {
+        out.push({ despesa: d, pagamento: null });
+      } else {
+        for (const p of pgtos) out.push({ despesa: d, pagamento: p });
+      }
+    }
+    return out;
+  }, [filtered, formaFilter]);
+
+  const contaLabelById = (id: string | null) => {
+    if (!id) return "—";
+    return (contas ?? []).find((c) => c.id === id)?.label ?? "—";
+  };
+
   return (
     <PageContainer>
       <PageHeader
         title="Despesas"
         description="Contas a pagar. O status é calculado automaticamente a partir dos pagamentos registrados."
         actions={
-          <ExportButton<any>
-            title="Despesas" filename="despesas" rows={filtered as any}
+          <ExportButton<ExportRow>
+            title="Despesas" filename="despesas" rows={exportRows}
             subtitle={formatPeriodoLabel(dataDe, dataAte)}
             filters={[
               { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },
               { label: "Missão", value: missaoFilter ? nomeById(missoes, missaoFilter) : "Todas as missões" },
               { label: "Status", value: statusFilter === "pago" ? "Somente pagas" : statusFilter === "em_aberto" ? "Somente em aberto" : "Todos os status" },
+              { label: "Forma de pagamento", value: formaFilter.length ? formaFilter.map(formaPagamentoLabel).join(", ") : "Todas" },
               { label: "Período", value: formatPeriodoLabel(dataDe, dataAte).replace(/^Período:\s*/i, "") },
               { label: "Busca", value: search || "" },
             ]}
@@ -309,29 +337,27 @@ function Page() {
               { label: "A pagar", value: formatCurrency(totaisPeriodo.restante) },
             ]}
             columns={[
-              
-              { header: "Descrição", accessor: (r: T) => r.descricao },
-              { header: "Categoria", accessor: (r: T) => categoriaLabel(r.categoria, r.categoria_personalizada) },
-              { header: "Empresa", accessor: (r: T) => nomeById(empresas, r.empresa_id) },
-              { header: "Missão", accessor: (r: T) => nomeById(missoes, r.missao_id) },
-              { header: "Fornecedor", accessor: (r: T) => nomeById(fornecedores, r.fornecedor_id) },
-              { header: "Banco", accessor: (r: T) => r.banco ?? "—" },
-              { header: "Valor", accessor: (r: T) => formatCurrency(Number(r.valor)) },
-              { header: "Valor pago", accessor: (r: T) => formatCurrency(Number(r.valor_pago ?? 0)) },
-              { header: "Parcela", accessor: (r: T) => r.parcelas > 1 ? `${r.numero_parcela}/${r.parcelas}` : "Única" },
-              { header: "Vencimento", accessor: (r: T) => formatDate(r.data_vencimento) },
-              { header: "Data de Pagamento", accessor: (r: T) => {
-                const pgtos = ((r as any).registros_pagamento ?? []) as Array<{ data_pagamento: string | null }>;
-                const datas = pgtos.map((p) => p.data_pagamento).filter(Boolean) as string[];
-                const ultima = datas.length ? datas.sort().at(-1)! : null;
-                return formatDate(ultima);
-              } },
-              { header: "Status", accessor: (r: T) => formatStatus(r.status) },
+              { header: "Descrição", accessor: (r) => r.despesa.descricao },
+              { header: "Categoria", accessor: (r) => categoriaLabel(r.despesa.categoria, r.despesa.categoria_personalizada) },
+              { header: "Empresa", accessor: (r) => nomeById(empresas, r.despesa.empresa_id) },
+              { header: "Missão", accessor: (r) => nomeById(missoes, r.despesa.missao_id) },
+              { header: "Fornecedor", accessor: (r) => nomeById(fornecedores, r.despesa.fornecedor_id) },
+              { header: "Parcela", accessor: (r) => r.despesa.parcelas > 1 ? `${r.despesa.numero_parcela}/${r.despesa.parcelas}` : "Única" },
+              { header: "Vencimento", accessor: (r) => formatDate(r.despesa.data_vencimento) },
+              { header: "Valor do contrato", accessor: (r) => formatCurrency(Number(r.despesa.valor)) },
+              { header: "Data do pagamento", accessor: (r) => r.pagamento ? formatDate(r.pagamento.data_pagamento) : "—" },
+              { header: "Valor pago", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor)) : formatCurrency(0) },
+              { header: "Forma de pagamento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
+              { header: "Conta", accessor: (r) => r.pagamento ? contaLabelById(r.pagamento.conta_bancaria_id) : (r.despesa.banco ?? "—") },
+              { header: "Total pago", accessor: (r) => formatCurrency(Number(r.despesa.valor_pago ?? 0)) },
+              { header: "Saldo a pagar", accessor: (r) => formatCurrency(Math.max(Number(r.despesa.valor) - Number(r.despesa.valor_pago ?? 0), 0)) },
+              { header: "Status", accessor: (r) => formatStatus(r.despesa.status) },
             ]}
 
           />
         }
       />
+
 
       {(dataDe || dataAte) ? (
         <KpiCard
