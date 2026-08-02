@@ -45,13 +45,14 @@ const parseSocios = (v: unknown): Socio[] =>
 
 function Page() {
   const qc = useQueryClient();
+  const [detalhe, setDetalhe] = useState<Empresa | null>(null);
 
   const { data: empresas = [] } = useQuery({
     queryKey: ["empresas-export"],
     queryFn: async () =>
       (await supabase
         .from("empresas")
-        .select("id,nome,razao_social,cnpj,cor,ativo,conta_bancaria_id")
+        .select("id,nome,razao_social,cnpj,cor,ativo,conta_bancaria_id,endereco,socios")
         .order("nome")).data ?? [],
     staleTime: 30_000,
   });
