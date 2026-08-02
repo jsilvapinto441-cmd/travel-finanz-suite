@@ -386,7 +386,9 @@ function Dashboard() {
             <SelectContent>
               <SelectItem value="all">Todas as missões</SelectItem>
               {missoes?.map((m) => (
-                <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                <SelectItem key={m.id} value={m.id}>
+                  {m.nome}{m.status === "concluido" ? " (Concluída)" : ""}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
