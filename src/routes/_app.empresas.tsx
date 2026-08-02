@@ -434,3 +434,57 @@ function EmpresaForm({
     </div>
   );
 }
+
+function SociosBlock({ values, setValues }: { values: any; setValues: (v: any) => void }) {
+  const socios = parseSocios(values.socios);
+
+  const update = (next: Socio[]) => setValues({ ...values, socios: next });
+  const setField = (i: number, key: keyof Socio, v: string) =>
+    update(socios.map((s, idx) => (idx === i ? { ...s, [key]: v } : s)));
+
+  return (
+    <div className="col-span-2 space-y-3 rounded-md border border-border/60 bg-muted/20 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Users className="size-4 text-primary" /> Sócios
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={socios.length >= MAX_SOCIOS}
+          onClick={() => update([...socios, { nome: "", cargo: "", telefone: "", email: "" }])}
+        >
+          <Plus className="size-4 mr-1" /> Adicionar sócio
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">Até {MAX_SOCIOS} sócios por empresa.</p>
+
+      {socios.length === 0 && (
+        <span className="text-xs text-muted-foreground italic">Nenhum sócio cadastrado</span>
+      )}
+
+      {socios.map((s, i) => (
+        <div key={i} className="rounded border border-border/50 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground">Sócio {i + 1}</span>
+            <button
+              type="button"
+              className="rounded p-1 hover:bg-destructive/20"
+              aria-label="Remover sócio"
+              onClick={() => update(socios.filter((_, idx) => idx !== i))}
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <TextField label="Nome" value={s.nome ?? ""} onChange={(v) => setField(i, "nome", v)} />
+            <TextField label="Cargo" value={s.cargo ?? ""} onChange={(v) => setField(i, "cargo", v)} />
+            <TextField label="Telefone" value={s.telefone ?? ""} onChange={(v) => setField(i, "telefone", v)} />
+            <TextField label="E-mail" value={s.email ?? ""} onChange={(v) => setField(i, "email", v)} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
