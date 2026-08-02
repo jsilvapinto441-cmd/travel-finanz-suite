@@ -131,7 +131,20 @@ function Page() {
             ),
             className: "w-8",
           },
-          { key: "nome", label: "Nome", render: (r) => <span className="font-medium">{r.nome}</span> },
+          {
+            key: "nome",
+            label: "Nome",
+            render: (r) => (
+              <button
+                type="button"
+                onClick={() => setDetalhe(r)}
+                className="font-medium text-left text-primary hover:underline"
+                title="Ver detalhes da empresa"
+              >
+                {r.nome}
+              </button>
+            ),
+          },
           { key: "razao_social", label: "Razão Social" },
           { key: "cnpj", label: "CNPJ" },
           {
