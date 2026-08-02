@@ -3,16 +3,26 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
-import { TextField, SelectField } from "@/components/form-fields";
+import { TextField, SelectField, TextAreaField } from "@/components/form-fields";
 import { ExportButton } from "@/components/export-button";
 import { useContasBancarias, contaLabel } from "@/lib/bancos";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Landmark, Plus } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import { X, Landmark, Plus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/empresas")({ component: Page });
+
+export type Socio = {
+  nome: string;
+  cargo?: string | null;
+  telefone?: string | null;
+  email?: string | null;
+};
 
 type Empresa = {
   id: string;
@@ -22,9 +32,16 @@ type Empresa = {
   cor: string | null;
   ativo: boolean;
   conta_bancaria_id: string | null;
+  endereco: string | null;
+  socios: Socio[] | null;
 };
 
 type Vinculo = { empresa_id: string; conta_bancaria_id: string };
+
+const MAX_SOCIOS = 3;
+
+const parseSocios = (v: unknown): Socio[] =>
+  Array.isArray(v) ? (v as Socio[]).filter((s) => s && typeof s === "object") : [];
 
 function Page() {
   const qc = useQueryClient();
