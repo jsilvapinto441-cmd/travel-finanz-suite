@@ -360,6 +360,18 @@ function EmpresaForm({
         onChange={(v) => setValues({ ...values, cnpj: v })}
       />
 
+      <div className="col-span-2">
+        <TextAreaField
+          label="Endereço"
+          value={values.endereco}
+          onChange={(v) => setValues({ ...values, endereco: v })}
+        />
+      </div>
+
+      <SociosBlock values={values} setValues={setValues} />
+
+
+
       <div className="col-span-2 space-y-2 rounded-md border border-border/60 bg-muted/20 p-3">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Landmark className="size-4 text-primary" />
