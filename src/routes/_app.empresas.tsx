@@ -214,7 +214,93 @@ function Page() {
           qc.invalidateQueries({ queryKey: ["empresas-export"] });
         }}
       />
+
+      <EmpresaDetalhesDialog
+        empresa={detalhe}
+        onClose={() => setDetalhe(null)}
+        contas={(detalhe ? contasPorEmpresa.get(detalhe.id) ?? [] : []).map(
+          (cid) => contaMap.get(cid) ?? "—",
+        )}
+      />
     </PageContainer>
+  );
+}
+
+function Info({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="space-y-0.5">
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-sm">{value || "—"}</div>
+    </div>
+  );
+}
+
+function EmpresaDetalhesDialog({
+  empresa,
+  contas,
+  onClose,
+}: {
+  empresa: Empresa | null;
+  contas: string[];
+  onClose: () => void;
+}) {
+  const socios = parseSocios(empresa?.socios);
+  return (
+    <Dialog open={!!empresa} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span
+              className="inline-block size-3 rounded-full"
+              style={{ background: empresa?.cor ?? "#0d7a5f" }}
+            />
+            {empresa?.nome}
+          </DialogTitle>
+          <DialogDescription>Detalhes cadastrais da empresa.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Info label="Razão Social" value={empresa?.razao_social} />
+          <Info label="CNPJ" value={empresa?.cnpj} />
+          <div className="col-span-2">
+            <Info label="Endereço" value={empresa?.endereco} />
+          </div>
+          <Info label="Status" value={empresa?.ativo ? "Ativa" : "Inativa"} />
+          <div className="col-span-2">
+            <Info
+              label="Contas Bancárias"
+              value={
+                contas.length ? (
+                  <div className="flex flex-wrap gap-1">
+                    {contas.map((c, i) => (
+                      <Badge key={i} variant="secondary" className="text-[10px]">{c}</Badge>
+                    ))}
+                  </div>
+                ) : null
+              }
+            />
+          </div>
+        </div>
+
+        <div className="rounded-md border border-border/60 bg-muted/20 p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Users className="size-4 text-primary" /> Sócios
+          </div>
+          {socios.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">Nenhum sócio cadastrado.</p>
+          ) : (
+            socios.map((s, i) => (
+              <div key={i} className="rounded border border-border/50 p-2 text-sm">
+                <div className="font-medium">{s.nome}</div>
+                <div className="text-xs text-muted-foreground">
+                  {[s.cargo, s.telefone, s.email].filter(Boolean).join(" · ") || "—"}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
