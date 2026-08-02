@@ -10,6 +10,11 @@ const PER_TABLE_STRIP: Record<string, string[]> = {
   recebiveis: ["registros_pagamento"],
 };
 
+// Colunas JSONB reais que devem ser preservadas mesmo sendo array/objeto.
+const PER_TABLE_JSON: Record<string, string[]> = {
+  empresas: ["socios"],
+};
+
 function isEmbeddedRelation(v: unknown): boolean {
   // PostgREST embedded relations: array of objects OR a joined object
   // (aliased like `empresa:empresas(nome)`). These are not real columns
