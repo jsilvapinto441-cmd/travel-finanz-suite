@@ -92,6 +92,14 @@ function Page() {
               { header: "Nome", accessor: "nome" },
               { header: "Razão Social", accessor: "razao_social" },
               { header: "CNPJ", accessor: "cnpj" },
+              { header: "Endereço", accessor: (r) => r.endereco || "—" },
+              {
+                header: "Sócios",
+                accessor: (r) =>
+                  parseSocios(r.socios)
+                    .map((s) => [s.nome, s.cargo].filter(Boolean).join(" - "))
+                    .join(" | ") || "—",
+              },
               {
                 header: "Contas Bancárias",
                 accessor: (r) =>
