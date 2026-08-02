@@ -10,6 +10,11 @@ const PER_TABLE_STRIP: Record<string, string[]> = {
   recebiveis: ["registros_pagamento"],
 };
 
+// Colunas JSONB reais que devem ser preservadas mesmo sendo array/objeto.
+const PER_TABLE_JSON: Record<string, string[]> = {
+  empresas: ["socios"],
+};
+
 function isEmbeddedRelation(v: unknown): boolean {
   // PostgREST embedded relations: array of objects OR a joined object
   // (aliased like `empresa:empresas(nome)`). These are not real columns
@@ -33,13 +38,14 @@ export function sanitizeUpdatePayload<T extends Record<string, unknown>>(
   payload: Partial<T>,
 ): Partial<T> {
   const strip = new Set<string>([...GLOBAL_STRIP, ...(PER_TABLE_STRIP[table] ?? [])]);
+  const keepJson = new Set<string>(PER_TABLE_JSON[table] ?? []);
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(payload)) {
     if (strip.has(k)) continue;
     // Descartar campos internos do cliente (marcadores começados por "_")
     if (k.startsWith("_")) continue;
     // Descartar relações embutidas do PostgREST (arrays/objetos aninhados)
-    if (isEmbeddedRelation(v)) continue;
+    if (!keepJson.has(k) && isEmbeddedRelation(v)) continue;
     out[k] = v;
   }
   return out as Partial<T>;

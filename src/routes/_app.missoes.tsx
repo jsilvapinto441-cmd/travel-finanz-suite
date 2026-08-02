@@ -83,7 +83,10 @@ function Page() {
             <TextField label="Nome" value={values.nome} onChange={(v) => setValues({ ...values, nome: v })} required />
             <TextAreaField label="Descrição" value={values.descricao} onChange={(v) => setValues({ ...values, descricao: v })} />
             <SelectField label="Status" value={values.status} onChange={(v) => setValues({ ...values, status: v })}
-              options={[{ value: "ativo", label: "Ativo" }, { value: "inativo", label: "Inativo" }]} />
+              options={[{ value: "ativo", label: "Ativo" }, { value: "concluido", label: "Concluído" }]} />
+            <p className="text-xs text-muted-foreground">
+              Missões concluídas são encerradas e deixam de participar dos cálculos do Dashboard Financeiro.
+            </p>
             <TextAreaField label="Observações" value={values.observacoes} onChange={(v) => setValues({ ...values, observacoes: v })} />
           </div>
         )}

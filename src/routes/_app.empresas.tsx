@@ -3,16 +3,26 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/data-table";
-import { TextField, SelectField } from "@/components/form-fields";
+import { TextField, SelectField, TextAreaField } from "@/components/form-fields";
 import { ExportButton } from "@/components/export-button";
 import { useContasBancarias, contaLabel } from "@/lib/bancos";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Landmark, Plus } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import { X, Landmark, Plus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/empresas")({ component: Page });
+
+export type Socio = {
+  nome: string;
+  cargo?: string | null;
+  telefone?: string | null;
+  email?: string | null;
+};
 
 type Empresa = {
   id: string;
@@ -22,19 +32,27 @@ type Empresa = {
   cor: string | null;
   ativo: boolean;
   conta_bancaria_id: string | null;
+  endereco: string | null;
+  socios: Socio[] | null;
 };
 
 type Vinculo = { empresa_id: string; conta_bancaria_id: string };
 
+const MAX_SOCIOS = 3;
+
+const parseSocios = (v: unknown): Socio[] =>
+  Array.isArray(v) ? (v as Socio[]).filter((s) => s && typeof s === "object") : [];
+
 function Page() {
   const qc = useQueryClient();
+  const [detalhe, setDetalhe] = useState<Empresa | null>(null);
 
   const { data: empresas = [] } = useQuery({
     queryKey: ["empresas-export"],
     queryFn: async () =>
       (await supabase
         .from("empresas")
-        .select("id,nome,razao_social,cnpj,cor,ativo,conta_bancaria_id")
+        .select("id,nome,razao_social,cnpj,cor,ativo,conta_bancaria_id,endereco,socios")
         .order("nome")).data ?? [],
     staleTime: 30_000,
   });
@@ -74,6 +92,14 @@ function Page() {
               { header: "Nome", accessor: "nome" },
               { header: "Razão Social", accessor: "razao_social" },
               { header: "CNPJ", accessor: "cnpj" },
+              { header: "Endereço", accessor: (r) => r.endereco || "—" },
+              {
+                header: "Sócios",
+                accessor: (r) =>
+                  parseSocios(r.socios)
+                    .map((s) => [s.nome, s.cargo].filter(Boolean).join(" - "))
+                    .join(" | ") || "—",
+              },
               {
                 header: "Contas Bancárias",
                 accessor: (r) =>
@@ -105,7 +131,20 @@ function Page() {
             ),
             className: "w-8",
           },
-          { key: "nome", label: "Nome", render: (r) => <span className="font-medium">{r.nome}</span> },
+          {
+            key: "nome",
+            label: "Nome",
+            render: (r) => (
+              <button
+                type="button"
+                onClick={() => setDetalhe(r)}
+                className="font-medium text-left text-primary hover:underline"
+                title="Ver detalhes da empresa"
+              >
+                {r.nome}
+              </button>
+            ),
+          },
           { key: "razao_social", label: "Razão Social" },
           { key: "cnpj", label: "CNPJ" },
           {
@@ -175,7 +214,93 @@ function Page() {
           qc.invalidateQueries({ queryKey: ["empresas-export"] });
         }}
       />
+
+      <EmpresaDetalhesDialog
+        empresa={detalhe}
+        onClose={() => setDetalhe(null)}
+        contas={(detalhe ? contasPorEmpresa.get(detalhe.id) ?? [] : []).map(
+          (cid) => contaMap.get(cid) ?? "—",
+        )}
+      />
     </PageContainer>
+  );
+}
+
+function Info({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="space-y-0.5">
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-sm">{value || "—"}</div>
+    </div>
+  );
+}
+
+function EmpresaDetalhesDialog({
+  empresa,
+  contas,
+  onClose,
+}: {
+  empresa: Empresa | null;
+  contas: string[];
+  onClose: () => void;
+}) {
+  const socios = parseSocios(empresa?.socios);
+  return (
+    <Dialog open={!!empresa} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span
+              className="inline-block size-3 rounded-full"
+              style={{ background: empresa?.cor ?? "#0d7a5f" }}
+            />
+            {empresa?.nome}
+          </DialogTitle>
+          <DialogDescription>Detalhes cadastrais da empresa.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Info label="Razão Social" value={empresa?.razao_social} />
+          <Info label="CNPJ" value={empresa?.cnpj} />
+          <div className="col-span-2">
+            <Info label="Endereço" value={empresa?.endereco} />
+          </div>
+          <Info label="Status" value={empresa?.ativo ? "Ativa" : "Inativa"} />
+          <div className="col-span-2">
+            <Info
+              label="Contas Bancárias"
+              value={
+                contas.length ? (
+                  <div className="flex flex-wrap gap-1">
+                    {contas.map((c, i) => (
+                      <Badge key={i} variant="secondary" className="text-[10px]">{c}</Badge>
+                    ))}
+                  </div>
+                ) : null
+              }
+            />
+          </div>
+        </div>
+
+        <div className="rounded-md border border-border/60 bg-muted/20 p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Users className="size-4 text-primary" /> Sócios
+          </div>
+          {socios.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">Nenhum sócio cadastrado.</p>
+          ) : (
+            socios.map((s, i) => (
+              <div key={i} className="rounded border border-border/50 p-2 text-sm">
+                <div className="font-medium">{s.nome}</div>
+                <div className="text-xs text-muted-foreground">
+                  {[s.cargo, s.telefone, s.email].filter(Boolean).join(" · ") || "—"}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -234,6 +359,18 @@ function EmpresaForm({
         value={values.cnpj}
         onChange={(v) => setValues({ ...values, cnpj: v })}
       />
+
+      <div className="col-span-2">
+        <TextAreaField
+          label="Endereço"
+          value={values.endereco}
+          onChange={(v) => setValues({ ...values, endereco: v })}
+        />
+      </div>
+
+      <SociosBlock values={values} setValues={setValues} />
+
+
 
       <div className="col-span-2 space-y-2 rounded-md border border-border/60 bg-muted/20 p-3">
         <div className="flex items-center gap-2 text-sm font-medium">
@@ -294,6 +431,60 @@ function EmpresaForm({
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SociosBlock({ values, setValues }: { values: any; setValues: (v: any) => void }) {
+  const socios = parseSocios(values.socios);
+
+  const update = (next: Socio[]) => setValues({ ...values, socios: next });
+  const setField = (i: number, key: keyof Socio, v: string) =>
+    update(socios.map((s, idx) => (idx === i ? { ...s, [key]: v } : s)));
+
+  return (
+    <div className="col-span-2 space-y-3 rounded-md border border-border/60 bg-muted/20 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Users className="size-4 text-primary" /> Sócios
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={socios.length >= MAX_SOCIOS}
+          onClick={() => update([...socios, { nome: "", cargo: "", telefone: "", email: "" }])}
+        >
+          <Plus className="size-4 mr-1" /> Adicionar sócio
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">Até {MAX_SOCIOS} sócios por empresa.</p>
+
+      {socios.length === 0 && (
+        <span className="text-xs text-muted-foreground italic">Nenhum sócio cadastrado</span>
+      )}
+
+      {socios.map((s, i) => (
+        <div key={i} className="rounded border border-border/50 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground">Sócio {i + 1}</span>
+            <button
+              type="button"
+              className="rounded p-1 hover:bg-destructive/20"
+              aria-label="Remover sócio"
+              onClick={() => update(socios.filter((_, idx) => idx !== i))}
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <TextField label="Nome" value={s.nome ?? ""} onChange={(v) => setField(i, "nome", v)} />
+            <TextField label="Cargo" value={s.cargo ?? ""} onChange={(v) => setField(i, "cargo", v)} />
+            <TextField label="Telefone" value={s.telefone ?? ""} onChange={(v) => setField(i, "telefone", v)} />
+            <TextField label="E-mail" value={s.email ?? ""} onChange={(v) => setField(i, "email", v)} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

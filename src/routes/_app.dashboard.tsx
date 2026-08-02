@@ -108,8 +108,15 @@ function Dashboard() {
       return true;
     };
 
-    const recsAll = recebiveis ?? [];
-    const despsAll = despesas ?? [];
+    // Missões concluídas são encerradas: seus valores saem de TODOS os cálculos.
+    const missoesConcluidas = new Set(
+      (missoes ?? []).filter((m) => m.status === "concluido").map((m) => m.id),
+    );
+    const foraDeMissaoConcluida = (row: { missao_id?: string | null }) =>
+      !row.missao_id || !missoesConcluidas.has(row.missao_id);
+
+    const recsAll = (recebiveis ?? []).filter(foraDeMissaoConcluida);
+    const despsAll = (despesas ?? []).filter(foraDeMissaoConcluida);
     const pagsAll = pagamentos ?? [];
     // Ids dos recebíveis já filtrados por empresa/missão (queries acima)
     const recIdsFiltrados = new Set(recsAll.map((r) => r.id));
@@ -253,7 +260,7 @@ function Dashboard() {
     });
 
     return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa };
-  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, empresaId, dataIni, dataFim]);
+  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, dataIni, dataFim]);
 
   const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa } = aggregates;
 
@@ -379,7 +386,9 @@ function Dashboard() {
             <SelectContent>
               <SelectItem value="all">Todas as missões</SelectItem>
               {missoes?.map((m) => (
-                <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                <SelectItem key={m.id} value={m.id}>
+                  {m.nome}{m.status === "concluido" ? " (Concluída)" : ""}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
