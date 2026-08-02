@@ -591,10 +591,12 @@ export type Database = {
           conta_bancaria_id: string | null
           cor: string | null
           created_at: string
+          endereco: string | null
           id: string
           nome: string
           owner_id: string
           razao_social: string | null
+          socios: Json
           updated_at: string
         }
         Insert: {
@@ -603,10 +605,12 @@ export type Database = {
           conta_bancaria_id?: string | null
           cor?: string | null
           created_at?: string
+          endereco?: string | null
           id?: string
           nome: string
           owner_id?: string
           razao_social?: string | null
+          socios?: Json
           updated_at?: string
         }
         Update: {
@@ -615,10 +619,12 @@ export type Database = {
           conta_bancaria_id?: string | null
           cor?: string | null
           created_at?: string
+          endereco?: string | null
           id?: string
           nome?: string
           owner_id?: string
           razao_social?: string | null
+          socios?: Json
           updated_at?: string
         }
         Relationships: [
@@ -787,7 +793,7 @@ export type Database = {
           nome: string
           observacoes: string | null
           owner_id: string
-          status: Database["public"]["Enums"]["status_generico"]
+          status: string
           updated_at: string
         }
         Insert: {
@@ -797,7 +803,7 @@ export type Database = {
           nome: string
           observacoes?: string | null
           owner_id?: string
-          status?: Database["public"]["Enums"]["status_generico"]
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -807,7 +813,7 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           owner_id?: string
-          status?: Database["public"]["Enums"]["status_generico"]
+          status?: string
           updated_at?: string
         }
         Relationships: []
