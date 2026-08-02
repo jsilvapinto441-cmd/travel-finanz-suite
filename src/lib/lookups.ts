@@ -10,7 +10,12 @@ export function useEmpresas() {
 export function useMissoes() {
   return useQuery({
     queryKey: ["missoes-options"],
-    queryFn: async () => (await supabase.from("missoes").select("id, nome").order("nome")).data ?? [],
+    queryFn: async () =>
+      ((await supabase.from("missoes").select("id, nome, status").order("nome")).data ?? []) as {
+        id: string;
+        nome: string;
+        status: string;
+      }[],
   });
 }
 export function useContratos() {
