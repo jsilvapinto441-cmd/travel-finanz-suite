@@ -37,6 +37,7 @@ import { useContasBancariasComEmpresa, type ContaBancariaComEmpresa } from "@/li
 import { EmpresaFilter } from "@/components/empresa-filter";
 import { Target, CreditCard } from "lucide-react";
 import { matchesQuery } from "@/lib/search-match";
+import { sortByVencimento, sortRowsByVencimento } from "@/lib/sort-vencimento";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { FORMAS_PAGAMENTO_OPTIONS, formaPagamentoLabel, formaMatches } from "@/lib/formas-pagamento";
 
@@ -258,9 +259,7 @@ function Page() {
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
-    return [...rows].sort((a, b) =>
-      (a.data_vencimento ?? "9999-12-31").localeCompare(b.data_vencimento ?? "9999-12-31")
-    );
+    return sortByVencimento(rows);
   }, [data, search, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter]);
 
   const groups = useMemo(
@@ -347,13 +346,14 @@ function Page() {
               if (pgtos.length === 0) rows.push({ rec, pagamento: null });
               else for (const p of pgtos) rows.push({ rec, pagamento: p });
             }
+            const exportRows = sortRowsByVencimento(rows, (r) => r.rec.data_vencimento);
             const contaLabelById = (id: string | null) =>
               !id ? "—" : (contas ?? []).find((c) => c.id === id)?.label ?? "—";
             return (
               <ExportButton<ExportRow>
                 title="Recebíveis"
                 filename="recebiveis"
-                rows={rows}
+                rows={exportRows}
                 subtitle={formatPeriodoLabel(dataDe, dataAte)}
                 filters={[
                   { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },

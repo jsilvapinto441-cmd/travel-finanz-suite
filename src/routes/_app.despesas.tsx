@@ -27,6 +27,7 @@ import { PagamentoDialog } from "@/components/pagamento-dialog";
 import { CircleDollarSign, CalendarClock, Target, Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import { EmpresaFilter } from "@/components/empresa-filter";
 import { matchesQuery } from "@/lib/search-match";
+import { sortByVencimento, sortRowsByVencimento } from "@/lib/sort-vencimento";
 import { ExportButton } from "@/components/export-button";
 import { KpiCard } from "@/components/kpi-card";
 import { useContasBancariasComEmpresa } from "@/lib/bancos";
@@ -226,9 +227,7 @@ function Page() {
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
-    return [...rows].sort((a, b) =>
-      (a.data_vencimento ?? "9999-12-31").localeCompare(b.data_vencimento ?? "9999-12-31")
-    );
+    return sortByVencimento(rows);
   }, [data, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter, search]);
 
   const groups = useMemo(() => buildGroups(filtered), [filtered]);
@@ -307,7 +306,7 @@ function Page() {
         for (const p of pgtos) out.push({ despesa: d, pagamento: p });
       }
     }
-    return out;
+    return sortRowsByVencimento(out, (r) => r.despesa.data_vencimento);
   }, [filtered, formaFilter]);
 
   const contaLabelById = (id: string | null) => {
