@@ -232,7 +232,7 @@ function Page() {
       const { data, error } = await supabase
         .from("recebiveis")
         .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id)")
-        .order("created_at", { ascending: false });
+        .order("data_vencimento", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as T[];
     },
@@ -258,7 +258,9 @@ function Page() {
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
-    return rows;
+    return [...rows].sort((a, b) =>
+      (a.data_vencimento ?? "9999-12-31").localeCompare(b.data_vencimento ?? "9999-12-31")
+    );
   }, [data, search, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter]);
 
   const groups = useMemo(
