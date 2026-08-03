@@ -356,23 +356,48 @@ function Page() {
   const { data: recebiveis } = useQuery({
     queryKey: ["recebiveis-min-por-contrato"],
     queryFn: async () =>
-      (await supabase.from("recebiveis").select("contrato_id,status,valor_total,valor_pago")).data ?? [],
+      (await supabase
+        .from("recebiveis")
+        .select("contrato_id,status,valor_total,valor_pago,data_vencimento,data_recebimento")).data ?? [],
     staleTime: 30_000,
   });
 
   const resumoPorContrato = useMemo(() => {
-    const map = new Map<string, { pagos: number; total: number; recebido: number; vencidos: number }>();
+    const map = new Map<
+      string,
+      {
+        pagos: number; total: number; recebido: number; vencidos: number;
+        restantes: number; primeiroPagamento: string | null; primeiroVencimento: string | null;
+      }
+    >();
     for (const r of recebiveis ?? []) {
       if (!r.contrato_id) continue;
-      const cur = map.get(r.contrato_id) ?? { pagos: 0, total: 0, recebido: 0, vencidos: 0 };
+      const cur = map.get(r.contrato_id) ?? {
+        pagos: 0, total: 0, recebido: 0, vencidos: 0,
+        restantes: 0, primeiroPagamento: null, primeiroVencimento: null,
+      };
       cur.total += 1;
-      if (r.status === "pago") cur.pagos += 1;
+      if (r.status === "pago") {
+        cur.pagos += 1;
+        const dt = (r as any).data_recebimento ?? r.data_vencimento ?? null;
+        if (dt && (!cur.primeiroPagamento || dt < cur.primeiroPagamento)) cur.primeiroPagamento = dt;
+      } else if (r.status !== "cancelado") {
+        cur.restantes += 1;
+      }
       if (r.status === "atrasado") cur.vencidos += 1;
+      const venc = r.data_vencimento ?? null;
+      if (venc && (!cur.primeiroVencimento || venc < cur.primeiroVencimento)) cur.primeiroVencimento = venc;
       cur.recebido += Number(r.valor_pago ?? 0);
       map.set(r.contrato_id, cur);
     }
     return map;
   }, [recebiveis]);
+
+  const resumoDe = (id: string) =>
+    resumoPorContrato.get(id) ?? {
+      pagos: 0, total: 0, recebido: 0, vencidos: 0,
+      restantes: 0, primeiroPagamento: null, primeiroVencimento: null,
+    };
 
   const { data: allContratos = [] } = useQuery({
     queryKey: ["contratos-export"],
@@ -418,13 +443,21 @@ function Page() {
               { header: "Empresa", accessor: (r) => nomeById(empresas, r.empresa_id) },
               { header: "Missão", accessor: (r) => nomeById(missoes, r.missao_id) },
               { header: "Destino", accessor: "destino" },
-              { header: "Embarque", accessor: (r) => formatDate(r.data_embarque) },
-              { header: "Retorno", accessor: (r) => formatDate(r.data_retorno) },
-              { header: "Passageiros", accessor: "num_passageiros" },
               { header: "Valor total", accessor: (r) => formatCurrency(Number(r.valor)) },
-              { header: "Entrada", accessor: (r) => formatCurrency(Number(r.valor_entrada)) },
+              { header: "Valor pago", accessor: (r) => formatCurrency(resumoDe(r.id).recebido) },
+              {
+                header: "Valor a receber",
+                accessor: (r) => formatCurrency(Math.max(Number(r.valor) - resumoDe(r.id).recebido, 0)),
+              },
               { header: "Parcelas", accessor: "parcelas" },
-              { header: "Início", accessor: (r) => formatDate(r.data_inicio) },
+              { header: "Parcelas restantes", accessor: (r) => resumoDe(r.id).restantes },
+              {
+                header: "Início",
+                accessor: (r) => {
+                  const res = resumoDe(r.id);
+                  return formatDate(res.primeiroPagamento ?? res.primeiroVencimento ?? r.data_inicio);
+                },
+              },
               { header: "Status", accessor: "status" },
             ]}
           />
