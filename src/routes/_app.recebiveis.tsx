@@ -346,13 +346,14 @@ function Page() {
               if (pgtos.length === 0) rows.push({ rec, pagamento: null });
               else for (const p of pgtos) rows.push({ rec, pagamento: p });
             }
+            const exportRows = sortRowsByVencimento(rows, (r) => r.rec.data_vencimento);
             const contaLabelById = (id: string | null) =>
               !id ? "—" : (contas ?? []).find((c) => c.id === id)?.label ?? "—";
             return (
               <ExportButton<ExportRow>
                 title="Recebíveis"
                 filename="recebiveis"
-                rows={rows}
+                rows={exportRows}
                 subtitle={formatPeriodoLabel(dataDe, dataAte)}
                 filters={[
                   { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },

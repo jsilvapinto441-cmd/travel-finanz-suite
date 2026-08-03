@@ -306,7 +306,7 @@ function Page() {
         for (const p of pgtos) out.push({ despesa: d, pagamento: p });
       }
     }
-    return out;
+    return sortRowsByVencimento(out, (r) => r.despesa.data_vencimento);
   }, [filtered, formaFilter]);
 
   const contaLabelById = (id: string | null) => {
