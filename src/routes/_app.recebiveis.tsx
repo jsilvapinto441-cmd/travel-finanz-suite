@@ -364,13 +364,14 @@ function Page() {
         description="Parcelas geradas pelos contratos + recebíveis avulsos."
         actions={
           (() => {
-            type ExportRow = { rec: T; pagamento: Pagamento | null };
+            type ExportRow = { rec: T; pagamento: Pagamento | null; totalRecebidoEscopo: number };
             const rows: ExportRow[] = [];
             for (const rec of filtered) {
               const pgtos = scopedPayments(rec);
+              const totalRecebidoEscopo = sumFinancialPayments(pgtos);
               pgtos.sort((a, b) => (a.data_pagamento ?? "").localeCompare(b.data_pagamento ?? ""));
-              if (pgtos.length === 0) rows.push({ rec, pagamento: null });
-              else for (const p of pgtos) rows.push({ rec, pagamento: p });
+              if (pgtos.length === 0) rows.push({ rec, pagamento: null, totalRecebidoEscopo });
+              else for (const p of pgtos) rows.push({ rec, pagamento: p, totalRecebidoEscopo });
             }
             const exportRows = sortRowsByVencimento(rows, (r) => r.rec.data_vencimento);
             const contaLabelById = (id: string | null) =>
@@ -407,7 +408,7 @@ function Page() {
                   { header: "Valor recebido", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor)) : formatCurrency(0) },
                   { header: "Forma de recebimento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
                   { header: "Conta", accessor: (r) => r.pagamento ? contaLabelById(r.pagamento.conta_bancaria_id) : "—" },
-                  { header: "Total recebido", accessor: (r) => formatCurrency(Number(r.rec.valor_pago ?? 0)) },
+                  { header: "Total recebido no filtro", accessor: (r) => formatCurrency(r.totalRecebidoEscopo) },
                   { header: "Saldo a receber", accessor: (r) => formatCurrency(Math.max(Number(r.rec.valor_parcela ?? r.rec.valor_total) - Number(r.rec.valor_pago ?? 0), 0)) },
                   { header: "Status", accessor: (r) => formatStatus(r.rec.status) },
                 ]}

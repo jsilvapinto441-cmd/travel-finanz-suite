@@ -311,16 +311,18 @@ function Page() {
   type ExportRow = {
     despesa: T;
     pagamento: Pagamento | null;
+    totalPagoEscopo: number;
   };
   const exportRows: ExportRow[] = useMemo(() => {
     const out: ExportRow[] = [];
     for (const d of filtered) {
       const pgtos = scopedPayments(d);
+      const totalPagoEscopo = sumFinancialPayments(pgtos);
       pgtos.sort((a, b) => (a.data_pagamento ?? "").localeCompare(b.data_pagamento ?? ""));
       if (pgtos.length === 0) {
-        out.push({ despesa: d, pagamento: null });
+        out.push({ despesa: d, pagamento: null, totalPagoEscopo });
       } else {
-        for (const p of pgtos) out.push({ despesa: d, pagamento: p });
+        for (const p of pgtos) out.push({ despesa: d, pagamento: p, totalPagoEscopo });
       }
     }
     return sortRowsByVencimento(out, (r) => r.despesa.data_vencimento);
@@ -367,7 +369,7 @@ function Page() {
               { header: "Valor pago", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor)) : formatCurrency(0) },
               { header: "Forma de pagamento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
               { header: "Conta", accessor: (r) => r.pagamento ? contaLabelById(r.pagamento.conta_bancaria_id) : (r.despesa.banco ?? "—") },
-              { header: "Total pago", accessor: (r) => formatCurrency(Number(r.despesa.valor_pago ?? 0)) },
+              { header: "Total pago no filtro", accessor: (r) => formatCurrency(r.totalPagoEscopo) },
               { header: "Saldo a pagar", accessor: (r) => formatCurrency(Math.max(Number(r.despesa.valor) - Number(r.despesa.valor_pago ?? 0), 0)) },
               { header: "Status", accessor: (r) => formatStatus(r.despesa.status) },
             ]}
