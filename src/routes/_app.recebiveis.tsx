@@ -40,6 +40,12 @@ import { matchesQuery } from "@/lib/search-match";
 import { sortByVencimento, sortRowsByVencimento } from "@/lib/sort-vencimento";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { FORMAS_PAGAMENTO_OPTIONS, formaPagamentoLabel, formaMatches } from "@/lib/formas-pagamento";
+import {
+  financialRecordMatchesScope,
+  paymentsInFinancialScope,
+  sumFinancialPayments,
+  type FinancialPayment,
+} from "@/lib/financial-report";
 
 export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
 
@@ -63,6 +69,12 @@ type T = {
   parent_id: string | null;
   numero_parcela: number;
   frequencia: string;
+  registros_pagamento?: Pagamento[];
+};
+
+type Pagamento = FinancialPayment & {
+  id: string;
+  conta_bancaria_id: string | null;
 };
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
@@ -152,7 +164,11 @@ type Group = {
   countVencido: number;
 };
 
-function buildGroups(rows: T[], contratos: { id: string; cliente: string; numero: string | null }[]): Group[] {
+function buildGroups(
+  rows: T[],
+  contratos: { id: string; cliente: string; numero: string | null }[],
+  scopedPayments: (row: T) => Pagamento[],
+): Group[] {
   const map = new Map<string, Group>();
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
@@ -175,10 +191,10 @@ function buildGroups(rows: T[], contratos: { id: string; cliente: string; numero
     }
     g.rows.push(r);
     const v = Number(r.valor_parcela ?? r.valor_total ?? 0);
-    const pago = Number(r.valor_pago ?? 0);
+    const pago = sumFinancialPayments(scopedPayments(r));
     g.total += v;
     g.pago += pago;
-    g.restante += Math.max(v - pago, 0);
+    g.restante += Math.max(v - Number(r.valor_pago ?? 0), 0);
 
     if (r.status !== "pago" && r.data_vencimento) {
       const dv = new Date(r.data_vencimento);
@@ -248,23 +264,28 @@ function Page() {
     } else if (statusFilter === "em_aberto") {
       rows = rows.filter((r) => r.status !== "pago" && r.status !== "cancelado");
     }
-    if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
-    if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
-    if (formaFilter.length > 0) {
-      rows = rows.filter((r) =>
-        (((r as any).registros_pagamento ?? []) as { forma_pagamento: string | null }[])
-          .some((p) => formaMatches(p.forma_pagamento, formaFilter))
-      );
-    }
+    rows = rows.filter((r) => financialRecordMatchesScope({
+      dueDate: r.data_vencimento,
+      payments: r.registros_pagamento,
+      period: { from: dataDe, to: dataAte },
+      hasPaymentMethodFilter: formaFilter.length > 0,
+      paymentMatches: (p) => formaMatches(p.forma_pagamento, formaFilter),
+    }));
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return sortByVencimento(rows);
   }, [data, search, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter]);
 
+  const scopedPayments = (row: T) => paymentsInFinancialScope(
+    row.registros_pagamento,
+    { from: dataDe, to: dataAte },
+    (payment) => formaMatches(payment.forma_pagamento, formaFilter),
+  );
+
   const groups = useMemo(
-    () => buildGroups(filtered, contratos ?? []),
-    [filtered, contratos]
+    () => buildGroups(filtered, contratos ?? [], scopedPayments),
+    [filtered, contratos, dataDe, dataAte, formaFilter]
   );
 
   const totaisPeriodo = useMemo(() => {
@@ -272,10 +293,17 @@ function Page() {
     for (const r of filtered) {
       if (r.status === "cancelado") continue;
       total += Number(r.valor_parcela ?? r.valor_total ?? 0);
-      recebido += Number(r.valor_pago ?? 0);
+      recebido += sumFinancialPayments(scopedPayments(r));
     }
-    return { total, recebido, restante: Math.max(total - recebido, 0) };
-  }, [filtered]);
+    const restante = filtered.reduce(
+      (sum, r) => sum + Math.max(
+        Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0),
+        0,
+      ),
+      0,
+    );
+    return { total, recebido, restante };
+  }, [filtered, dataDe, dataAte, formaFilter]);
 
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
@@ -336,15 +364,14 @@ function Page() {
         description="Parcelas geradas pelos contratos + recebíveis avulsos."
         actions={
           (() => {
-            type Pgto = { id: string; data_pagamento: string | null; valor: number; forma_pagamento: string | null; conta_bancaria_id: string | null };
-            type ExportRow = { rec: T; pagamento: Pgto | null };
+            type ExportRow = { rec: T; pagamento: Pagamento | null; totalRecebidoEscopo: number };
             const rows: ExportRow[] = [];
             for (const rec of filtered) {
-              let pgtos = (((rec as any).registros_pagamento ?? []) as Pgto[]).slice();
-              if (formaFilter.length > 0) pgtos = pgtos.filter((p) => formaMatches(p.forma_pagamento, formaFilter));
+              const pgtos = scopedPayments(rec);
+              const totalRecebidoEscopo = sumFinancialPayments(pgtos);
               pgtos.sort((a, b) => (a.data_pagamento ?? "").localeCompare(b.data_pagamento ?? ""));
-              if (pgtos.length === 0) rows.push({ rec, pagamento: null });
-              else for (const p of pgtos) rows.push({ rec, pagamento: p });
+              if (pgtos.length === 0) rows.push({ rec, pagamento: null, totalRecebidoEscopo });
+              else for (const p of pgtos) rows.push({ rec, pagamento: p, totalRecebidoEscopo });
             }
             const exportRows = sortRowsByVencimento(rows, (r) => r.rec.data_vencimento);
             const contaLabelById = (id: string | null) =>
@@ -381,7 +408,7 @@ function Page() {
                   { header: "Valor recebido", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor)) : formatCurrency(0) },
                   { header: "Forma de recebimento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
                   { header: "Conta", accessor: (r) => r.pagamento ? contaLabelById(r.pagamento.conta_bancaria_id) : "—" },
-                  { header: "Total recebido", accessor: (r) => formatCurrency(Number(r.rec.valor_pago ?? 0)) },
+                  { header: "Total recebido no filtro", accessor: (r) => formatCurrency(r.totalRecebidoEscopo) },
                   { header: "Saldo a receber", accessor: (r) => formatCurrency(Math.max(Number(r.rec.valor_parcela ?? r.rec.valor_total) - Number(r.rec.valor_pago ?? 0), 0)) },
                   { header: "Status", accessor: (r) => formatStatus(r.rec.status) },
                 ]}
