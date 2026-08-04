@@ -121,9 +121,13 @@ function Dashboard() {
     // Ids dos recebíveis já filtrados por empresa/missão (queries acima)
     const recIdsFiltrados = new Set(recsAll.map((r) => r.id));
     const recs = recsAll.filter((r) => inDateRange(r.data_vencimento));
-    const desps = despsAll.filter((d) => inDateRange(d.data_pagamento ?? d.data_vencimento));
+    const desps = despsAll.filter((d) => inDateRange(d.data_vencimento));
     // SOMENTE pagamentos de clientes cujo recebível pertence ao escopo filtrado
     const pagsCliente = pagsAll.filter((p) => p.recebivel_id && recIdsFiltrados.has(p.recebivel_id) && inDateRange(p.data_pagamento));
+    const despIdsFiltradas = new Set(despsAll.map((d) => d.id));
+    const pagsDespesas = pagsAll.filter(
+      (p) => p.despesa_id && despIdsFiltradas.has(p.despesa_id) && inDateRange(p.data_pagamento),
+    );
 
     const st = (r: any) => String(r.status ?? "");
 
@@ -153,7 +157,7 @@ function Dashboard() {
 
     // 5a. DESPESAS OPERACIONAIS — soma de despesas manuais (exceto canceladas)
     const totalOperacional = desps.filter((d) => d.status !== "cancelado").reduce((s, d) => s + Number(d.valor ?? 0), 0);
-    const despesasPagas = desps.reduce((s, d) => s + Number(d.valor_pago ?? 0), 0);
+    const despesasPagas = pagsDespesas.reduce((s, p) => s + Number(p.valor ?? 0), 0);
 
     // 5b. CUSTOS COM FUNCIONÁRIOS — cadastros de funcionários NÃO geram despesa
     //     automática. O custo só entra quando uma despesa é lançada em Despesas.
@@ -164,7 +168,7 @@ function Dashboard() {
     const totalDespesa = totalOperacional;
 
     // 6. LUCRO LÍQUIDO = Total Recebido - Total de Despesas
-    const lucro = totalRecebido - totalDespesa;
+    const lucro = totalRecebido - despesasPagas;
 
 
     const atrasados = [
@@ -186,11 +190,10 @@ function Dashboard() {
       const idx = monthIdx.get((p.data_pagamento ?? "").slice(0, 7));
       if (idx !== undefined) months[idx].entradas += Number(p.valor ?? 0);
     }
-    for (const d of desps) {
-      const dateStr = d.data_pagamento ?? d.data_vencimento;
-      if (!dateStr) continue;
-      const idx = monthIdx.get(dateStr.slice(0, 7));
-      if (idx !== undefined) months[idx].saidas += Number(d.valor ?? 0);
+    for (const p of pagsAll) {
+      if (!p.despesa_id || !despIdsFiltradas.has(p.despesa_id)) continue;
+      const idx = monthIdx.get((p.data_pagamento ?? "").slice(0, 7));
+      if (idx !== undefined) months[idx].saidas += Number(p.valor ?? 0);
     }
     // Folha mensal recorrente entra em todos os meses do fluxo
     for (const m of months) m.saidas += folhaMensal;
@@ -227,13 +230,14 @@ function Dashboard() {
       monthsPorEmpresa[idx][`in_${rec.empresa_id}`] += Number(p.valor ?? 0);
     }
     // Saídas (despesas operacionais) por empresa
-    for (const d of desps) {
-      if (!d.empresa_id) continue;
-      const dateStr = d.data_pagamento ?? d.data_vencimento;
-      if (!dateStr) continue;
-      const idx = monthIdx.get(dateStr.slice(0, 7));
+    const despById = new Map(despsAll.map((d) => [d.id, d]));
+    for (const p of pagsAll) {
+      if (!p.despesa_id) continue;
+      const d = despById.get(p.despesa_id);
+      if (!d?.empresa_id) continue;
+      const idx = monthIdx.get((p.data_pagamento ?? "").slice(0, 7));
       if (idx === undefined) continue;
-      monthsPorEmpresa[idx][`out_${d.empresa_id}`] += Number(d.valor ?? 0);
+      monthsPorEmpresa[idx][`out_${d.empresa_id}`] += Number(p.valor ?? 0);
     }
     // Cadastros de funcionários NÃO geram despesa automática por empresa.
 

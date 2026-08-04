@@ -39,6 +39,11 @@ import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { FORMAS_PAGAMENTO_OPTIONS, formaPagamentoLabel, formaMatches } from "@/lib/formas-pagamento";
 import { CreditCard } from "lucide-react";
+import {
+  financialRecordMatchesScope,
+  paymentsInFinancialScope,
+  sumFinancialPayments,
+} from "@/lib/financial-report";
 
 export const Route = createFileRoute("/_app/despesas")({ component: Page });
 
@@ -119,7 +124,7 @@ type Group = {
   countVencido: number;
 };
 
-function buildGroups(rows: T[]): Group[] {
+function buildGroups(rows: T[], scopedPayments: (row: T) => Pagamento[]): Group[] {
   const map = new Map<string, Group>();
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
@@ -142,10 +147,10 @@ function buildGroups(rows: T[]): Group[] {
     }
     g.rows.push(r);
     const v = Number(r.valor ?? 0);
-    const pago = Number(r.valor_pago ?? 0);
+    const pago = sumFinancialPayments(scopedPayments(r));
     g.total += v;
     g.pago += pago;
-    g.restante += Math.max(v - pago, 0);
+    g.restante += Math.max(v - Number(r.valor_pago ?? 0), 0);
     if (r.status !== "pago" && r.data_vencimento) {
       const dv = new Date(r.data_vencimento);
       if (!g.proximoVenc || new Date(g.proximoVenc) > dv) g.proximoVenc = r.data_vencimento;
@@ -219,18 +224,29 @@ function Page() {
     } else if (statusFilter === "em_aberto") {
       rows = rows.filter((r) => r.status !== "pago" && r.status !== "cancelado");
     }
-    if (dataDe) rows = rows.filter((r) => (r.data_vencimento ?? "") >= dataDe);
-    if (dataAte) rows = rows.filter((r) => (r.data_vencimento ?? "") <= dataAte);
-    if (formaFilter.length > 0) {
-      rows = rows.filter((r) => (r.registros_pagamento ?? []).some((p) => formaMatches(p.forma_pagamento, formaFilter)));
-    }
+    rows = rows.filter((r) => financialRecordMatchesScope({
+      dueDate: r.data_vencimento,
+      payments: r.registros_pagamento,
+      period: { from: dataDe, to: dataAte },
+      hasPaymentMethodFilter: formaFilter.length > 0,
+      paymentMatches: (p) => formaMatches(p.forma_pagamento, formaFilter),
+    }));
     if (search) {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return sortByVencimento(rows);
   }, [data, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter, search]);
 
-  const groups = useMemo(() => buildGroups(filtered), [filtered]);
+  const scopedPayments = (row: T) => paymentsInFinancialScope(
+    row.registros_pagamento,
+    { from: dataDe, to: dataAte },
+    (payment) => formaMatches(payment.forma_pagamento, formaFilter),
+  );
+
+  const groups = useMemo(
+    () => buildGroups(filtered, scopedPayments),
+    [filtered, dataDe, dataAte, formaFilter],
+  );
 
   const totalHoje = useMemo(() => {
     const hoje = new Date().toLocaleDateString("sv-SE");
@@ -244,10 +260,14 @@ function Page() {
     for (const r of filtered) {
       if (r.status === "cancelado") continue;
       total += Number(r.valor ?? 0);
-      pago += Number(r.valor_pago ?? 0);
+      pago += sumFinancialPayments(scopedPayments(r));
     }
-    return { total, pago, restante: Math.max(total - pago, 0) };
-  }, [filtered]);
+    const restante = filtered.reduce(
+      (sum, r) => sum + Math.max(Number(r.valor ?? 0) - Number(r.valor_pago ?? 0), 0),
+      0,
+    );
+    return { total, pago, restante };
+  }, [filtered, dataDe, dataAte, formaFilter]);
 
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
@@ -295,10 +315,7 @@ function Page() {
   const exportRows: ExportRow[] = useMemo(() => {
     const out: ExportRow[] = [];
     for (const d of filtered) {
-      let pgtos = (d.registros_pagamento ?? []).slice();
-      if (formaFilter.length > 0) {
-        pgtos = pgtos.filter((p) => formaMatches(p.forma_pagamento, formaFilter));
-      }
+      const pgtos = scopedPayments(d);
       pgtos.sort((a, b) => (a.data_pagamento ?? "").localeCompare(b.data_pagamento ?? ""));
       if (pgtos.length === 0) {
         out.push({ despesa: d, pagamento: null });
@@ -307,7 +324,7 @@ function Page() {
       }
     }
     return sortRowsByVencimento(out, (r) => r.despesa.data_vencimento);
-  }, [filtered, formaFilter]);
+  }, [filtered, dataDe, dataAte, formaFilter]);
 
   const contaLabelById = (id: string | null) => {
     if (!id) return "—";
