@@ -495,6 +495,16 @@ function Dashboard() {
             ))}
           </div>
         </Card>
+
+        <DespesasCategoriaDialog
+          open={catDialogOpen}
+          onOpenChange={setCatDialogOpen}
+          despesas={despsAll as any}
+          empresas={(empresas ?? []) as { id: string; nome: string }[]}
+          colors={colors}
+          initialPeriodo={{ from: dataIni, to: dataFim }}
+          initialEmpresaId={empresaId}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
