@@ -14,6 +14,7 @@ export const FORMAS_PAGAMENTO: { value: string; label: string }[] = [
   { value: "deposito", label: "Depósito" },
   { value: "boleto", label: "Boleto" },
   { value: "cheque", label: "Cheque" },
+  { value: "comissao", label: "Comissão" },
   { value: "outros", label: "Outros" },
 ];
 

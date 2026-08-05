@@ -71,6 +71,7 @@ const METODOS_PAGAMENTO = [
   { value: "transferencia_bancaria", label: "Transferência bancária" },
   { value: "dinheiro", label: "Dinheiro" },
   { value: "cheque", label: "Cheque" },
+  { value: "comissao", label: "Comissão" },
 ];
 
 function pad(n: number) { return n.toString().padStart(2, "0"); }

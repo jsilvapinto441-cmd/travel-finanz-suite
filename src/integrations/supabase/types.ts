@@ -1332,6 +1332,7 @@ export type Database = {
         | "boleto"
         | "cartao"
         | "dinheiro"
+        | "comissao"
       status_contrato:
         | "rascunho"
         | "ativo"
@@ -1493,7 +1494,14 @@ export const Constants = {
         "prestador_mei",
         "consolidadora",
       ],
-      forma_pagamento: ["pix", "transferencia", "boleto", "cartao", "dinheiro"],
+      forma_pagamento: [
+        "pix",
+        "transferencia",
+        "boleto",
+        "cartao",
+        "dinheiro",
+        "comissao",
+      ],
       status_contrato: [
         "rascunho",
         "ativo",

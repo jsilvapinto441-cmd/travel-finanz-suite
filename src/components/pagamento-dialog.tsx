@@ -49,6 +49,7 @@ const FORMAS = [
   { value: "boleto", label: "Boleto" },
   { value: "cartao", label: "Cartão" },
   { value: "dinheiro", label: "Dinheiro" },
+  { value: "comissao", label: "Comissão" },
 ];
 
 function todayISO() {
