@@ -24,6 +24,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { exportRelatorioGerencial } from "@/lib/relatorio-gerencial";
 import { FileText, Target } from "lucide-react";
 import { useMissoes } from "@/lib/lookups";
+import { DespesasCategoriaDialog } from "@/components/despesas-categoria-dialog";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -34,6 +35,7 @@ function Dashboard() {
   const [missaoId, setMissaoId] = useState<string>("all");
   const [dataIni, setDataIni] = useState<string>("");
   const [dataFim, setDataFim] = useState<string>("");
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
   const { data: missoes } = useMissoes();
 
   // Auto-marca itens vencidos como atrasados ao abrir o dashboard
@@ -78,7 +80,7 @@ function Dashboard() {
     queryFn: async () => {
       let q = supabase
         .from("despesas")
-        .select("id,descricao,empresa_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id");
+        .select("id,descricao,empresa_id,fornecedor_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
       if (missaoId !== "all") q = q.eq("missao_id", missaoId);
       return (await q).data ?? [];
@@ -203,7 +205,9 @@ function Dashboard() {
       catMap.set(d.categoria, (catMap.get(d.categoria) ?? 0) + Number(d.valor ?? 0));
     }
     if (folhaMensal > 0) catMap.set("folha_pagamento", (catMap.get("folha_pagamento") ?? 0) + folhaMensal);
-    const catData = [...catMap.entries()].map(([name, value]) => ({ name, value }));
+    const catData = [...catMap.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
 
     // ===== Por empresa: evolução mensal de lucro + comparativo lucro x despesas =====
     const empresasList = (empresas ?? []).filter((e) => empresaId === "all" || e.id === empresaId);
@@ -263,10 +267,10 @@ function Dashboard() {
       return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", entrada, saida };
     });
 
-    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa };
+    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll };
   }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, dataIni, dataFim]);
 
-  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa } = aggregates;
+  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll } = aggregates;
 
   const semDados =
     (recebiveis?.length ?? 0) === 0 &&
@@ -458,13 +462,22 @@ function Dashboard() {
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="font-display font-semibold mb-4">Despesas por Categoria</h3>
+        <Card
+          className="p-6 cursor-pointer transition-colors hover:border-primary/40"
+          role="button"
+          tabIndex={0}
+          onClick={() => setCatDialogOpen(true)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setCatDialogOpen(true); } }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display font-semibold">Despesas por Categoria</h3>
+            <span className="text-xs text-muted-foreground">Ver detalhes</span>
+          </div>
           <div className="h-72">
             <ResponsiveContainer>
               <PieChart>
-                <Pie data={catData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
-                  {catData.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
+                <Pie data={catData.slice(0, 5)} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
+                  {catData.slice(0, 5).map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
                 </Pie>
                 <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
               </PieChart>
