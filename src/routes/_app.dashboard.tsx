@@ -38,6 +38,8 @@ function Dashboard() {
   const [dataIni, setDataIni] = useState<string>("");
   const [dataFim, setDataFim] = useState<string>("");
   const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [atrasoDialogOpen, setAtrasoDialogOpen] = useState(false);
+
   const { data: missoes } = useMissoes();
 
   // Auto-marca itens vencidos como atrasados ao abrir o dashboard
