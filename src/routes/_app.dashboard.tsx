@@ -174,9 +174,28 @@ function Dashboard() {
 
 
     const atrasados = [
-      ...recs.filter((r) => ["atrasado", "vencido"].includes(st(r))),
-      ...desps.filter((d) => d.status === "atrasado"),
-    ];
+      ...recs
+        .filter((r) => ["atrasado", "vencido"].includes(st(r)))
+        .map((r: any) => ({
+          id: `rec-${r.id}`,
+          tipo: "Recebível" as const,
+          nome: r.pagador ?? "—",
+          data_vencimento: r.data_vencimento,
+          valor: Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0), 0),
+          status: r.status,
+        })),
+      ...desps
+        .filter((d) => d.status === "atrasado")
+        .map((d: any) => ({
+          id: `desp-${d.id}`,
+          tipo: "Despesa" as const,
+          nome: d.descricao ?? "—",
+          data_vencimento: d.data_vencimento,
+          valor: Math.max(Number(d.valor ?? 0) - Number(d.valor_pago ?? 0), 0),
+          status: d.status,
+        })),
+    ].sort((a, b) => (a.data_vencimento ?? "").localeCompare(b.data_vencimento ?? ""));
+
 
     const now = new Date();
     const months: { key: string; label: string; entradas: number; saidas: number }[] = [];
