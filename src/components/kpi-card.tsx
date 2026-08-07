@@ -30,8 +30,19 @@ export function KpiCard({
   }[tone];
 
   return (
-    <Card className={cn("relative overflow-hidden p-5 bg-gradient-to-br", toneClass)}>
+    <Card
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
+      className={cn(
+        "relative overflow-hidden p-5 bg-gradient-to-br",
+        toneClass,
+        onClick && "cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
+
         <div className="flex-1 min-w-0">
           <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
             {label}
