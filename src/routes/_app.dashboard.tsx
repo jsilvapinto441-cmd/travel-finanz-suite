@@ -9,7 +9,9 @@ import { DatePicker } from "@/components/date-picker";
 
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatMonth } from "@/lib/format";
+import { formatCurrency, formatMonth, formatDate } from "@/lib/format";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
 import {
   ArrowDownLeft, ArrowUpRight, AlertTriangle, Wallet, Building2, TrendingUp, Users,
 } from "lucide-react";
