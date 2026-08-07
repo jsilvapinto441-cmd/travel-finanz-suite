@@ -106,25 +106,31 @@ function LoginPage() {
           toast.error(msg);
           return;
         }
-        const { error } = await supabase.auth.resetPasswordForEmail(safeEmail, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        if (error) throw error;
+        try {
+          const { error } = await supabase.auth.resetPasswordForEmail(safeEmail, {
+            redirectTo: `${window.location.origin}/reset-password`,
+          });
+          if (error) throw error;
+        } catch (e) {
+          toast.error(friendlyAuthError(e));
+          return;
+        }
         registerResetSent(safeEmail);
-        await audit("password_reset_request", "auth", null, { email: safeEmail });
-        toast.success("Se o email existir, enviaremos as instruções.");
+        await audit("password_reset_request", "auth", null, { email: safeEmail }).catch(() => {});
+        toast.success("E-mail enviado com sucesso. Verifique sua caixa de entrada e o spam.");
         setMode("login");
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
         toast.error(err.issues[0]?.message ?? "Dados inválidos");
       } else {
-        toast.error(err instanceof Error ? err.message : "Erro ao autenticar");
+        toast.error(friendlyAuthError(err));
       }
     } finally {
       setLoading(false);
     }
   }
+
 
   const title =
     mode === "login" ? "Entrar" : mode === "signup" ? "Criar conta" : "Recuperar senha";
