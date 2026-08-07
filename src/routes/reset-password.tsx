@@ -97,8 +97,13 @@ function ResetPasswordPage() {
         <CardHeader>
           <CardTitle>Redefinir senha</CardTitle>
           <CardDescription>
-            {ready ? "Escolha uma nova senha forte." : "Link inválido ou expirado."}
+            {checking
+              ? "Validando link de recuperação..."
+              : ready
+                ? "Escolha uma nova senha forte."
+                : "Link inválido ou expirado. Solicite um novo link na tela de login."}
           </CardDescription>
+
         </CardHeader>
         <CardContent>
           {ready ? (
