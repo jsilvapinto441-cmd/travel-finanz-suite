@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { audit } from "@/lib/audit";
+import { friendlyAuthError } from "@/lib/auth-errors";
+
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
