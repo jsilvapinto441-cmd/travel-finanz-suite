@@ -3,14 +3,16 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export function KpiCard({
-  label, value, hint, icon, tone = "default",
+  label, value, hint, icon, tone = "default", onClick,
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
   icon?: ReactNode;
   tone?: "default" | "success" | "warning" | "destructive" | "gold";
+  onClick?: () => void;
 }) {
+
   const toneClass = {
     default: "from-primary/8 to-transparent",
     success: "from-success/12 to-transparent",
