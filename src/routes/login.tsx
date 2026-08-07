@@ -10,6 +10,8 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import rotasLogo from "@/assets/rotas-logo-transparent.png.asset.json";
 import { z } from "zod";
 import { audit } from "@/lib/audit";
+import { friendlyAuthError } from "@/lib/auth-errors";
+
 import {
   checkLoginAllowed, registerLoginFailure, registerLoginSuccess,
   checkResetAllowed, registerResetSent, formatSeconds,
