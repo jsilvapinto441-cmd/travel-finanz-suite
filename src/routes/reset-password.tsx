@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { audit } from "@/lib/audit";
+import { friendlyAuthError } from "@/lib/auth-errors";
+
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
@@ -19,6 +21,7 @@ const passwordSchema = z.string().min(8, "Mínimo 8 caracteres").max(72, "Máxim
 function ResetPasswordPage() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,15 +29,44 @@ function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Detecta link de recovery vindo do email
-    const hash = window.location.hash;
-    if (hash.includes("type=recovery") || hash.includes("access_token")) {
-      setReady(true);
-    } else {
-      supabase.auth.getSession().then(({ data }) => {
-        setReady(Boolean(data.session));
-      });
-    }
+    let active = true;
+    (async () => {
+      try {
+        const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const query = new URLSearchParams(window.location.search);
+
+        const errDesc = hash.get("error_description") ?? query.get("error_description");
+        if (errDesc) {
+          toast.error(friendlyAuthError(errDesc));
+        }
+
+        // Fluxo PKCE: ?code=...
+        const code = query.get("code");
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          if (active) { setReady(true); setChecking(false); }
+          return;
+        }
+
+        // Fluxo implícito: #access_token=...&type=recovery
+        const access_token = hash.get("access_token");
+        const refresh_token = hash.get("refresh_token");
+        if (access_token && refresh_token) {
+          const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+          if (error) throw error;
+          if (active) { setReady(true); setChecking(false); }
+          return;
+        }
+
+        const { data } = await supabase.auth.getSession();
+        if (active) { setReady(Boolean(data.session)); setChecking(false); }
+      } catch (e) {
+        toast.error(friendlyAuthError(e));
+        if (active) { setReady(false); setChecking(false); }
+      }
+    })();
+    return () => { active = false; };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -45,17 +77,19 @@ function ResetPasswordPage() {
       if (password !== confirm) throw new Error("As senhas não coincidem");
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      await audit("password_reset_complete", "auth");
-      toast.success("Senha atualizada. Faça login novamente.");
+      await audit("password_reset_complete", "auth").catch(() => {});
+      toast.success("Senha atualizada com sucesso. Faça login novamente.");
       await supabase.auth.signOut();
       navigate({ to: "/login" });
     } catch (err) {
       if (err instanceof z.ZodError) toast.error(err.issues[0]?.message ?? "Senha inválida");
-      else toast.error(err instanceof Error ? err.message : "Falha ao atualizar");
+      else if (err instanceof Error && err.message === "As senhas não coincidem") toast.error(err.message);
+      else toast.error(friendlyAuthError(err));
     } finally {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
@@ -63,8 +97,13 @@ function ResetPasswordPage() {
         <CardHeader>
           <CardTitle>Redefinir senha</CardTitle>
           <CardDescription>
-            {ready ? "Escolha uma nova senha forte." : "Link inválido ou expirado."}
+            {checking
+              ? "Validando link de recuperação..."
+              : ready
+                ? "Escolha uma nova senha forte."
+                : "Link inválido ou expirado. Solicite um novo link na tela de login."}
           </CardDescription>
+
         </CardHeader>
         <CardContent>
           {ready ? (
