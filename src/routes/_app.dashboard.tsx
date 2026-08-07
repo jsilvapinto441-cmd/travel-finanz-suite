@@ -439,8 +439,9 @@ function Dashboard() {
           hint="Pagamentos de clientes" icon={<ArrowDownLeft className="size-5" />} tone="success" />
         <KpiCard label="Total em Aberto" value={formatCurrency(totalEmAberto)}
           hint="Contratado − Recebido" icon={<ArrowDownLeft className="size-5" />} tone="gold" />
-        <KpiCard label="Em Atraso" value={String(atrasados.length)}
-          hint={`Contas vencidas · ${formatCurrency(totalVencido)}`} icon={<AlertTriangle className="size-5" />} tone="warning" />
+        <KpiCard label="Em Atraso" value={String(atrasados.length)} onClick={() => setAtrasoDialogOpen(true)}
+          hint={`Contas vencidas · ${formatCurrency(totalVencido)} · toque para ver`} icon={<AlertTriangle className="size-5" />} tone="warning" />
+
       </div>
 
       <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Despesas</div>
