@@ -584,23 +584,76 @@ function Dashboard() {
             <AlertTriangle className="size-4 text-destructive" />
             <h3 className="font-display font-semibold">Itens em Atraso</h3>
             <span className="text-xs text-muted-foreground">({atrasados.length})</span>
+            <Button variant="outline" size="sm" className="ml-auto" onClick={() => setAtrasoDialogOpen(true)}>
+              Ver todos
+            </Button>
           </div>
           <div className="space-y-2">
-            {atrasados.slice(0, 6).map((item: any) => (
-              <div key={item.id} className="flex items-center justify-between text-sm py-2 border-b border-border last:border-0">
-                <div>
-                  <div className="font-medium">{item.pagador ?? item.descricao}</div>
-                  <div className="text-xs text-muted-foreground">Venc. {item.data_vencimento ?? "—"}</div>
+            {atrasados.slice(0, 6).map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                onClick={() => setAtrasoDialogOpen(true)}
+                className="w-full text-left flex items-center justify-between gap-3 text-sm py-2 border-b border-border last:border-0 hover:bg-muted/30 rounded-md px-1"
+              >
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{item.nome}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {item.tipo} · Venc. {formatDate(item.data_vencimento)}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-medium">{formatCurrency(item.valor_total ?? item.valor)}</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="font-medium">{formatCurrency(item.valor)}</span>
                   <StatusBadge status={item.status} />
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </Card>
       )}
+
+      <Dialog open={atrasoDialogOpen} onOpenChange={setAtrasoDialogOpen}>
+        <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">Itens em Atraso</DialogTitle>
+            <DialogDescription>
+              {atrasados.length} item(ns) vencido(s) no período e filtros selecionados.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="text-left p-2">Descrição</th>
+                  <th className="text-left p-2">Tipo</th>
+                  <th className="text-left p-2">Vencimento</th>
+                  <th className="text-right p-2">Valor em atraso</th>
+                  <th className="text-left p-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {atrasados.map((item) => (
+                  <tr key={item.id} className="border-t border-border/60">
+                    <td className="p-2">{item.nome}</td>
+                    <td className="p-2">{item.tipo}</td>
+                    <td className="p-2">{formatDate(item.data_vencimento)}</td>
+                    <td className="p-2 text-right font-medium">{formatCurrency(item.valor)}</td>
+                    <td className="p-2"><StatusBadge status={item.status} /></td>
+                  </tr>
+                ))}
+                {atrasados.length === 0 && (
+                  <tr><td colSpan={5} className="p-4 text-center text-muted-foreground">Nenhum item em atraso.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex justify-between text-sm font-medium pt-1">
+            <span>Total em atraso</span>
+            <span>{formatCurrency(atrasados.reduce((s, i) => s + i.valor, 0))}</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </PageContainer>
   );
 }
