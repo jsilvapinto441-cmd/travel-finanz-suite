@@ -437,8 +437,8 @@ function Dashboard() {
           hint="Soma dos contratos e parcelas" icon={<Wallet className="size-5" />} tone="default" />
         <KpiCard label="Total Recebido" value={formatCurrency(totalRecebido)}
           hint="Pagamentos de clientes" icon={<ArrowDownLeft className="size-5" />} tone="success" />
-        <KpiCard label="Total em Aberto" value={formatCurrency(totalEmAberto)}
-          hint="Contratado − Recebido" icon={<ArrowDownLeft className="size-5" />} tone="gold" />
+        <KpiCard label="A receber" value={formatCurrency(totalEmAberto)}
+          hint="Saldo pendente de recebíveis" icon={<ArrowDownLeft className="size-5" />} tone="gold" />
         <KpiCard label="Em Atraso" value={String(atrasados.length)} onClick={() => setAtrasoDialogOpen(true)}
           hint={`Contas vencidas · ${formatCurrency(totalVencido)} · toque para ver`} icon={<AlertTriangle className="size-5" />} tone="warning" />
 
