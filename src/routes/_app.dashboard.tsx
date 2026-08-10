@@ -469,8 +469,6 @@ function Dashboard() {
           hint="Pagamentos de clientes" icon={<ArrowDownLeft className="size-5" />} tone="success" />
         <KpiCard label="A receber" value={formatCurrency(totalEmAberto)}
           hint="Saldo pendente de recebíveis" icon={<ArrowDownLeft className="size-5" />} tone="gold" />
-        <KpiCard label="Em Atraso" value={String(qtdDespAtraso + qtdRecAtraso)}
-          hint={`Contas vencidas · ${formatCurrency(totalVencido)}`} icon={<AlertTriangle className="size-5" />} tone="warning" />
 
       </div>
 
