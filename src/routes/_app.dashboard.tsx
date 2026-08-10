@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageContainer, PageHeader } from "@/components/page-header";
@@ -9,8 +9,7 @@ import { DatePicker } from "@/components/date-picker";
 
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatMonth, formatDate } from "@/lib/format";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { formatCurrency, formatMonth } from "@/lib/format";
 
 import {
   ArrowDownLeft, ArrowUpRight, AlertTriangle, Wallet, Building2, TrendingUp, Users,
@@ -21,7 +20,6 @@ import {
 } from "recharts";
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StatusBadge } from "@/components/status-badge";
 // funcionários não geram despesa automática — mantido o import removido intencionalmente.
 import { exportRelatorioGerencial } from "@/lib/relatorio-gerencial";
 import { FileText, Target } from "lucide-react";
@@ -38,8 +36,8 @@ function Dashboard() {
   const [dataIni, setDataIni] = useState<string>("");
   const [dataFim, setDataFim] = useState<string>("");
   const [catDialogOpen, setCatDialogOpen] = useState(false);
-  const [atrasoDialogOpen, setAtrasoDialogOpen] = useState(false);
 
+  const navigate = useNavigate();
   const { data: missoes } = useMissoes();
 
   // Auto-marca itens vencidos como atrasados ao abrir o dashboard
@@ -200,6 +198,18 @@ function Dashboard() {
         })),
     ].sort((a, b) => (a.data_vencimento ?? "").localeCompare(b.data_vencimento ?? ""));
 
+    // Contagem de itens vencidos com saldo pendente (vencimento já passou)
+    const hojeStr = new Date().toISOString().slice(0, 10);
+    const vencido = (status: string, venc: string | null | undefined) =>
+      status !== "pago" && status !== "cancelado" && !!venc && String(venc).slice(0, 10) < hojeStr;
+
+    const recsAtrasados = recs.filter((r: any) => vencido(st(r), r.data_vencimento));
+    const despsAtrasadas = desps.filter((d: any) => vencido(d.status, d.data_vencimento));
+    const qtdRecAtraso = recsAtrasados.length;
+    const qtdDespAtraso = despsAtrasadas.length;
+    const valorRecAtraso = recsAtrasados.reduce((s2: number, r: any) => s2 + Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0), 0), 0);
+    const valorDespAtraso = despsAtrasadas.reduce((s2: number, d: any) => s2 + Math.max(Number(d.valor ?? 0) - Number(d.valor_pago ?? 0), 0), 0);
+
 
     const now = new Date();
     const months: { key: string; label: string; entradas: number; saidas: number }[] = [];
@@ -290,10 +300,10 @@ function Dashboard() {
       return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", entrada, saida };
     });
 
-    return { totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll };
+    return { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll };
   }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, dataIni, dataFim]);
 
-  const { totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll } = aggregates;
+  const { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll } = aggregates;
 
   const semDados =
     (recebiveis?.length ?? 0) === 0 &&
@@ -431,6 +441,26 @@ function Dashboard() {
         )}
       </Card>
 
+      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Em atraso</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <KpiCard
+          label="Despesas em atraso"
+          value={String(qtdDespAtraso)}
+          hint={`${formatCurrency(valorDespAtraso)} pendente · toque para ver`}
+          icon={<AlertTriangle className="size-5" />}
+          tone="destructive"
+          onClick={() => navigate({ to: "/despesas", search: { status: "atrasado" } })}
+        />
+        <KpiCard
+          label="Recebíveis em atraso"
+          value={String(qtdRecAtraso)}
+          hint={`${formatCurrency(valorRecAtraso)} pendente · toque para ver`}
+          icon={<AlertTriangle className="size-5" />}
+          tone="warning"
+          onClick={() => navigate({ to: "/recebiveis", search: { status: "atrasado" } })}
+        />
+      </div>
+
       <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Financeiro</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard label="Total Contratado" value={formatCurrency(totalContratado)}
@@ -439,8 +469,8 @@ function Dashboard() {
           hint="Pagamentos de clientes" icon={<ArrowDownLeft className="size-5" />} tone="success" />
         <KpiCard label="A receber" value={formatCurrency(totalEmAberto)}
           hint="Saldo pendente de recebíveis" icon={<ArrowDownLeft className="size-5" />} tone="gold" />
-        <KpiCard label="Em Atraso" value={String(atrasados.length)} onClick={() => setAtrasoDialogOpen(true)}
-          hint={`Contas vencidas · ${formatCurrency(totalVencido)} · toque para ver`} icon={<AlertTriangle className="size-5" />} tone="warning" />
+        <KpiCard label="Em Atraso" value={String(qtdDespAtraso + qtdRecAtraso)}
+          hint={`Contas vencidas · ${formatCurrency(totalVencido)}`} icon={<AlertTriangle className="size-5" />} tone="warning" />
 
       </div>
 
@@ -583,81 +613,6 @@ function Dashboard() {
         </Card>
       </div>
 
-      {atrasados.length > 0 && (
-        <Card className="p-6 mt-6 border-destructive/30">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="size-4 text-destructive" />
-            <h3 className="font-display font-semibold">Itens em Atraso</h3>
-            <span className="text-xs text-muted-foreground">({atrasados.length})</span>
-            <Button variant="outline" size="sm" className="ml-auto" onClick={() => setAtrasoDialogOpen(true)}>
-              Ver todos
-            </Button>
-          </div>
-          <div className="space-y-2">
-            {atrasados.slice(0, 6).map((item) => (
-              <button
-                type="button"
-                key={item.id}
-                onClick={() => setAtrasoDialogOpen(true)}
-                className="w-full text-left flex items-center justify-between gap-3 text-sm py-2 border-b border-border last:border-0 hover:bg-muted/30 rounded-md px-1"
-              >
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{item.nome}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {item.tipo} · Venc. {formatDate(item.data_vencimento)}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-medium">{formatCurrency(item.valor)}</span>
-                  <StatusBadge status={item.status} />
-                </div>
-              </button>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      <Dialog open={atrasoDialogOpen} onOpenChange={setAtrasoDialogOpen}>
-        <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-display">Itens em Atraso</DialogTitle>
-            <DialogDescription>
-              {atrasados.length} item(ns) vencido(s) no período e filtros selecionados.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="text-left p-2">Descrição</th>
-                  <th className="text-left p-2">Tipo</th>
-                  <th className="text-left p-2">Vencimento</th>
-                  <th className="text-right p-2">Valor em atraso</th>
-                  <th className="text-left p-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {atrasados.map((item) => (
-                  <tr key={item.id} className="border-t border-border/60">
-                    <td className="p-2">{item.nome}</td>
-                    <td className="p-2">{item.tipo}</td>
-                    <td className="p-2">{formatDate(item.data_vencimento)}</td>
-                    <td className="p-2 text-right font-medium">{formatCurrency(item.valor)}</td>
-                    <td className="p-2"><StatusBadge status={item.status} /></td>
-                  </tr>
-                ))}
-                {atrasados.length === 0 && (
-                  <tr><td colSpan={5} className="p-4 text-center text-muted-foreground">Nenhum item em atraso.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex justify-between text-sm font-medium pt-1">
-            <span>Total em atraso</span>
-            <span>{formatCurrency(atrasados.reduce((s, i) => s + i.valor, 0))}</span>
-          </div>
-        </DialogContent>
-      </Dialog>
 
     </PageContainer>
   );

@@ -47,7 +47,18 @@ import {
   type FinancialPayment,
 } from "@/lib/financial-report";
 
-export const Route = createFileRoute("/_app/recebiveis")({ component: Page });
+export const Route = createFileRoute("/_app/recebiveis")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    status: search.status === "atrasado" || search.status === "em_aberto" || search.status === "pago"
+      ? (search.status as "atrasado" | "em_aberto" | "pago")
+      : undefined,
+  }),
+  component: Page,
+});
+
+const hoje = () => new Date().toISOString().slice(0, 10);
+const isVencido = (status: string, vencimento: string | null | undefined) =>
+  status !== "pago" && status !== "cancelado" && !!vencimento && vencimento.slice(0, 10) < hoje();
 
 type T = {
   id: string;
@@ -226,7 +237,8 @@ function Page() {
 
   const [empresaFilter, setEmpresaFilter] = useState("");
   const [missaoFilter, setMissaoFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"" | "em_aberto" | "pago">("");
+  const initialStatus = Route.useSearch().status;
+  const [statusFilter, setStatusFilter] = useState<"" | "em_aberto" | "pago" | "atrasado">(initialStatus ?? "");
   const [formaFilter, setFormaFilter] = useState<string[]>([]);
   const [dataDe, setDataDe] = useState("");
   const [dataAte, setDataAte] = useState("");
@@ -263,6 +275,8 @@ function Page() {
       rows = rows.filter((r) => r.status === "pago");
     } else if (statusFilter === "em_aberto") {
       rows = rows.filter((r) => r.status !== "pago" && r.status !== "cancelado");
+    } else if (statusFilter === "atrasado") {
+      rows = rows.filter((r) => isVencido(r.status, r.data_vencimento));
     }
     rows = rows.filter((r) => financialRecordMatchesScope({
       dueDate: r.data_vencimento,
@@ -385,7 +399,7 @@ function Page() {
                 filters={[
                   { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },
                   { label: "Missão", value: missaoFilter ? nomeById(missoes, missaoFilter) : "Todas as missões" },
-                  { label: "Status", value: statusFilter === "pago" ? "Somente recebidas" : statusFilter === "em_aberto" ? "Somente em aberto" : "Todos os status" },
+                  { label: "Status", value: statusFilter === "pago" ? "Somente recebidas" : statusFilter === "em_aberto" ? "Somente em aberto" : statusFilter === "atrasado" ? "Somente em atraso" : "Todos os status" },
                   { label: "Forma de recebimento", value: formaFilter.length ? formaFilter.map(formaPagamentoLabel).join(", ") : "Todas" },
                   { label: "Período", value: formatPeriodoLabel(dataDe, dataAte).replace(/^Período:\s*/i, "") },
                   { label: "Busca", value: search || "" },
@@ -451,10 +465,11 @@ function Page() {
               <SelectField
                 label=""
                 value={statusFilter === "" ? "__all__" : statusFilter}
-                onChange={(v) => setStatusFilter(v === "__all__" ? "" : (v as "em_aberto" | "pago"))}
+                onChange={(v) => setStatusFilter(v === "__all__" ? "" : (v as "em_aberto" | "pago" | "atrasado"))}
                 options={[
                   { value: "__all__", label: "Todos os status" },
                   { value: "em_aberto", label: "Somente em aberto" },
+                  { value: "atrasado", label: "Somente em atraso" },
                   { value: "pago", label: "Somente recebidas" },
                 ]}
               />
