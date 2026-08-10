@@ -9,8 +9,7 @@ import { DatePicker } from "@/components/date-picker";
 
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatMonth, formatDate } from "@/lib/format";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { formatCurrency, formatMonth } from "@/lib/format";
 
 import {
   ArrowDownLeft, ArrowUpRight, AlertTriangle, Wallet, Building2, TrendingUp, Users,
@@ -21,7 +20,6 @@ import {
 } from "recharts";
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StatusBadge } from "@/components/status-badge";
 // funcionários não geram despesa automática — mantido o import removido intencionalmente.
 import { exportRelatorioGerencial } from "@/lib/relatorio-gerencial";
 import { FileText, Target } from "lucide-react";
