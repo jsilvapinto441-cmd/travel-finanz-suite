@@ -109,7 +109,8 @@ export function PagamentoDialog(props: Props) {
         .from("registros_pagamento" as any)
         .select("*")
         .eq(filterCol, target!.id)
-        .order("data_pagamento", { ascending: false });
+        .order("data_pagamento", { ascending: true })
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as Pagamento[];
     },

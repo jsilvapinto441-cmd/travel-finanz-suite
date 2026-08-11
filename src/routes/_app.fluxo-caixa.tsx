@@ -11,6 +11,7 @@ import { formatCurrency, formatDate, formatPeriodoLabel } from "@/lib/format";
 import { useContasBancarias } from "@/lib/bancos";
 import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
+import { sortByDateAsc } from "@/lib/sort-vencimento";
 
 export const Route = createFileRoute("/_app/fluxo-caixa")({ component: Page });
 
@@ -49,12 +50,12 @@ function Page() {
         .select("*")
         .gte("data_movimentacao", from)
         .lte("data_movimentacao", to)
-        .order("data_movimentacao", { ascending: false })
-        .order("created_at", { ascending: false });
+        .order("data_movimentacao", { ascending: true })
+        .order("created_at", { ascending: true });
       if (contaId !== "__all__") q = q.eq("conta_bancaria_id", contaId);
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as unknown as Mov[];
+      return sortByDateAsc((data ?? []) as unknown as Mov[], (m) => m.data_movimentacao);
     },
   });
 
