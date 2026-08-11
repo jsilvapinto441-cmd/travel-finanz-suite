@@ -441,26 +441,6 @@ function Dashboard() {
         )}
       </Card>
 
-      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Em atraso</div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <KpiCard
-          label="Despesas em atraso"
-          value={String(qtdDespAtraso)}
-          hint={`${formatCurrency(valorDespAtraso)} pendente · toque para ver`}
-          icon={<AlertTriangle className="size-5" />}
-          tone="destructive"
-          onClick={() => navigate({ to: "/despesas", search: { status: "atrasado" } })}
-        />
-        <KpiCard
-          label="Recebíveis em atraso"
-          value={String(qtdRecAtraso)}
-          hint={`${formatCurrency(valorRecAtraso)} pendente · toque para ver`}
-          icon={<AlertTriangle className="size-5" />}
-          tone="warning"
-          onClick={() => navigate({ to: "/recebiveis", search: { status: "atrasado" } })}
-        />
-      </div>
-
       <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Financeiro</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard label="Total Contratado" value={formatCurrency(totalContratado)}
@@ -480,6 +460,26 @@ function Dashboard() {
           hint="Folha mensal (ativos)" icon={<Users className="size-5" />} tone="warning" />
         <KpiCard label="Total Geral de Despesas" value={formatCurrency(totalDespesa)}
           hint="Operacionais + Folha" icon={<Wallet className="size-5" />} tone="default" />
+      </div>
+
+      <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Pendências financeiras</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <KpiCard
+          label="Despesas em atraso"
+          value={String(qtdDespAtraso)}
+          hint={`${formatCurrency(valorDespAtraso)} pendente · toque para ver`}
+          icon={<AlertTriangle className="size-5" />}
+          tone="destructive"
+          onClick={() => navigate({ to: "/despesas", search: { status: "atrasado" } })}
+        />
+        <KpiCard
+          label="Recebíveis em atraso"
+          value={String(qtdRecAtraso)}
+          hint={`${formatCurrency(valorRecAtraso)} pendente · toque para ver`}
+          icon={<AlertTriangle className="size-5" />}
+          tone="warning"
+          onClick={() => navigate({ to: "/recebiveis", search: { status: "atrasado" } })}
+        />
       </div>
 
       <div className="mb-3 text-xs uppercase tracking-wider text-muted-foreground font-medium">Resultado</div>
