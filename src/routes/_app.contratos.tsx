@@ -11,6 +11,7 @@ import { useEmpresas, useMissoes, nomeById } from "@/lib/lookups";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { ExportButton } from "@/components/export-button";
+import { sortByDateAsc } from "@/lib/sort-vencimento";
 import { EmpresaFilter } from "@/components/empresa-filter";
 import { CalendarDays, Plane, Sparkles, Users, Target } from "lucide-react";
 
@@ -402,7 +403,11 @@ function Page() {
 
   const { data: allContratos = [] } = useQuery({
     queryKey: ["contratos-export"],
-    queryFn: async () => (await supabase.from("contratos").select("*").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () =>
+      sortByDateAsc(
+        ((await supabase.from("contratos").select("*").order("data_inicio", { ascending: true })).data ?? []) as any[],
+        (c) => c.data_inicio,
+      ),
     staleTime: 30_000,
   });
 
@@ -437,7 +442,7 @@ function Page() {
           <ExportButton<T>
             title="Contratos"
             filename="contratos"
-            rows={allContratos as T[]}
+            rows={sortByDateAsc(allContratos as T[], (c) => c.data_inicio)}
             columns={[
               { header: "Nº", accessor: "numero" },
               { header: "Cliente", accessor: "cliente" },
@@ -467,6 +472,8 @@ function Page() {
       <DataTable<T>
         table="contratos"
         title="Contrato"
+        orderBy="data_inicio"
+        ascending
         searchFields={["cliente", "numero", "destino"]}
         defaultValues={{
           status: "ativo", valor: 0, valor_entrada: 0, parcelas: 1,

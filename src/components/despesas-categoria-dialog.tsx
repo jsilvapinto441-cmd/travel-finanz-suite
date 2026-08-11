@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { compareVencimento } from "@/lib/sort-vencimento";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useFornecedores } from "@/lib/lookups";
 import { ArrowLeft, Search } from "lucide-react";
@@ -131,7 +132,7 @@ export function DespesasCategoriaDialog({
     if (!detalhe) return [];
     return filtradas
       .filter((d) => (d.categoria ?? "outros") === detalhe)
-      .sort((a, b) => (a.data_vencimento ?? "").localeCompare(b.data_vencimento ?? ""));
+      .sort((a, b) => compareVencimento(a.data_vencimento, b.data_vencimento));
   }, [filtradas, detalhe]);
 
   const pieData = categorias.slice().sort((a, b) => b.valor - a.valor);
