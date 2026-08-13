@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
+import { BackupRestore } from "@/components/backup-restore";
+
 
 export const Route = createFileRoute("/_app/configuracoes")({ component: Page });
 
