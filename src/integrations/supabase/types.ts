@@ -145,6 +145,99 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_schedules: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          frequencia: string
+          hora_utc: number
+          id: string
+          owner_id: string
+          proxima_execucao: string | null
+          reter_ultimos: number
+          ultima_execucao: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          frequencia?: string
+          hora_utc?: number
+          id?: string
+          owner_id: string
+          proxima_execucao?: string | null
+          reter_ultimos?: number
+          ultima_execucao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          frequencia?: string
+          hora_utc?: number
+          id?: string
+          owner_id?: string
+          proxima_execucao?: string | null
+          reter_ultimos?: number
+          ultima_execucao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      backups: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          erro: string | null
+          id: string
+          observacoes: string | null
+          owner_id: string
+          path: string | null
+          restaurado_em: string | null
+          status: string
+          tabelas: Json
+          tamanho_bytes: number
+          tipo: string
+          total_arquivos: number
+          total_registros: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          erro?: string | null
+          id?: string
+          observacoes?: string | null
+          owner_id: string
+          path?: string | null
+          restaurado_em?: string | null
+          status?: string
+          tabelas?: Json
+          tamanho_bytes?: number
+          tipo?: string
+          total_arquivos?: number
+          total_registros?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          erro?: string | null
+          id?: string
+          observacoes?: string | null
+          owner_id?: string
+          path?: string | null
+          restaurado_em?: string | null
+          status?: string
+          tabelas?: Json
+          tamanho_bytes?: number
+          tipo?: string
+          total_arquivos?: number
+          total_registros?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       consolidadoras: {
         Row: {
           ativo: boolean
