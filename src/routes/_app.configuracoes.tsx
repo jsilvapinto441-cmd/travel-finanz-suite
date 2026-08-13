@@ -36,39 +36,40 @@ function Page() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (!isAdmin) {
-    return (
-      <PageContainer>
-        <PageHeader title="Configurações" />
-        <Card className="p-8 text-center text-muted-foreground">Apenas administradores têm acesso.</Card>
-      </PageContainer>
-    );
-  }
-
   return (
     <PageContainer>
-      <PageHeader title="Configurações" description="Gerencie usuários e permissões." />
-      <Card className="p-6">
-        <h3 className="font-display font-semibold mb-4">Usuários do Sistema</h3>
-        <div className="space-y-2">
-          {profiles?.map((p) => (
-            <div key={p.id} className="flex items-center justify-between p-3 rounded-md border">
-              <div>
-                <div className="font-medium">{p.nome}</div>
-                <div className="text-xs text-muted-foreground">{p.email}</div>
-              </div>
-              <Select value={p.role} onValueChange={(v) => updateRole.mutate({ userId: p.id, role: v })}>
-                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                  <SelectItem value="financeiro">Financeiro</SelectItem>
-                  <SelectItem value="viewer">Visualizador</SelectItem>
-                </SelectContent>
-              </Select>
+      <PageHeader title="Configurações" description="Gerencie usuários, permissões e backups." />
+      <div className="space-y-4">
+        <BackupRestore />
+        {isAdmin ? (
+          <Card className="p-4 sm:p-6">
+            <h3 className="font-display font-semibold mb-4">Usuários do Sistema</h3>
+            <div className="space-y-2">
+              {profiles?.map((p) => (
+                <div key={p.id} className="flex flex-col gap-3 p-3 rounded-md border sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{p.nome}</div>
+                    <div className="text-xs text-muted-foreground truncate">{p.email}</div>
+                  </div>
+                  <Select value={p.role} onValueChange={(v) => updateRole.mutate({ userId: p.id, role: v })}>
+                    <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="financeiro">Financeiro</SelectItem>
+                      <SelectItem value="viewer">Visualizador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Card>
+          </Card>
+        ) : (
+          <Card className="p-6 text-center text-muted-foreground text-sm">
+            Gerenciamento de usuários disponível apenas para administradores.
+          </Card>
+        )}
+      </div>
     </PageContainer>
   );
 }
+
