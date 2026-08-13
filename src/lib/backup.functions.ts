@@ -114,8 +114,12 @@ async function gerarBackup(ownerId: string, tipo: "manual" | "seguranca" | "auto
 
     for (const t of TABLES) {
       const col = t === "profiles" ? "id" : "owner_id";
-      const { data, error } = await db.from(t).select("*").eq(col, ownerId);
+      const q = db.from(t).select("*") as unknown as {
+        eq: (c: string, v: string) => Promise<{ data: Row[] | null; error: { message: string } | null }>;
+      };
+      const { data, error } = await q.eq(col, ownerId);
       if (error) throw new Error(`${t}: ${error.message}`);
+
       tabelas[t] = (data ?? []) as Row[];
       contagem[t] = tabelas[t].length;
       totalRegistros += tabelas[t].length;
