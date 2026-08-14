@@ -146,7 +146,7 @@ export function DespesasCategoriaDialog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-w-5xl w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="sm:max-w-5xl w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-display">Despesas por Categoria</DialogTitle>
           <DialogDescription>
