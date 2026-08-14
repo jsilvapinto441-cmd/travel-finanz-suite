@@ -66,14 +66,16 @@ export function DatePicker({
           aria-invalid={showInvalid || undefined}
           aria-label={rest["aria-label"]}
           className={cn(
-            "w-full justify-start text-left font-normal",
+            "w-full justify-start text-left font-normal min-w-0",
             !selected && "text-muted-foreground",
             showInvalid && "border-destructive focus-visible:ring-destructive",
             className,
           )}
         >
-          <CalendarIcon className="mr-2 size-4" />
-          {selected ? fmt.format(selected) : <span>{placeholder}</span>}
+          <CalendarIcon className="mr-2 size-4 shrink-0" />
+          <span className="truncate min-w-0">
+            {selected ? fmt.format(selected) : placeholder}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">

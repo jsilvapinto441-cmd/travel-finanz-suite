@@ -24,6 +24,7 @@ import { compareVencimento } from "@/lib/sort-vencimento";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useFornecedores } from "@/lib/lookups";
 import { ArrowLeft, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type DespesaCategoriaRow = {
   id: string;
@@ -145,7 +146,7 @@ export function DespesasCategoriaDialog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-w-5xl w-[calc(100vw-1.5rem)] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-display">Despesas por Categoria</DialogTitle>
           <DialogDescription>
@@ -154,19 +155,21 @@ export function DespesasCategoriaDialog({
         </DialogHeader>
 
         {/* Filtros */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="space-y-1.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="space-y-1.5 min-w-0">
             <Label className="text-xs text-muted-foreground">Período inicial</Label>
             <DatePicker value={dataIni} onChange={setDataIni} />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 min-w-0">
             <Label className="text-xs text-muted-foreground">Período final</Label>
             <DatePicker value={dataFim} onChange={setDataFim} />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 min-w-0">
             <Label className="text-xs text-muted-foreground">Empresa</Label>
             <Select value={empresaId} onValueChange={setEmpresaId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full min-w-0">
+                <SelectValue className="truncate" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as empresas</SelectItem>
                 {empresas.map((e) => (
@@ -175,10 +178,12 @@ export function DespesasCategoriaDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 min-w-0">
             <Label className="text-xs text-muted-foreground">Categoria</Label>
             <Select value={categoriaSel} onValueChange={setCategoriaSel}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full min-w-0">
+                <SelectValue className="truncate" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as categorias</SelectItem>
                 {todasCategorias.map((c) => (
@@ -191,28 +196,28 @@ export function DespesasCategoriaDialog({
 
         {/* Resumo */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Card className="p-4">
+          <Card className="p-3 sm:p-4 min-w-0">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Total do período</p>
-            <p className="text-xl font-semibold mt-1">{formatCurrency(totalGeral)}</p>
+            <p className="text-lg sm:text-xl font-semibold mt-1 truncate">{formatCurrency(totalGeral)}</p>
           </Card>
-          <Card className="p-4">
+          <Card className="p-3 sm:p-4 min-w-0">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Categorias</p>
-            <p className="text-xl font-semibold mt-1">{categorias.length}</p>
+            <p className="text-lg sm:text-xl font-semibold mt-1">{categorias.length}</p>
           </Card>
-          <Card className="p-4">
+          <Card className="p-3 sm:p-4 min-w-0">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Despesas consideradas</p>
-            <p className="text-xl font-semibold mt-1">{filtradas.length}</p>
+            <p className="text-lg sm:text-xl font-semibold mt-1">{filtradas.length}</p>
           </Card>
         </div>
 
         {detalhe ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => { setDetalhe(null); setLimite(PAGE_SIZE); }}>
                 <ArrowLeft className="size-4 mr-1" /> Voltar
               </Button>
-              <span className="font-medium">{categoriaLabel(detalhe)}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="font-medium truncate min-w-0 max-w-full">{categoriaLabel(detalhe)}</span>
+              <span className="text-xs text-muted-foreground shrink-0">
                 {detalheRows.length} lançamento(s)
               </span>
             </div>
@@ -229,8 +234,8 @@ export function DespesasCategoriaDialog({
                 </Button>
               ))}
             </div>
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto rounded-lg border border-border max-w-full">
+              <table className="w-full text-sm min-w-[640px]">
                 <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="text-left p-2">Descrição</th>
@@ -246,14 +251,14 @@ export function DespesasCategoriaDialog({
                 <tbody>
                   {detalheRows.slice(0, limite).map((d) => (
                     <tr key={d.id} className="border-t border-border/60">
-                      <td className="p-2">{d.descricao ?? "—"}</td>
-                      <td className="p-2">{categoriaLabel(d.categoria)}</td>
-                      <td className="p-2">{fornecedorNome(d.fornecedor_id)}</td>
-                      <td className="p-2 text-right font-medium">{formatCurrency(Number(d.valor ?? 0))}</td>
-                      <td className="p-2">{formatDate(d.data_vencimento)}</td>
-                      <td className="p-2">{formatDate(d.data_pagamento)}</td>
-                      <td className="p-2"><StatusBadge status={d.status} /></td>
-                      <td className="p-2">{empresaNome(d.empresa_id)}</td>
+                      <td className="p-2 max-w-[180px] truncate">{d.descricao ?? "—"}</td>
+                      <td className="p-2 whitespace-nowrap">{categoriaLabel(d.categoria)}</td>
+                      <td className="p-2 max-w-[140px] truncate">{fornecedorNome(d.fornecedor_id)}</td>
+                      <td className="p-2 text-right font-medium whitespace-nowrap">{formatCurrency(Number(d.valor ?? 0))}</td>
+                      <td className="p-2 whitespace-nowrap">{formatDate(d.data_vencimento)}</td>
+                      <td className="p-2 whitespace-nowrap">{formatDate(d.data_pagamento)}</td>
+                      <td className="p-2 whitespace-nowrap"><StatusBadge status={d.status} /></td>
+                      <td className="p-2 max-w-[140px] truncate">{empresaNome(d.empresa_id)}</td>
                     </tr>
                   ))}
                   {detalheRows.length === 0 && (
@@ -272,8 +277,8 @@ export function DespesasCategoriaDialog({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="h-[300px] sm:h-[360px]">
-              <ResponsiveContainer>
+            <div className="h-[300px] sm:h-[360px] max-w-full">
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
@@ -298,7 +303,7 @@ export function DespesasCategoriaDialog({
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-0">
                 <Search className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={busca}
@@ -308,7 +313,9 @@ export function DespesasCategoriaDialog({
                 />
               </div>
               <Select value={ordem} onValueChange={(v) => setOrdem(v as Ordem)}>
-                <SelectTrigger className="sm:w-[220px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[220px] min-w-0">
+                  <SelectValue className="truncate" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="valor_desc">Maior valor</SelectItem>
                   <SelectItem value="valor_asc">Menor valor</SelectItem>
