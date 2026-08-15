@@ -38,6 +38,7 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicHooksBackupCronRouteImport } from './routes/api/public/hooks/backup-cron'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -186,6 +187,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksBackupCronRoute =
+  ApiPublicHooksBackupCronRouteImport.update({
+    id: '/api/public/hooks/backup-cron',
+    path: '/api/public/hooks/backup-cron',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/api/public/hooks/backup-cron': typeof ApiPublicHooksBackupCronRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -246,6 +254,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/api/public/hooks/backup-cron': typeof ApiPublicHooksBackupCronRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -278,6 +287,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/api/public/hooks/backup-cron': typeof ApiPublicHooksBackupCronRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/version'
+    | '/api/public/hooks/backup-cron'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/version'
+    | '/api/public/hooks/backup-cron'
   id:
     | '__root__'
     | '/'
@@ -371,6 +383,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/version'
+    | '/api/public/hooks/backup-cron'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -387,6 +400,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
+  ApiPublicHooksBackupCronRoute: typeof ApiPublicHooksBackupCronRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -594,6 +608,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/backup-cron': {
+      id: '/api/public/hooks/backup-cron'
+      path: '/api/public/hooks/backup-cron'
+      fullPath: '/api/public/hooks/backup-cron'
+      preLoaderRoute: typeof ApiPublicHooksBackupCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -652,6 +673,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
+  ApiPublicHooksBackupCronRoute: ApiPublicHooksBackupCronRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
