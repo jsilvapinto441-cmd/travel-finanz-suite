@@ -145,6 +145,59 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_jobs: {
+        Row: {
+          backup_id: string | null
+          created_at: string
+          erro: string | null
+          etapa: string | null
+          id: string
+          logs: Json
+          owner_id: string
+          progresso: number
+          resultado: Json | null
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          backup_id?: string | null
+          created_at?: string
+          erro?: string | null
+          etapa?: string | null
+          id?: string
+          logs?: Json
+          owner_id: string
+          progresso?: number
+          resultado?: Json | null
+          status?: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          backup_id?: string | null
+          created_at?: string
+          erro?: string | null
+          etapa?: string | null
+          id?: string
+          logs?: Json
+          owner_id?: string
+          progresso?: number
+          resultado?: Json | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_jobs_backup_id_fkey"
+            columns: ["backup_id"]
+            isOneToOne: false
+            referencedRelation: "backups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_schedules: {
         Row: {
           ativo: boolean
