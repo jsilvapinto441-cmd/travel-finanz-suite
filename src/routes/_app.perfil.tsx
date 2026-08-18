@@ -228,6 +228,59 @@ function PerfilPage() {
           </>
         )}
       </Card>
+
+      <Card className="p-6 max-w-2xl space-y-4 mt-4">
+        <div className="flex items-center gap-2">
+          <Mail className="size-4 text-primary" />
+          <h3 className="font-display font-semibold">Alterar e-mail de login</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          A conta continua a mesma: mesmo usuário, mesma senha, mesmas permissões e dados.
+          Alteramos apenas o e-mail usado para entrar no sistema.
+        </p>
+
+        {emailPendente && (
+          <div className="rounded-md border border-primary/40 bg-primary/5 p-3 text-xs">
+            Confirmação pendente para <strong>{emailPendente}</strong>. O e-mail só é trocado
+            depois que você clicar no link enviado. Até lá, continue entrando com o e-mail atual.
+          </div>
+        )}
+
+        <form onSubmit={handleTrocarEmail} className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="novo-email">Novo e-mail</Label>
+            <Input
+              id="novo-email"
+              type="email"
+              autoComplete="email"
+              value={novoEmail}
+              onChange={(e) => setNovoEmail(e.target.value)}
+              placeholder="nome@empresa.com.br"
+              maxLength={255}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="senha-atual">Senha atual</Label>
+            <Input
+              id="senha-atual"
+              type="password"
+              autoComplete="current-password"
+              value={senhaAtual}
+              onChange={(e) => setSenhaAtual(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          <div className="sm:col-span-2 flex justify-end">
+            <Button type="submit" disabled={trocandoEmail}>
+              {trocandoEmail && <Loader2 className="size-4 mr-2 animate-spin" />}
+              Alterar e-mail
+            </Button>
+          </div>
+        </form>
+      </Card>
+
     </PageContainer>
   );
 }
