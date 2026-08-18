@@ -5,6 +5,7 @@ export type AuditAction =
   | "create" | "update" | "delete"
   | "upload" | "download" | "delete_file"
   | "password_reset_request" | "password_reset_complete"
+  | "email_change_request"
   | "access_denied";
 
 export async function audit(
