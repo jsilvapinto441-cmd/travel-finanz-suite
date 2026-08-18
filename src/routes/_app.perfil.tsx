@@ -31,6 +31,78 @@ function PerfilPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Alteração de e-mail de login
+  const [novoEmail, setNovoEmail] = useState("");
+  const [senhaAtual, setSenhaAtual] = useState("");
+  const [trocandoEmail, setTrocandoEmail] = useState(false);
+  const [emailPendente, setEmailPendente] = useState<string | null>(null);
+
+  // Mantém profiles.email sincronizado com o e-mail de autenticação
+  useEffect(() => {
+    if (!user?.email) return;
+    (async () => {
+      const { data } = await supabase.from("profiles").select("email").eq("id", user.id).maybeSingle();
+      if (data && data.email !== user.email) {
+        await supabase.from("profiles").update({ email: user.email! }).eq("id", user.id);
+      }
+    })();
+  }, [user?.id, user?.email]);
+
+  async function handleTrocarEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user?.email) return;
+    setTrocandoEmail(true);
+    try {
+      const alvo = emailSchema.parse(novoEmail).toLowerCase();
+      if (alvo === user.email.toLowerCase()) {
+        toast.error("O novo e-mail é igual ao atual.");
+        return;
+      }
+      if (!senhaAtual) {
+        toast.error("Informe sua senha atual para confirmar.");
+        return;
+      }
+
+      // 1) Reautentica com a senha atual (não cria usuário novo, não altera a sessão)
+      const { error: authErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: senhaAtual,
+      });
+      if (authErr) {
+        toast.error("Senha atual incorreta.");
+        return;
+      }
+
+      // 2) Solicita a alteração pelo mecanismo oficial de autenticação
+      const { error } = await supabase.auth.updateUser(
+        { email: alvo },
+        { emailRedirectTo: `${window.location.origin}/perfil` },
+      );
+      if (error) {
+        const m = error.message.toLowerCase();
+        if (m.includes("already") || m.includes("registered") || m.includes("exists")) {
+          toast.error("Este e-mail já está cadastrado em outra conta.");
+        } else {
+          toast.error(friendlyAuthError(error));
+        }
+        return;
+      }
+
+      setEmailPendente(alvo);
+      setNovoEmail("");
+      setSenhaAtual("");
+      await audit("email_change_request", "auth", null, { novo_email: alvo }).catch(() => {});
+      toast.success("Confirmação enviada. Verifique a caixa de entrada do novo e-mail (e o spam).");
+    } catch (err) {
+      if (err instanceof z.ZodError) toast.error(err.issues[0]?.message ?? "Dados inválidos");
+      else toast.error(friendlyAuthError(err));
+    } finally {
+      setTrocandoEmail(false);
+    }
+  }
+
+
+
 
   useEffect(() => {
     if (!user) return;
