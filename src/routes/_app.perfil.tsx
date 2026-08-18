@@ -8,12 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, Upload, User } from "lucide-react";
+import { Loader2, Upload, User, Mail } from "lucide-react";
 import { setBrandName, setBrandLogo } from "@/lib/brand";
+import { z } from "zod";
+import { friendlyAuthError } from "@/lib/auth-errors";
+import { audit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_app/perfil")({
   component: PerfilPage,
 });
+
+const emailSchema = z.string().trim().email("E-mail inválido").max(255);
 
 function PerfilPage() {
   const { user } = useAuth();
@@ -25,6 +30,7 @@ function PerfilPage() {
   const [telefone, setTelefone] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     if (!user) return;
