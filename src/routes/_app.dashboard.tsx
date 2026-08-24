@@ -734,3 +734,35 @@ function Dashboard() {
     </PageContainer>
   );
 }
+
+function EntradaSaidaTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { payload: { entrada: number; saida: number; saldo: number } }[];
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg text-xs space-y-1">
+      <div className="font-semibold mb-1">{label}</div>
+      <div className="flex items-center justify-between gap-6">
+        <span className="text-muted-foreground">Entrada</span>
+        <span className="font-medium tabular-nums text-success">{formatCurrency(d.entrada)}</span>
+      </div>
+      <div className="flex items-center justify-between gap-6">
+        <span className="text-muted-foreground">Saída</span>
+        <span className="font-medium tabular-nums text-destructive">{formatCurrency(d.saida)}</span>
+      </div>
+      <div className="flex items-center justify-between gap-6 border-t border-border/60 pt-1">
+        <span className="text-muted-foreground">Saldo</span>
+        <span className={"font-semibold tabular-nums " + (d.saldo < 0 ? "text-destructive" : "text-primary")}>
+          {formatCurrency(d.saldo)}
+        </span>
+      </div>
+    </div>
+  );
+}
