@@ -38,7 +38,7 @@ function LoginPage() {
   const { next } = Route.useSearch();
   const goAfterAuth = () => {
     if (next) window.location.href = next;
-    else navigate({ to: "/" });
+    else navigate({ to: "/dashboard" });
   };
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
