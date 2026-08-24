@@ -375,7 +375,7 @@ function Dashboard() {
   }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, missaoId, dataIni, dataFim]);
 
 
-  const { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaSerie, entradaSaidaTotais, entradaSaidaVazio, granularidade, despsAll } = aggregates;
+  const { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, entradaSaidaSerie, entradaSaidaTotais, entradaSaidaVazio, granularidade, despsAll } = aggregates;
 
   const semDados =
     (recebiveis?.length ?? 0) === 0 &&
