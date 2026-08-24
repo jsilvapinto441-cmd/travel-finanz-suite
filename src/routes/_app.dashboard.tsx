@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, Legend,
+  LineChart, Line, PieChart, Pie, Cell, Legend, ComposedChart,
 } from "recharts";
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -300,10 +300,82 @@ function Dashboard() {
       return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", entrada, saida };
     });
 
-    return { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll };
-  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, dataIni, dataFim]);
+    // ===== Entrada × Saída (série cronológica, respeitando TODOS os filtros) =====
+    // Usa exatamente os pagamentos já filtrados por empresa / missão / período,
+    // portanto os valores batem com as telas de Recebíveis e Despesas.
+    const toDate = (s: string) => new Date(`${s.slice(0, 10)}T00:00:00Z`);
+    const datasPag = [...pagsCliente, ...pagsDespesas]
+      .map((p) => (p.data_pagamento ?? "").slice(0, 10))
+      .filter(Boolean)
+      .sort();
 
-  const { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll } = aggregates;
+    let inicio: Date;
+    let fim: Date;
+    if (dataIni || dataFim) {
+      inicio = toDate(dataIni || datasPag[0] || dataFim!);
+      fim = toDate(dataFim || datasPag[datasPag.length - 1] || dataIni!);
+    } else if (datasPag.length) {
+      const seisMeses = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 5, 1));
+      const primeiro = toDate(datasPag[0]);
+      inicio = primeiro > seisMeses ? primeiro : seisMeses;
+      fim = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    } else {
+      inicio = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 5, 1));
+      fim = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    }
+    if (fim < inicio) fim = inicio;
+
+    const diasRange = Math.round((fim.getTime() - inicio.getTime()) / 86400000);
+    const granularidade: "dia" | "mes" = diasRange <= 62 ? "dia" : "mes";
+
+    const bucketKey = (iso: string) => (granularidade === "dia" ? iso.slice(0, 10) : iso.slice(0, 7));
+    const buckets: { key: string; label: string; entrada: number; saida: number }[] = [];
+    if (granularidade === "dia") {
+      for (let t = inicio.getTime(); t <= fim.getTime(); t += 86400000) {
+        const d = new Date(t);
+        const key = d.toISOString().slice(0, 10);
+        buckets.push({
+          key,
+          label: `${key.slice(8, 10)}/${key.slice(5, 7)}`,
+          entrada: 0,
+          saida: 0,
+        });
+      }
+    } else {
+      const cursor = new Date(Date.UTC(inicio.getUTCFullYear(), inicio.getUTCMonth(), 1));
+      const limite = new Date(Date.UTC(fim.getUTCFullYear(), fim.getUTCMonth(), 1));
+      while (cursor <= limite) {
+        const key = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, "0")}`;
+        buckets.push({
+          key,
+          label: formatMonth(new Date(cursor.getUTCFullYear(), cursor.getUTCMonth(), 1)),
+          entrada: 0,
+          saida: 0,
+        });
+        cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+      }
+    }
+    const bucketIdx = new Map(buckets.map((b, i) => [b.key, i]));
+    for (const p of pagsCliente) {
+      const i = bucketIdx.get(bucketKey(p.data_pagamento ?? ""));
+      if (i !== undefined) buckets[i].entrada += Number(p.valor ?? 0);
+    }
+    for (const p of pagsDespesas) {
+      const i = bucketIdx.get(bucketKey(p.data_pagamento ?? ""));
+      if (i !== undefined) buckets[i].saida += Number(p.valor ?? 0);
+    }
+    const entradaSaidaSerie = buckets.map((b) => ({ ...b, saldo: b.entrada - b.saida }));
+    const entradaSaidaTotais = entradaSaidaSerie.reduce(
+      (acc, b) => ({ entrada: acc.entrada + b.entrada, saida: acc.saida + b.saida }),
+      { entrada: 0, saida: 0 },
+    );
+    const entradaSaidaVazio = entradaSaidaTotais.entrada === 0 && entradaSaidaTotais.saida === 0;
+
+    return { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, entradaSaidaSerie, entradaSaidaTotais, entradaSaidaVazio, granularidade, despsAll };
+  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, missaoId, dataIni, dataFim]);
+
+
+  const { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, entradaSaidaSerie, entradaSaidaTotais, entradaSaidaVazio, granularidade, despsAll } = aggregates;
 
   const semDados =
     (recebiveis?.length ?? 0) === 0 &&
@@ -588,30 +660,109 @@ function Dashboard() {
         </Card>
 
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold">Entrada × Saída (mês atual)</h3>
-            <Building2 className="size-4 text-muted-foreground" />
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div className="min-w-0">
+              <h3 className="font-display font-semibold">Entrada × Saída</h3>
+              <p className="text-xs text-muted-foreground">
+                {granularidade === "dia" ? "Por dia" : "Por mês"} · conforme filtros aplicados
+              </p>
+            </div>
+            <div className="flex gap-4 text-right">
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Entradas</div>
+                <div className="text-sm font-semibold tabular-nums text-success">{formatCurrency(entradaSaidaTotais.entrada)}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Saídas</div>
+                <div className="text-sm font-semibold tabular-nums text-destructive">{formatCurrency(entradaSaidaTotais.saida)}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Saldo</div>
+                <div className={"text-sm font-semibold tabular-nums " + (entradaSaidaTotais.entrada - entradaSaidaTotais.saida < 0 ? "text-destructive" : "text-primary")}>
+                  {formatCurrency(entradaSaidaTotais.entrada - entradaSaidaTotais.saida)}
+                </div>
+              </div>
+            </div>
           </div>
           <div className="h-72">
-            <ResponsiveContainer>
-              <BarChart data={entradaSaidaPorEmpresa}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="nome" tick={{ fontSize: 11 }} stroke="var(--color-muted-foreground)" angle={-20} textAnchor="end" height={60} />
-                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
-                <Tooltip
-                  formatter={(v: number, name: string) => [formatCurrency(v), name]}
-                  contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 8 }}
-                />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="entrada" name="Entrada" fill="var(--color-primary)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="saida" name="Saída" fill="var(--color-gold)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {entradaSaidaVazio ? (
+              <div className="h-full flex flex-col items-center justify-center text-center gap-2 rounded-lg border border-dashed border-border/70">
+                <Wallet className="size-6 text-muted-foreground" />
+                <p className="text-sm font-medium">Nenhuma movimentação no período</p>
+                <p className="text-xs text-muted-foreground max-w-[260px]">
+                  Não há entradas nem saídas para os filtros selecionados. Ajuste o período, a empresa ou a missão.
+                </p>
+              </div>
+            ) : (
+              <ResponsiveContainer>
+                <ComposedChart data={entradaSaidaSerie} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradEntrada" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-success)" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="var(--color-success)" stopOpacity={0.35} />
+                    </linearGradient>
+                    <linearGradient id="gradSaida" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-destructive)" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="var(--color-destructive)" stopOpacity={0.3} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="var(--color-muted-foreground)" interval="preserveStartEnd" minTickGap={12} />
+                  <YAxis
+                    tickFormatter={(v: number) => (Math.abs(v) >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${v}`)}
+                    tick={{ fontSize: 11 }}
+                    stroke="var(--color-muted-foreground)"
+                    width={60}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "var(--color-muted)", opacity: 0.25 }}
+                    content={<EntradaSaidaTooltip />}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="entrada" name="Entrada" fill="url(#gradEntrada)" radius={[6, 6, 0, 0]} maxBarSize={38} isAnimationActive={false} />
+                  <Bar dataKey="saida" name="Saída" fill="url(#gradSaida)" radius={[6, 6, 0, 0]} maxBarSize={38} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--color-primary)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} isAnimationActive={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </Card>
+
       </div>
 
 
     </PageContainer>
+  );
+}
+
+function EntradaSaidaTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { payload: { entrada: number; saida: number; saldo: number } }[];
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg text-xs space-y-1">
+      <div className="font-semibold mb-1">{label}</div>
+      <div className="flex items-center justify-between gap-6">
+        <span className="text-muted-foreground">Entrada</span>
+        <span className="font-medium tabular-nums text-success">{formatCurrency(d.entrada)}</span>
+      </div>
+      <div className="flex items-center justify-between gap-6">
+        <span className="text-muted-foreground">Saída</span>
+        <span className="font-medium tabular-nums text-destructive">{formatCurrency(d.saida)}</span>
+      </div>
+      <div className="flex items-center justify-between gap-6 border-t border-border/60 pt-1">
+        <span className="text-muted-foreground">Saldo</span>
+        <span className={"font-semibold tabular-nums " + (d.saldo < 0 ? "text-destructive" : "text-primary")}>
+          {formatCurrency(d.saldo)}
+        </span>
+      </div>
+    </div>
   );
 }
