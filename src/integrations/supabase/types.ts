@@ -520,6 +520,51 @@ export type Database = {
           },
         ]
       }
+      despesa_rateios: {
+        Row: {
+          created_at: string
+          despesa_id: string
+          id: string
+          missao_id: string
+          owner_id: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          despesa_id: string
+          id?: string
+          missao_id: string
+          owner_id: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          despesa_id?: string
+          id?: string
+          missao_id?: string
+          owner_id?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "despesa_rateios_despesa_id_fkey"
+            columns: ["despesa_id"]
+            isOneToOne: false
+            referencedRelation: "despesas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesa_rateios_missao_id_fkey"
+            columns: ["missao_id"]
+            isOneToOne: false
+            referencedRelation: "missoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       despesas: {
         Row: {
           banco: string | null
