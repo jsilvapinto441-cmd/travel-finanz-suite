@@ -136,7 +136,12 @@ type Group = {
   countVencido: number;
 };
 
-function buildGroups(rows: T[], scopedPayments: (row: T) => Pagamento[]): Group[] {
+function buildGroups(
+  rows: T[],
+  scopedPayments: (row: T) => Pagamento[],
+  valorDe: (row: T) => number = (row) => Number(row.valor ?? 0),
+  fatorDe: (row: T) => number = () => 1,
+): Group[] {
   const map = new Map<string, Group>();
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
@@ -158,11 +163,12 @@ function buildGroups(rows: T[], scopedPayments: (row: T) => Pagamento[]): Group[
       map.set(key, g);
     }
     g.rows.push(r);
-    const v = Number(r.valor ?? 0);
-    const pago = sumFinancialPayments(scopedPayments(r));
+    const f = fatorDe(r);
+    const v = valorDe(r);
+    const pago = sumFinancialPayments(scopedPayments(r)) * f;
     g.total += v;
     g.pago += pago;
-    g.restante += Math.max(v - Number(r.valor_pago ?? 0), 0);
+    g.restante += Math.max(v - Number(r.valor_pago ?? 0) * f, 0);
     if (r.status !== "pago" && r.data_vencimento) {
       const dv = new Date(r.data_vencimento);
       if (!g.proximoVenc || new Date(g.proximoVenc) > dv) g.proximoVenc = r.data_vencimento;
