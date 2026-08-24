@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
+import { RateioMissoes, diferencaRateio, type RateioItem } from "@/components/rateio-missoes";
 import { FORMAS_PAGAMENTO_OPTIONS, formaPagamentoLabel, formaMatches } from "@/lib/formas-pagamento";
 import { CreditCard } from "lucide-react";
 import {
@@ -194,6 +195,24 @@ function Page() {
   const { data: contas } = useContasBancariasComEmpresa({ ativas: true });
 
 
+  const { data: rateiosByDespesa } = useQuery({
+    queryKey: ["despesa-rateios"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("despesa_rateios")
+        .select("id, despesa_id, missao_id, valor");
+      if (error) throw error;
+      const map = new Map<string, RateioItem[]>();
+      for (const r of (data ?? []) as any[]) {
+        const list = map.get(r.despesa_id) ?? [];
+        list.push({ id: r.id, missao_id: r.missao_id, valor: Number(r.valor ?? 0) });
+        map.set(r.despesa_id, list);
+      }
+      return map;
+    },
+  });
+  const rateiosDe = (id: string): RateioItem[] => rateiosByDespesa?.get(id) ?? [];
+
   const [empresaFilter, setEmpresaFilter] = useState("");
   const [missaoFilter, setMissaoFilter] = useState("");
   const initialStatus = Route.useSearch().status;
@@ -214,6 +233,7 @@ function Page() {
     parcelas: 1, frequencia: "mensal",
   };
   const [values, setValues] = useState<Partial<T>>(defaultValues);
+  const [rateio, setRateio] = useState<RateioItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data = [], isLoading } = useQuery({
@@ -230,7 +250,12 @@ function Page() {
   const filtered = useMemo(() => {
     let rows = data as T[];
     if (empresaFilter) rows = rows.filter((r) => r.empresa_id === empresaFilter);
-    if (missaoFilter) rows = rows.filter((r) => r.missao_id === missaoFilter);
+    if (missaoFilter)
+      rows = rows.filter(
+        (r) =>
+          r.missao_id === missaoFilter ||
+          (rateiosByDespesa?.get(r.id) ?? []).some((x) => x.missao_id === missaoFilter),
+      );
     if (statusFilter === "pago") {
       rows = rows.filter((r) => r.status === "pago");
     } else if (statusFilter === "em_aberto") {
@@ -249,7 +274,7 @@ function Page() {
       rows = rows.filter((r) => matchesQuery(r as unknown as Record<string, unknown>, search));
     }
     return sortByVencimento(rows);
-  }, [data, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter, search]);
+  }, [data, rateiosByDespesa, empresaFilter, missaoFilter, statusFilter, dataDe, dataAte, formaFilter, search]);
 
   const scopedPayments = (row: T) => paymentsInFinancialScope(
     row.registros_pagamento,
@@ -286,18 +311,32 @@ function Page() {
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
       const clean = sanitizeUpdatePayload("despesas", payload);
+      let despesaId: string;
       if (editing) {
         const { error } = await supabase.from("despesas").update(clean as any).eq("id", editing.id);
         if (error) throw error;
+        despesaId = editing.id;
       } else {
-        const { error } = await supabase.from("despesas").insert(clean as any);
+        const { data, error } = await supabase.from("despesas").insert(clean as any).select("id").single();
         if (error) throw error;
+        despesaId = (data as any).id as string;
+      }
+      // Sincroniza o rateio por missão (a despesa continua sendo um único lançamento)
+      const itens = rateio.filter((r) => r.missao_id && Number(r.valor) > 0);
+      const { error: delErr } = await supabase.from("despesa_rateios").delete().eq("despesa_id", despesaId);
+      if (delErr) throw delErr;
+      if (itens.length > 0) {
+        const { error: insErr } = await supabase.from("despesa_rateios").insert(
+          itens.map((r) => ({ despesa_id: despesaId, missao_id: r.missao_id, valor: r.valor })) as any,
+        );
+        if (insErr) throw insErr;
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["despesas"] });
+      qc.invalidateQueries({ queryKey: ["despesa-rateios"] });
       toast.success(editing ? "Atualizado com sucesso" : "Criado com sucesso");
-      setFormOpen(false); setEditing(null); setValues(defaultValues);
+      setFormOpen(false); setEditing(null); setValues(defaultValues); setRateio([]);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -312,8 +351,11 @@ function Page() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const openNew = () => { setEditing(null); setValues(defaultValues); setFormOpen(true); };
-  const openEdit = (row: T) => { setEditing(row); setValues(row); setFormOpen(true); };
+  const openNew = () => { setEditing(null); setValues(defaultValues); setRateio([]); setFormOpen(true); };
+  const openEdit = (row: T) => { setEditing(row); setValues(row); setRateio(rateiosDe(row.id)); setFormOpen(true); };
+
+  const rateioTexto = (id: string) =>
+    rateiosDe(id).map((r) => `${nomeById(missoes, r.missao_id)}: ${formatCurrency(Number(r.valor))}`).join(" | ");
 
   const contratoLabel = (id: string | null) => {
     if (!id) return "—";
@@ -375,6 +417,7 @@ function Page() {
               { header: "Categoria", accessor: (r) => categoriaLabel(r.despesa.categoria, r.despesa.categoria_personalizada) },
               { header: "Empresa", accessor: (r) => nomeById(empresas, r.despesa.empresa_id) },
               { header: "Missão", accessor: (r) => nomeById(missoes, r.despesa.missao_id) },
+              { header: "Rateio por missão", accessor: (r) => rateioTexto(r.despesa.id) || "—" },
               { header: "Fornecedor", accessor: (r) => nomeById(fornecedores, r.despesa.fornecedor_id) },
               { header: "Parcela", accessor: (r) => r.despesa.parcelas > 1 ? `${r.despesa.numero_parcela}/${r.despesa.parcelas}` : "Única" },
               { header: "Vencimento", accessor: (r) => formatDate(r.despesa.data_vencimento) },
@@ -547,6 +590,15 @@ function Page() {
                                 {pago > 0 && pago < v && (
                                   <div className="text-[10px] text-success">Pago {formatCurrency(pago)}</div>
                                 )}
+                                {rateiosDe(r.id).length > 0 && (
+                                  <div className="mt-1 space-y-0.5 text-[10px] text-muted-foreground text-right">
+                                    {rateiosDe(r.id).map((rt) => (
+                                      <div key={rt.id ?? rt.missao_id}>
+                                        {nomeById(missoes, rt.missao_id)}: {formatCurrency(Number(rt.valor))}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </td>
                               <td className="px-4 py-2 tabular-nums">{formatDate(r.data_vencimento)}</td>
                               <td className="px-4 py-2"><StatusBadge status={r.status} /></td>
@@ -584,13 +636,21 @@ function Page() {
         )}
       </Card>
 
-      <Dialog open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) { setEditing(null); setValues(defaultValues); } }}>
+      <Dialog open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) { setEditing(null); setValues(defaultValues); setRateio([]); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar Despesa" : "Nova Despesa"}</DialogTitle>
             <DialogDescription>Preencha os campos abaixo</DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); upsert.mutate(values); }} className="space-y-4">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const itens = rateio.filter((r) => r.missao_id && Number(r.valor) > 0);
+            if (itens.length > 0 && diferencaRateio(itens, Number(values.valor ?? 0)) !== 0) {
+              toast.error("A soma do rateio por missão deve ser exatamente igual ao valor da despesa.");
+              return;
+            }
+            upsert.mutate(values);
+          }} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <SelectField label="Categoria" value={values.categoria}
                 onChange={(v) => setValues({
@@ -647,6 +707,14 @@ function Page() {
               </div>
               <div className="col-span-2">
                 <TextAreaField label="Observações" value={values.observacoes} onChange={(v) => setValues({ ...values, observacoes: v })} />
+              </div>
+              <div className="col-span-2">
+                <RateioMissoes
+                  itens={rateio}
+                  onChange={setRateio}
+                  total={Number(values.valor ?? 0)}
+                  missoes={missoes ?? []}
+                />
               </div>
               <p className="col-span-2 text-[11px] text-muted-foreground">
                 Em despesas parceladas, o valor informado é repetido em <strong>cada</strong> parcela (não é dividido).
