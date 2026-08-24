@@ -599,8 +599,9 @@ function Page() {
                       </thead>
                       <tbody>
                         {g.rows.map((r) => {
-                          const v = Number(r.valor);
-                          const pago = Number(r.valor_pago ?? 0);
+                          const rateado = rateiosDe(r.id).length > 0;
+                          const v = valorNoEscopo(r);
+                          const pago = Number(r.valor_pago ?? 0) * fatorEscopo(r);
                           return (
                             <tr key={r.id} className="border-b last:border-b-0 hover:bg-muted/30">
                               <td className="px-4 py-2">
@@ -609,10 +610,15 @@ function Page() {
                               <td className="px-4 py-2">{r.banco ?? "—"}</td>
                               <td className="px-4 py-2 text-right tabular-nums">
                                 <div className="font-medium">{formatCurrency(v)}</div>
+                                {rateado && missaoFilter && (
+                                  <div className="text-[10px] text-muted-foreground">
+                                    Rateada · total {formatCurrency(Number(r.valor))}
+                                  </div>
+                                )}
                                 {pago > 0 && pago < v && (
                                   <div className="text-[10px] text-success">Pago {formatCurrency(pago)}</div>
                                 )}
-                                {rateiosDe(r.id).length > 0 && (
+                                {rateado && !missaoFilter && (
                                   <div className="mt-1 space-y-0.5 text-[10px] text-muted-foreground text-right">
                                     {rateiosDe(r.id).map((rt) => (
                                       <div key={rt.id ?? rt.missao_id}>
