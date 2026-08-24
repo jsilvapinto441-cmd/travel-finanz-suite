@@ -18,7 +18,7 @@ import rotasLogo from "@/assets/rotas-logo-transparent.png.asset.json";
 
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/bancos", label: "Bancos", icon: Landmark },
   { to: "/empresas", label: "Empresas", icon: Building2 },
   { to: "/missoes", label: "Missões", icon: Target },
@@ -36,7 +36,7 @@ const nav = [
 
 // Barra inferior mobile — 4 módulos mais usados + botão Menu
 const bottomNav = [
-  { to: "/", label: "Início", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Início", icon: LayoutDashboard },
   { to: "/recebiveis", label: "Receber", icon: ArrowDownLeft },
   { to: "/despesas", label: "Pagar", icon: ArrowUpRight },
   { to: "/contratos", label: "Contratos", icon: FileText },

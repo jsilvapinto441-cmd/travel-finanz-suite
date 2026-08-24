@@ -48,7 +48,7 @@ function Page() {
   useEffect(() => {
     if (!loading && !isAdmin) {
       toast.error("Acesso restrito a administradores.");
-      navigate({ to: "/" });
+      navigate({ to: "/dashboard" });
     }
   }, [loading, isAdmin, navigate]);
 
