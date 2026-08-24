@@ -416,10 +416,12 @@
 }
 
 .splash-logo-wrap.mounted.hold {
+  opacity: 1;
   animation: splash-float 6s ease-in-out infinite;
 }
 
 .splash-logo-wrap.mounted.exit {
+  opacity: 1;
   animation: splash-exit 0.35s ease-in forwards;
 }
 
