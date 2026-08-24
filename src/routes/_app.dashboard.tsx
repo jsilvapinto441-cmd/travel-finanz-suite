@@ -408,7 +408,7 @@ function Dashboard() {
     const entradaSaidaVazio = entradaSaidaTotais.entrada === 0 && entradaSaidaTotais.saida === 0;
 
     return { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, entradaSaidaSerie, entradaSaidaTotais, entradaSaidaVazio, granularidade, despsAll };
-  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, missaoId, dataIni, dataFim]);
+  }, [recebiveis, despesas, despesaFator, pagamentos, funcionarios, empresas, missoes, empresaId, missaoId, dataIni, dataFim]);
 
 
   const { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, entradaSaidaSerie, entradaSaidaTotais, entradaSaidaVazio, granularidade, despsAll } = aggregates;
