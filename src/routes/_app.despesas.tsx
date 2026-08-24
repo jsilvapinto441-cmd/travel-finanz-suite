@@ -443,13 +443,13 @@ function Page() {
               { header: "Fornecedor", accessor: (r) => nomeById(fornecedores, r.despesa.fornecedor_id) },
               { header: "Parcela", accessor: (r) => r.despesa.parcelas > 1 ? `${r.despesa.numero_parcela}/${r.despesa.parcelas}` : "Única" },
               { header: "Vencimento", accessor: (r) => formatDate(r.despesa.data_vencimento) },
-              { header: "Valor do contrato", accessor: (r) => formatCurrency(Number(r.despesa.valor)) },
+              { header: "Valor do contrato", accessor: (r) => formatCurrency(valorNoEscopo(r.despesa)) },
               { header: "Data do pagamento", accessor: (r) => r.pagamento ? formatDate(r.pagamento.data_pagamento) : "—" },
-              { header: "Valor pago", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor)) : formatCurrency(0) },
+              { header: "Valor pago", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor) * fatorEscopo(r.despesa)) : formatCurrency(0) },
               { header: "Forma de pagamento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
               { header: "Conta", accessor: (r) => r.pagamento ? contaLabelById(r.pagamento.conta_bancaria_id) : (r.despesa.banco ?? "—") },
-              { header: "Total pago no filtro", accessor: (r) => formatCurrency(r.totalPagoEscopo) },
-              { header: "Saldo a pagar", accessor: (r) => formatCurrency(Math.max(Number(r.despesa.valor) - Number(r.despesa.valor_pago ?? 0), 0)) },
+              { header: "Total pago no filtro", accessor: (r) => formatCurrency(r.totalPagoEscopo * fatorEscopo(r.despesa)) },
+              { header: "Saldo a pagar", accessor: (r) => formatCurrency(Math.max(valorNoEscopo(r.despesa) - Number(r.despesa.valor_pago ?? 0) * fatorEscopo(r.despesa), 0)) },
               { header: "Status", accessor: (r) => formatStatus(r.despesa.status) },
             ]}
 
