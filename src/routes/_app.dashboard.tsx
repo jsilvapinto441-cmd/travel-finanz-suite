@@ -300,8 +300,80 @@ function Dashboard() {
       return { id: e.id, nome: e.nome, cor: e.cor || "#f97316", entrada, saida };
     });
 
-    return { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll };
-  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, dataIni, dataFim]);
+    // ===== Entrada × Saída (série cronológica, respeitando TODOS os filtros) =====
+    // Usa exatamente os pagamentos já filtrados por empresa / missão / período,
+    // portanto os valores batem com as telas de Recebíveis e Despesas.
+    const toDate = (s: string) => new Date(`${s.slice(0, 10)}T00:00:00Z`);
+    const datasPag = [...pagsCliente, ...pagsDespesas]
+      .map((p) => (p.data_pagamento ?? "").slice(0, 10))
+      .filter(Boolean)
+      .sort();
+
+    let inicio: Date;
+    let fim: Date;
+    if (dataIni || dataFim) {
+      inicio = toDate(dataIni || datasPag[0] || dataFim!);
+      fim = toDate(dataFim || datasPag[datasPag.length - 1] || dataIni!);
+    } else if (datasPag.length) {
+      const seisMeses = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 5, 1));
+      const primeiro = toDate(datasPag[0]);
+      inicio = primeiro > seisMeses ? primeiro : seisMeses;
+      fim = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    } else {
+      inicio = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 5, 1));
+      fim = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    }
+    if (fim < inicio) fim = inicio;
+
+    const diasRange = Math.round((fim.getTime() - inicio.getTime()) / 86400000);
+    const granularidade: "dia" | "mes" = diasRange <= 62 ? "dia" : "mes";
+
+    const bucketKey = (iso: string) => (granularidade === "dia" ? iso.slice(0, 10) : iso.slice(0, 7));
+    const buckets: { key: string; label: string; entrada: number; saida: number }[] = [];
+    if (granularidade === "dia") {
+      for (let t = inicio.getTime(); t <= fim.getTime(); t += 86400000) {
+        const d = new Date(t);
+        const key = d.toISOString().slice(0, 10);
+        buckets.push({
+          key,
+          label: `${key.slice(8, 10)}/${key.slice(5, 7)}`,
+          entrada: 0,
+          saida: 0,
+        });
+      }
+    } else {
+      const cursor = new Date(Date.UTC(inicio.getUTCFullYear(), inicio.getUTCMonth(), 1));
+      const limite = new Date(Date.UTC(fim.getUTCFullYear(), fim.getUTCMonth(), 1));
+      while (cursor <= limite) {
+        const key = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, "0")}`;
+        buckets.push({
+          key,
+          label: formatMonth(new Date(cursor.getUTCFullYear(), cursor.getUTCMonth(), 1)),
+          entrada: 0,
+          saida: 0,
+        });
+        cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+      }
+    }
+    const bucketIdx = new Map(buckets.map((b, i) => [b.key, i]));
+    for (const p of pagsCliente) {
+      const i = bucketIdx.get(bucketKey(p.data_pagamento ?? ""));
+      if (i !== undefined) buckets[i].entrada += Number(p.valor ?? 0);
+    }
+    for (const p of pagsDespesas) {
+      const i = bucketIdx.get(bucketKey(p.data_pagamento ?? ""));
+      if (i !== undefined) buckets[i].saida += Number(p.valor ?? 0);
+    }
+    const entradaSaidaSerie = buckets.map((b) => ({ ...b, saldo: b.entrada - b.saida }));
+    const entradaSaidaTotais = entradaSaidaSerie.reduce(
+      (acc, b) => ({ entrada: acc.entrada + b.entrada, saida: acc.saida + b.saida }),
+      { entrada: 0, saida: 0 },
+    );
+    const entradaSaidaVazio = entradaSaidaTotais.entrada === 0 && entradaSaidaTotais.saida === 0;
+
+    return { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, entradaSaidaSerie, entradaSaidaTotais, entradaSaidaVazio, granularidade, despsAll };
+  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, missaoId, dataIni, dataFim]);
+
 
   const { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, despsAll } = aggregates;
 
