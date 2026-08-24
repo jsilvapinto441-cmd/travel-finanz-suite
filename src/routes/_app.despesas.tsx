@@ -288,31 +288,47 @@ function Page() {
     (payment) => formaMatches(payment.forma_pagamento, formaFilter),
   );
 
+  /** Valor da despesa considerando o rateio quando há filtro por missão. */
+  const valorNoEscopo = (row: T): number => {
+    const total = Number(row.valor ?? 0);
+    if (!missaoFilter) return total;
+    const itens = rateiosByDespesa?.get(row.id) ?? [];
+    if (itens.length === 0) return total;
+    const item = itens.find((x) => x.missao_id === missaoFilter);
+    return item ? Number(item.valor ?? 0) : total;
+  };
+  /** Proporção do valor da despesa atribuída à missão filtrada (1 quando sem rateio/filtro). */
+  const fatorEscopo = (row: T): number => {
+    const total = Number(row.valor ?? 0);
+    if (!total) return 1;
+    return valorNoEscopo(row) / total;
+  };
+
   const groups = useMemo(
-    () => buildGroups(filtered, scopedPayments),
-    [filtered, dataDe, dataAte, formaFilter],
+    () => buildGroups(filtered, scopedPayments, valorNoEscopo, fatorEscopo),
+    [filtered, dataDe, dataAte, formaFilter, missaoFilter, rateiosByDespesa],
   );
 
   const totalHoje = useMemo(() => {
     const hoje = new Date().toLocaleDateString("sv-SE");
     return filtered
       .filter((r) => r.data_vencimento === hoje && r.status !== "pago" && r.status !== "cancelado")
-      .reduce((acc, r) => acc + Math.max(0, Number(r.valor) - Number(r.valor_pago ?? 0)), 0);
-  }, [filtered]);
+      .reduce((acc, r) => acc + Math.max(0, valorNoEscopo(r) - Number(r.valor_pago ?? 0) * fatorEscopo(r)), 0);
+  }, [filtered, missaoFilter, rateiosByDespesa]);
 
   const totaisPeriodo = useMemo(() => {
     let total = 0, pago = 0;
     for (const r of filtered) {
       if (r.status === "cancelado") continue;
-      total += Number(r.valor ?? 0);
-      pago += sumFinancialPayments(scopedPayments(r));
+      total += valorNoEscopo(r);
+      pago += sumFinancialPayments(scopedPayments(r)) * fatorEscopo(r);
     }
     const restante = filtered.reduce(
-      (sum, r) => sum + Math.max(Number(r.valor ?? 0) - Number(r.valor_pago ?? 0), 0),
+      (sum, r) => sum + Math.max(valorNoEscopo(r) - Number(r.valor_pago ?? 0) * fatorEscopo(r), 0),
       0,
     );
     return { total, pago, restante };
-  }, [filtered, dataDe, dataAte, formaFilter]);
+  }, [filtered, dataDe, dataAte, formaFilter, missaoFilter, rateiosByDespesa]);
 
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
