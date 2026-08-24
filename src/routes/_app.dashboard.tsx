@@ -77,18 +77,48 @@ function Dashboard() {
     staleTime: 60_000,
   });
 
-  const { data: despesas } = useQuery({
+  // Despesas do escopo. Com filtro por missão, considera também as despesas rateadas
+  // e usa somente a parcela de valor destinada àquela missão.
+  const { data: despesasScope } = useQuery({
     queryKey: ["dash-despesas", empresaId, missaoId],
     queryFn: async () => {
+      let rateioValor = new Map<string, number>();
+      if (missaoId !== "all") {
+        const { data: rat } = await supabase
+          .from("despesa_rateios")
+          .select("despesa_id, valor")
+          .eq("missao_id", missaoId);
+        for (const r of (rat ?? []) as any[]) {
+          rateioValor.set(r.despesa_id, Number(r.valor ?? 0));
+        }
+      }
       let q = supabase
         .from("despesas")
         .select("id,descricao,empresa_id,fornecedor_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
-      if (missaoId !== "all") q = q.eq("missao_id", missaoId);
-      return (await q).data ?? [];
+      const rows = ((await q).data ?? []) as any[];
+      if (missaoId === "all") {
+        return { rows, fator: new Map<string, number>() };
+      }
+      const fator = new Map<string, number>();
+      const scoped: any[] = [];
+      for (const d of rows) {
+        const share = rateioValor.get(d.id);
+        const total = Number(d.valor ?? 0);
+        if (share !== undefined) {
+          const f = total > 0 ? share / total : 1;
+          fator.set(d.id, f);
+          scoped.push({ ...d, valor: share, valor_pago: Number(d.valor_pago ?? 0) * f });
+        } else if (d.missao_id === missaoId && !rateioValor.has(d.id)) {
+          scoped.push(d);
+        }
+      }
+      return { rows: scoped, fator };
     },
     staleTime: 60_000,
   });
+  const despesas = despesasScope?.rows;
+  const despesaFator = despesasScope?.fator;
 
   const { data: funcionarios } = useQuery({
     queryKey: ["dash-funcionarios", empresaId],
