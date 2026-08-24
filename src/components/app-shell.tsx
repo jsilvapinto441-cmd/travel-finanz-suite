@@ -18,7 +18,7 @@ import rotasLogo from "@/assets/rotas-logo-transparent.png.asset.json";
 
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/bancos", label: "Bancos", icon: Landmark },
   { to: "/empresas", label: "Empresas", icon: Building2 },
   { to: "/missoes", label: "Missões", icon: Target },
@@ -36,7 +36,7 @@ const nav = [
 
 // Barra inferior mobile — 4 módulos mais usados + botão Menu
 const bottomNav = [
-  { to: "/", label: "Início", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Início", icon: LayoutDashboard },
   { to: "/recebiveis", label: "Receber", icon: ArrowDownLeft },
   { to: "/despesas", label: "Pagar", icon: ArrowUpRight },
   { to: "/contratos", label: "Contratos", icon: FileText },
@@ -66,7 +66,7 @@ export function AppShell() {
   const navItems = nav.filter((i) => !("adminOnly" in i && i.adminOnly) || isAdmin);
 
   const currentLabel = navItems.find((i) =>
-    i.to === "/" ? location.pathname === "/" : location.pathname.startsWith(i.to),
+    location.pathname.startsWith(i.to),
   )?.label ?? "Rotas";
 
   const { name: empresaNome, logo: empresaLogo } = useBrand();
@@ -105,10 +105,7 @@ export function AppShell() {
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          const active =
-            item.to === "/"
-              ? location.pathname === "/"
-              : location.pathname.startsWith(item.to);
+        const active = location.pathname.startsWith(item.to);
           const Icon = item.icon;
           return (
             <Link
@@ -233,10 +230,7 @@ export function AppShell() {
           aria-label="Navegação principal"
         >
           {bottomNav.map((item) => {
-            const active =
-              item.to === "/"
-                ? location.pathname === "/"
-                : location.pathname.startsWith(item.to);
+            const active = location.pathname.startsWith(item.to);
             const Icon = item.icon;
             return (
               <Link
