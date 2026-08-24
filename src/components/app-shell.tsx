@@ -66,7 +66,7 @@ export function AppShell() {
   const navItems = nav.filter((i) => !("adminOnly" in i && i.adminOnly) || isAdmin);
 
   const currentLabel = navItems.find((i) =>
-    i.to === "/" ? location.pathname === "/" : location.pathname.startsWith(i.to),
+    location.pathname.startsWith(i.to),
   )?.label ?? "Rotas";
 
   const { name: empresaNome, logo: empresaLogo } = useBrand();
@@ -105,10 +105,7 @@ export function AppShell() {
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          const active =
-            item.to === "/"
-              ? location.pathname === "/"
-              : location.pathname.startsWith(item.to);
+        const active = location.pathname.startsWith(item.to);
           const Icon = item.icon;
           return (
             <Link
@@ -233,10 +230,7 @@ export function AppShell() {
           aria-label="Navegação principal"
         >
           {bottomNav.map((item) => {
-            const active =
-              item.to === "/"
-                ? location.pathname === "/"
-                : location.pathname.startsWith(item.to);
+            const active = location.pathname.startsWith(item.to);
             const Icon = item.icon;
             return (
               <Link
