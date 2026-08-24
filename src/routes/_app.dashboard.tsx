@@ -82,14 +82,15 @@ function Dashboard() {
   const { data: despesasScope } = useQuery({
     queryKey: ["dash-despesas", empresaId, missaoId],
     queryFn: async () => {
-      let rateioValor = new Map<string, number>();
+      const rateioValor = new Map<string, number>();
+      const temRateio = new Set<string>();
       if (missaoId !== "all") {
         const { data: rat } = await supabase
           .from("despesa_rateios")
-          .select("despesa_id, valor")
-          .eq("missao_id", missaoId);
+          .select("despesa_id, missao_id, valor");
         for (const r of (rat ?? []) as any[]) {
-          rateioValor.set(r.despesa_id, Number(r.valor ?? 0));
+          temRateio.add(r.despesa_id);
+          if (r.missao_id === missaoId) rateioValor.set(r.despesa_id, Number(r.valor ?? 0));
         }
       }
       let q = supabase
@@ -103,13 +104,14 @@ function Dashboard() {
       const fator = new Map<string, number>();
       const scoped: any[] = [];
       for (const d of rows) {
-        const share = rateioValor.get(d.id);
         const total = Number(d.valor ?? 0);
-        if (share !== undefined) {
+        if (temRateio.has(d.id)) {
+          const share = rateioValor.get(d.id);
+          if (share === undefined) continue; // rateada, mas não para esta missão
           const f = total > 0 ? share / total : 1;
           fator.set(d.id, f);
           scoped.push({ ...d, valor: share, valor_pago: Number(d.valor_pago ?? 0) * f });
-        } else if (d.missao_id === missaoId && !rateioValor.has(d.id)) {
+        } else if (d.missao_id === missaoId) {
           scoped.push(d);
         }
       }
