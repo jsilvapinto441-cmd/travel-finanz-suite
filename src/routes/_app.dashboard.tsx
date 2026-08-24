@@ -161,9 +161,13 @@ function Dashboard() {
     // SOMENTE pagamentos de clientes cujo recebível pertence ao escopo filtrado
     const pagsCliente = pagsAll.filter((p) => p.recebivel_id && recIdsFiltrados.has(p.recebivel_id) && inDateRange(p.data_pagamento));
     const despIdsFiltradas = new Set(despsAll.map((d) => d.id));
-    const pagsDespesas = pagsAll.filter(
-      (p) => p.despesa_id && despIdsFiltradas.has(p.despesa_id) && inDateRange(p.data_pagamento),
-    );
+    // Em despesas rateadas por missão, cada pagamento entra apenas na proporção da missão filtrada.
+    const pagsDespesas = pagsAll
+      .filter((p) => p.despesa_id && despIdsFiltradas.has(p.despesa_id) && inDateRange(p.data_pagamento))
+      .map((p) => {
+        const f = despesaFator?.get(p.despesa_id as string);
+        return f === undefined ? p : { ...p, valor: Number(p.valor ?? 0) * f };
+      });
 
     const st = (r: any) => String(r.status ?? "");
 
