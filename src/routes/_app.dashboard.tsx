@@ -77,18 +77,50 @@ function Dashboard() {
     staleTime: 60_000,
   });
 
-  const { data: despesas } = useQuery({
+  // Despesas do escopo. Com filtro por missão, considera também as despesas rateadas
+  // e usa somente a parcela de valor destinada àquela missão.
+  const { data: despesasScope } = useQuery({
     queryKey: ["dash-despesas", empresaId, missaoId],
     queryFn: async () => {
+      const rateioValor = new Map<string, number>();
+      const temRateio = new Set<string>();
+      if (missaoId !== "all") {
+        const { data: rat } = await supabase
+          .from("despesa_rateios")
+          .select("despesa_id, missao_id, valor");
+        for (const r of (rat ?? []) as any[]) {
+          temRateio.add(r.despesa_id);
+          if (r.missao_id === missaoId) rateioValor.set(r.despesa_id, Number(r.valor ?? 0));
+        }
+      }
       let q = supabase
         .from("despesas")
         .select("id,descricao,empresa_id,fornecedor_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
-      if (missaoId !== "all") q = q.eq("missao_id", missaoId);
-      return (await q).data ?? [];
+      const rows = ((await q).data ?? []) as any[];
+      if (missaoId === "all") {
+        return { rows, fator: new Map<string, number>() };
+      }
+      const fator = new Map<string, number>();
+      const scoped: any[] = [];
+      for (const d of rows) {
+        const total = Number(d.valor ?? 0);
+        if (temRateio.has(d.id)) {
+          const share = rateioValor.get(d.id);
+          if (share === undefined) continue; // rateada, mas não para esta missão
+          const f = total > 0 ? share / total : 1;
+          fator.set(d.id, f);
+          scoped.push({ ...d, valor: share, valor_pago: Number(d.valor_pago ?? 0) * f });
+        } else if (d.missao_id === missaoId) {
+          scoped.push(d);
+        }
+      }
+      return { rows: scoped, fator };
     },
     staleTime: 60_000,
   });
+  const despesas = despesasScope?.rows;
+  const despesaFator = despesasScope?.fator;
 
   const { data: funcionarios } = useQuery({
     queryKey: ["dash-funcionarios", empresaId],
@@ -129,9 +161,13 @@ function Dashboard() {
     // SOMENTE pagamentos de clientes cujo recebível pertence ao escopo filtrado
     const pagsCliente = pagsAll.filter((p) => p.recebivel_id && recIdsFiltrados.has(p.recebivel_id) && inDateRange(p.data_pagamento));
     const despIdsFiltradas = new Set(despsAll.map((d) => d.id));
-    const pagsDespesas = pagsAll.filter(
-      (p) => p.despesa_id && despIdsFiltradas.has(p.despesa_id) && inDateRange(p.data_pagamento),
-    );
+    // Em despesas rateadas por missão, cada pagamento entra apenas na proporção da missão filtrada.
+    const pagsDespesas = pagsAll
+      .filter((p) => p.despesa_id && despIdsFiltradas.has(p.despesa_id) && inDateRange(p.data_pagamento))
+      .map((p) => {
+        const f = despesaFator?.get(p.despesa_id as string);
+        return f === undefined ? p : { ...p, valor: Number(p.valor ?? 0) * f };
+      });
 
     const st = (r: any) => String(r.status ?? "");
 
@@ -372,7 +408,7 @@ function Dashboard() {
     const entradaSaidaVazio = entradaSaidaTotais.entrada === 0 && entradaSaidaTotais.saida === 0;
 
     return { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, inadimplencia, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, entradaSaidaSerie, entradaSaidaTotais, entradaSaidaVazio, granularidade, despsAll };
-  }, [recebiveis, despesas, pagamentos, funcionarios, empresas, missoes, empresaId, missaoId, dataIni, dataFim]);
+  }, [recebiveis, despesas, despesaFator, pagamentos, funcionarios, empresas, missoes, empresaId, missaoId, dataIni, dataFim]);
 
 
   const { qtdRecAtraso, qtdDespAtraso, valorRecAtraso, valorDespAtraso, totalContratado, totalRecebido, totalEmAberto, totalVencido, totalOperacional, folhaMensal, totalDespesa, despesasPagas, lucro, atrasados, months, catData, empresasList, receitaPorEmpresa, entradaSaidaPorEmpresa, entradaSaidaSerie, entradaSaidaTotais, entradaSaidaVazio, granularidade, despsAll } = aggregates;

@@ -136,7 +136,12 @@ type Group = {
   countVencido: number;
 };
 
-function buildGroups(rows: T[], scopedPayments: (row: T) => Pagamento[]): Group[] {
+function buildGroups(
+  rows: T[],
+  scopedPayments: (row: T) => Pagamento[],
+  valorDe: (row: T) => number = (row) => Number(row.valor ?? 0),
+  fatorDe: (row: T) => number = () => 1,
+): Group[] {
   const map = new Map<string, Group>();
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
@@ -158,11 +163,12 @@ function buildGroups(rows: T[], scopedPayments: (row: T) => Pagamento[]): Group[
       map.set(key, g);
     }
     g.rows.push(r);
-    const v = Number(r.valor ?? 0);
-    const pago = sumFinancialPayments(scopedPayments(r));
+    const f = fatorDe(r);
+    const v = valorDe(r);
+    const pago = sumFinancialPayments(scopedPayments(r)) * f;
     g.total += v;
     g.pago += pago;
-    g.restante += Math.max(v - Number(r.valor_pago ?? 0), 0);
+    g.restante += Math.max(v - Number(r.valor_pago ?? 0) * f, 0);
     if (r.status !== "pago" && r.data_vencimento) {
       const dv = new Date(r.data_vencimento);
       if (!g.proximoVenc || new Date(g.proximoVenc) > dv) g.proximoVenc = r.data_vencimento;
@@ -282,31 +288,47 @@ function Page() {
     (payment) => formaMatches(payment.forma_pagamento, formaFilter),
   );
 
+  /** Valor da despesa considerando o rateio quando há filtro por missão. */
+  const valorNoEscopo = (row: T): number => {
+    const total = Number(row.valor ?? 0);
+    if (!missaoFilter) return total;
+    const itens = rateiosByDespesa?.get(row.id) ?? [];
+    if (itens.length === 0) return total;
+    const item = itens.find((x) => x.missao_id === missaoFilter);
+    return item ? Number(item.valor ?? 0) : total;
+  };
+  /** Proporção do valor da despesa atribuída à missão filtrada (1 quando sem rateio/filtro). */
+  const fatorEscopo = (row: T): number => {
+    const total = Number(row.valor ?? 0);
+    if (!total) return 1;
+    return valorNoEscopo(row) / total;
+  };
+
   const groups = useMemo(
-    () => buildGroups(filtered, scopedPayments),
-    [filtered, dataDe, dataAte, formaFilter],
+    () => buildGroups(filtered, scopedPayments, valorNoEscopo, fatorEscopo),
+    [filtered, dataDe, dataAte, formaFilter, missaoFilter, rateiosByDespesa],
   );
 
   const totalHoje = useMemo(() => {
     const hoje = new Date().toLocaleDateString("sv-SE");
     return filtered
       .filter((r) => r.data_vencimento === hoje && r.status !== "pago" && r.status !== "cancelado")
-      .reduce((acc, r) => acc + Math.max(0, Number(r.valor) - Number(r.valor_pago ?? 0)), 0);
-  }, [filtered]);
+      .reduce((acc, r) => acc + Math.max(0, valorNoEscopo(r) - Number(r.valor_pago ?? 0) * fatorEscopo(r)), 0);
+  }, [filtered, missaoFilter, rateiosByDespesa]);
 
   const totaisPeriodo = useMemo(() => {
     let total = 0, pago = 0;
     for (const r of filtered) {
       if (r.status === "cancelado") continue;
-      total += Number(r.valor ?? 0);
-      pago += sumFinancialPayments(scopedPayments(r));
+      total += valorNoEscopo(r);
+      pago += sumFinancialPayments(scopedPayments(r)) * fatorEscopo(r);
     }
     const restante = filtered.reduce(
-      (sum, r) => sum + Math.max(Number(r.valor ?? 0) - Number(r.valor_pago ?? 0), 0),
+      (sum, r) => sum + Math.max(valorNoEscopo(r) - Number(r.valor_pago ?? 0) * fatorEscopo(r), 0),
       0,
     );
     return { total, pago, restante };
-  }, [filtered, dataDe, dataAte, formaFilter]);
+  }, [filtered, dataDe, dataAte, formaFilter, missaoFilter, rateiosByDespesa]);
 
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
@@ -421,13 +443,13 @@ function Page() {
               { header: "Fornecedor", accessor: (r) => nomeById(fornecedores, r.despesa.fornecedor_id) },
               { header: "Parcela", accessor: (r) => r.despesa.parcelas > 1 ? `${r.despesa.numero_parcela}/${r.despesa.parcelas}` : "Única" },
               { header: "Vencimento", accessor: (r) => formatDate(r.despesa.data_vencimento) },
-              { header: "Valor do contrato", accessor: (r) => formatCurrency(Number(r.despesa.valor)) },
+              { header: "Valor do contrato", accessor: (r) => formatCurrency(valorNoEscopo(r.despesa)) },
               { header: "Data do pagamento", accessor: (r) => r.pagamento ? formatDate(r.pagamento.data_pagamento) : "—" },
-              { header: "Valor pago", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor)) : formatCurrency(0) },
+              { header: "Valor pago", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor) * fatorEscopo(r.despesa)) : formatCurrency(0) },
               { header: "Forma de pagamento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
               { header: "Conta", accessor: (r) => r.pagamento ? contaLabelById(r.pagamento.conta_bancaria_id) : (r.despesa.banco ?? "—") },
-              { header: "Total pago no filtro", accessor: (r) => formatCurrency(r.totalPagoEscopo) },
-              { header: "Saldo a pagar", accessor: (r) => formatCurrency(Math.max(Number(r.despesa.valor) - Number(r.despesa.valor_pago ?? 0), 0)) },
+              { header: "Total pago no filtro", accessor: (r) => formatCurrency(r.totalPagoEscopo * fatorEscopo(r.despesa)) },
+              { header: "Saldo a pagar", accessor: (r) => formatCurrency(Math.max(valorNoEscopo(r.despesa) - Number(r.despesa.valor_pago ?? 0) * fatorEscopo(r.despesa), 0)) },
               { header: "Status", accessor: (r) => formatStatus(r.despesa.status) },
             ]}
 
@@ -577,8 +599,9 @@ function Page() {
                       </thead>
                       <tbody>
                         {g.rows.map((r) => {
-                          const v = Number(r.valor);
-                          const pago = Number(r.valor_pago ?? 0);
+                          const rateado = rateiosDe(r.id).length > 0;
+                          const v = valorNoEscopo(r);
+                          const pago = Number(r.valor_pago ?? 0) * fatorEscopo(r);
                           return (
                             <tr key={r.id} className="border-b last:border-b-0 hover:bg-muted/30">
                               <td className="px-4 py-2">
@@ -587,10 +610,15 @@ function Page() {
                               <td className="px-4 py-2">{r.banco ?? "—"}</td>
                               <td className="px-4 py-2 text-right tabular-nums">
                                 <div className="font-medium">{formatCurrency(v)}</div>
+                                {rateado && missaoFilter && (
+                                  <div className="text-[10px] text-muted-foreground">
+                                    Rateada · total {formatCurrency(Number(r.valor))}
+                                  </div>
+                                )}
                                 {pago > 0 && pago < v && (
                                   <div className="text-[10px] text-success">Pago {formatCurrency(pago)}</div>
                                 )}
-                                {rateiosDe(r.id).length > 0 && (
+                                {rateado && !missaoFilter && (
                                   <div className="mt-1 space-y-0.5 text-[10px] text-muted-foreground text-right">
                                     {rateiosDe(r.id).map((rt) => (
                                       <div key={rt.id ?? rt.missao_id}>
