@@ -264,6 +264,7 @@ export function DespesasCategoriaDialog({
                     <th className="text-left p-2">Categoria</th>
                     <th className="text-left p-2">Fornecedor</th>
                     <th className="text-right p-2">Valor</th>
+                    <th className="text-right p-2">Valor pago</th>
                     <th className="text-left p-2">Vencimento</th>
                     <th className="text-left p-2">Pagamento</th>
                     <th className="text-left p-2">Status</th>
