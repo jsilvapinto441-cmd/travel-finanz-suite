@@ -34,9 +34,31 @@ export type DespesaCategoriaRow = {
   status: string | null;
   data_vencimento: string | null;
   data_pagamento: string | null;
+  valor_pago?: number | string | null;
+  registros_pagamento?: { data_pagamento: string | null; valor: number | string | null }[] | null;
   empresa_id: string | null;
   fornecedor_id?: string | null;
 };
+
+/** Total efetivamente pago: usa os pagamentos registrados e cai para valor_pago. */
+function totalPago(d: DespesaCategoriaRow): number {
+  const regs = d.registros_pagamento ?? [];
+  if (regs.length > 0) return regs.reduce((s, p) => s + Number(p.valor ?? 0), 0);
+  return Number(d.valor_pago ?? 0);
+}
+
+/**
+ * Data do pagamento exibida: usa o último pagamento efetivamente registrado (igual ao
+ * relatório de Despesas) e cai para a data da despesa quando não há registro.
+ */
+function dataPagamentoEfetiva(d: DespesaCategoriaRow): string | null {
+  const datas = (d.registros_pagamento ?? [])
+    .map((p) => p.data_pagamento)
+    .filter((x): x is string => Boolean(x))
+    .sort();
+  if (datas.length) return datas[datas.length - 1];
+  return d.data_pagamento ?? null;
+}
 
 export function categoriaLabel(c: string | null | undefined) {
   if (!c) return "—";
@@ -242,6 +264,7 @@ export function DespesasCategoriaDialog({
                     <th className="text-left p-2">Categoria</th>
                     <th className="text-left p-2">Fornecedor</th>
                     <th className="text-right p-2">Valor</th>
+                    <th className="text-right p-2">Valor pago</th>
                     <th className="text-left p-2">Vencimento</th>
                     <th className="text-left p-2">Pagamento</th>
                     <th className="text-left p-2">Status</th>
@@ -255,14 +278,15 @@ export function DespesasCategoriaDialog({
                       <td className="p-2 whitespace-nowrap">{categoriaLabel(d.categoria)}</td>
                       <td className="p-2 max-w-[140px] truncate">{fornecedorNome(d.fornecedor_id)}</td>
                       <td className="p-2 text-right font-medium whitespace-nowrap">{formatCurrency(Number(d.valor ?? 0))}</td>
+                      <td className="p-2 text-right whitespace-nowrap">{formatCurrency(totalPago(d))}</td>
                       <td className="p-2 whitespace-nowrap">{formatDate(d.data_vencimento)}</td>
-                      <td className="p-2 whitespace-nowrap">{formatDate(d.data_pagamento)}</td>
+                      <td className="p-2 whitespace-nowrap">{formatDate(dataPagamentoEfetiva(d))}</td>
                       <td className="p-2 whitespace-nowrap"><StatusBadge status={d.status} /></td>
                       <td className="p-2 max-w-[140px] truncate">{empresaNome(d.empresa_id)}</td>
                     </tr>
                   ))}
                   {detalheRows.length === 0 && (
-                    <tr><td colSpan={8} className="p-4 text-center text-muted-foreground">Nenhuma despesa.</td></tr>
+                    <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">Nenhuma despesa.</td></tr>
                   )}
                 </tbody>
               </table>

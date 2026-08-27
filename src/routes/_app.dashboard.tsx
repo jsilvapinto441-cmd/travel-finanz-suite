@@ -95,7 +95,9 @@ function Dashboard() {
       }
       let q = supabase
         .from("despesas")
-        .select("id,descricao,empresa_id,fornecedor_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id");
+        .select(
+          "id,descricao,empresa_id,fornecedor_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id,registros_pagamento(data_pagamento,valor)",
+        );
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
       const rows = ((await q).data ?? []) as any[];
       if (missaoId === "all") {
