@@ -34,9 +34,31 @@ export type DespesaCategoriaRow = {
   status: string | null;
   data_vencimento: string | null;
   data_pagamento: string | null;
+  valor_pago?: number | string | null;
+  registros_pagamento?: { data_pagamento: string | null; valor: number | string | null }[] | null;
   empresa_id: string | null;
   fornecedor_id?: string | null;
 };
+
+/** Total efetivamente pago: usa os pagamentos registrados e cai para valor_pago. */
+function totalPago(d: DespesaCategoriaRow): number {
+  const regs = d.registros_pagamento ?? [];
+  if (regs.length > 0) return regs.reduce((s, p) => s + Number(p.valor ?? 0), 0);
+  return Number(d.valor_pago ?? 0);
+}
+
+/**
+ * Data do pagamento exibida: mantém a data da despesa quando existe (comportamento atual)
+ * e, para pagamentos parciais (onde a despesa não recebe data), usa o último pagamento registrado.
+ */
+function dataPagamentoEfetiva(d: DespesaCategoriaRow): string | null {
+  if (d.data_pagamento) return d.data_pagamento;
+  const datas = (d.registros_pagamento ?? [])
+    .map((p) => p.data_pagamento)
+    .filter((x): x is string => Boolean(x))
+    .sort();
+  return datas.length ? datas[datas.length - 1] : null;
+}
 
 export function categoriaLabel(c: string | null | undefined) {
   if (!c) return "—";
