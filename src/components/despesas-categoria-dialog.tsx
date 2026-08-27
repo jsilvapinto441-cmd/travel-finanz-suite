@@ -278,14 +278,15 @@ export function DespesasCategoriaDialog({
                       <td className="p-2 whitespace-nowrap">{categoriaLabel(d.categoria)}</td>
                       <td className="p-2 max-w-[140px] truncate">{fornecedorNome(d.fornecedor_id)}</td>
                       <td className="p-2 text-right font-medium whitespace-nowrap">{formatCurrency(Number(d.valor ?? 0))}</td>
+                      <td className="p-2 text-right whitespace-nowrap">{formatCurrency(totalPago(d))}</td>
                       <td className="p-2 whitespace-nowrap">{formatDate(d.data_vencimento)}</td>
-                      <td className="p-2 whitespace-nowrap">{formatDate(d.data_pagamento)}</td>
+                      <td className="p-2 whitespace-nowrap">{formatDate(dataPagamentoEfetiva(d))}</td>
                       <td className="p-2 whitespace-nowrap"><StatusBadge status={d.status} /></td>
                       <td className="p-2 max-w-[140px] truncate">{empresaNome(d.empresa_id)}</td>
                     </tr>
                   ))}
                   {detalheRows.length === 0 && (
-                    <tr><td colSpan={8} className="p-4 text-center text-muted-foreground">Nenhuma despesa.</td></tr>
+                    <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">Nenhuma despesa.</td></tr>
                   )}
                 </tbody>
               </table>
