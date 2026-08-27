@@ -48,16 +48,16 @@ function totalPago(d: DespesaCategoriaRow): number {
 }
 
 /**
- * Data do pagamento exibida: mantém a data da despesa quando existe (comportamento atual)
- * e, para pagamentos parciais (onde a despesa não recebe data), usa o último pagamento registrado.
+ * Data do pagamento exibida: usa o último pagamento efetivamente registrado (igual ao
+ * relatório de Despesas) e cai para a data da despesa quando não há registro.
  */
 function dataPagamentoEfetiva(d: DespesaCategoriaRow): string | null {
-  if (d.data_pagamento) return d.data_pagamento;
   const datas = (d.registros_pagamento ?? [])
     .map((p) => p.data_pagamento)
     .filter((x): x is string => Boolean(x))
     .sort();
-  return datas.length ? datas[datas.length - 1] : null;
+  if (datas.length) return datas[datas.length - 1];
+  return d.data_pagamento ?? null;
 }
 
 export function categoriaLabel(c: string | null | undefined) {
