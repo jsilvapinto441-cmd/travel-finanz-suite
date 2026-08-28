@@ -112,7 +112,15 @@ function Dashboard() {
           if (share === undefined) continue; // rateada, mas não para esta missão
           const f = total > 0 ? share / total : 1;
           fator.set(d.id, f);
-          scoped.push({ ...d, valor: share, valor_pago: Number(d.valor_pago ?? 0) * f });
+          scoped.push({
+            ...d,
+            valor: share,
+            valor_pago: Number(d.valor_pago ?? 0) * f,
+            registros_pagamento: (d.registros_pagamento ?? []).map((p: any) => ({
+              ...p,
+              valor: Number(p.valor ?? 0) * f,
+            })),
+          });
         } else if (d.missao_id === missaoId) {
           scoped.push(d);
         }
