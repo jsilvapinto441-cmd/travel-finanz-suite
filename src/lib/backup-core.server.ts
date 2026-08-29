@@ -540,7 +540,11 @@ export async function restaurar(ownerId: string, backupId: string, job: Job | nu
 
     for (const lote of lotes) {
       for (let k = 0; k < lote.length; k += 200) {
-        const chunk = lote.slice(k, k + 200).map((r) => ({ ...r, owner_id: ownerId }));
+        const chunk = lote.slice(k, k + 200).map((r) => {
+          const row: Row = { ...r, owner_id: ownerId };
+          for (const col of GENERATED_COLS[t] ?? []) delete row[col];
+          return row;
+        });
         const { error } = await db.from(t).upsert(chunk as never, { onConflict: "id" });
         if (error) throw new Error(`Falha ao restaurar ${t}: ${error.message}`);
       }
