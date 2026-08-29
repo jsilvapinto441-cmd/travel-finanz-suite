@@ -300,6 +300,89 @@ export async function gerarBackup(
 }
 
 /* ------------------------------------------------------------------ */
+/* Importação de arquivo de backup baixado anteriormente               */
+/* ------------------------------------------------------------------ */
+
+export async function importarBackupUpload(
+  ownerId: string,
+  rawText: string,
+  job: Job | null = null,
+) {
+  const db = await admin();
+
+  await passo(job, 2, "Lendo arquivo enviado");
+  let payload: BackupPayload;
+  try {
+    payload = validarPayload(JSON.parse(rawText), ownerId);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Arquivo inválido";
+    throw new Error(`Validação: ${msg}`);
+  }
+
+  const json = rawText;
+  const bytes = new TextEncoder().encode(json);
+
+  await passo(job, 10, "Registrando backup no histórico");
+
+  const contagem: Record<string, number> = {};
+  let totalRegistros = 0;
+  for (const t of TABLES) {
+    const n = (payload.tabelas[t] ?? []).length;
+    contagem[t] = n;
+    totalRegistros += n;
+  }
+  const arquivos = payload.arquivos ?? [];
+  const comConteudo = arquivos.filter((a) => !!a.conteudo_b64).length;
+
+  const { data: registro, error: regErr } = await db
+    .from("backups")
+    .insert({
+      owner_id: ownerId,
+      criado_por: ownerId,
+      tipo: "upload",
+      status: "processando",
+      tabelas: contagem as never,
+      total_registros: totalRegistros,
+      total_arquivos: arquivos.length,
+      observacoes: `Importado de arquivo · ${arquivos.length} arquivo(s) · ${comConteudo} com conteúdo`,
+    })
+    .select()
+    .single();
+  if (regErr) throw new Error(regErr.message);
+
+  const path = `${ownerId}/${registro.id}.json`;
+  await passo(job, 30, "Enviando pacote para o armazenamento seguro");
+  const { error: upErr } = await db.storage
+    .from("backups")
+    .upload(path, bytes, { contentType: "application/json", upsert: true });
+  if (upErr) {
+    await db.from("backups").update({ status: "erro", erro: upErr.message }).eq("id", registro.id);
+    throw new Error(upErr.message);
+  }
+
+  const { data: final, error: updErr } = await db
+    .from("backups")
+    .update({
+      status: "concluido",
+      path,
+      tamanho_bytes: bytes.byteLength,
+    })
+    .eq("id", registro.id)
+    .select()
+    .single();
+  if (updErr) throw new Error(updErr.message);
+
+  await passo(job, 99, `Backup importado · ${totalRegistros} registros · ${arquivos.length} arquivo(s)`);
+  await log(ownerId, "backup_upload", registro.id, {
+    totalRegistros,
+    arquivos: arquivos.length,
+    comConteudo,
+  });
+
+  return final;
+}
+
+/* ------------------------------------------------------------------ */
 /* Validação / leitura do pacote                                       */
 /* ------------------------------------------------------------------ */
 
