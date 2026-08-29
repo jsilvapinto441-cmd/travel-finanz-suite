@@ -175,6 +175,27 @@ export function BackupRestore() {
     validar.mutate(id);
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx. 100 MB).");
+      return;
+    }
+    try {
+      const text = await file.text();
+      if (!text.trim().startsWith("{")) {
+        toast.error("O arquivo selecionado não parece ser um backup do Rotas.");
+        return;
+      }
+      importar.mutate(text);
+    } catch {
+      toast.error("Não foi possível ler o arquivo.");
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Último backup + ação principal */}
