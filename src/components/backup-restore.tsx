@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   criarBackup, listarBackups, baixarBackup, excluirBackup, restaurarBackup,
   obterAgendamento, salvarAgendamento, jobAtual, validarRestauracao, limparAntigos,
+  uploadBackup,
 } from "@/lib/backup.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   DatabaseBackup, Download, Loader2, RotateCcw, ShieldCheck, Trash2, Clock,
-  ListChecks, AlertTriangle, Eraser,
+  ListChecks, AlertTriangle, Eraser, Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
