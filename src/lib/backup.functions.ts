@@ -7,6 +7,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  * O tenant é SEMPRE `context.userId`, nunca um valor vindo do frontend.
  */
 
+export const uploadBackup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ conteudo: z.string().max(120 * 1024 * 1024) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const core = await import("./backup-core.server");
+    const job = await core.criarJob(context.userId, "validacao", null, "Importando backup enviado");
+    try {
+      const b = await core.importarBackupUpload(context.userId, data.conteudo, job);
+      await core.finalizarJob(job, "concluido", { backupId: b.id, resultado: { backup_id: b.id } });
+      return { backupId: b.id };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Falha ao importar backup";
+      await core.finalizarJob(job, "erro", { erro: msg });
+      throw new Error(msg);
+    }
+  });
+
 export const criarBackup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

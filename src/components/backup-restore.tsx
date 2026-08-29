@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   criarBackup, listarBackups, baixarBackup, excluirBackup, restaurarBackup,
   obterAgendamento, salvarAgendamento, jobAtual, validarRestauracao, limparAntigos,
+  uploadBackup,
 } from "@/lib/backup.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   DatabaseBackup, Download, Loader2, RotateCcw, ShieldCheck, Trash2, Clock,
-  ListChecks, AlertTriangle, Eraser,
+  ListChecks, AlertTriangle, Eraser, Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +44,7 @@ const TIPO_LABEL: Record<string, string> = {
   manual: "Manual",
   automatico: "Automático",
   seguranca: "Segurança (pré-restauração)",
+  upload: "Arquivo importado",
 };
 
 const JOB_TIPO_LABEL: Record<string, string> = {
@@ -69,6 +71,7 @@ export function BackupRestore() {
   const [restaurarId, setRestaurarId] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const [rodando, setRodando] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: backups, isLoading } = useQuery({
     queryKey: ["backups"],
@@ -102,6 +105,18 @@ export function BackupRestore() {
   const criar = useMutation({
     mutationFn: () => { startJob(); return fnCriar(); },
     onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ["backup-job"] }); toast.success("Backup criado com sucesso"); },
+    onError: (e: Error) => { qc.invalidateQueries({ queryKey: ["backup-job"] }); toast.error(e.message); },
+  });
+
+  const fnUpload = useServerFn(uploadBackup);
+
+  const importar = useMutation({
+    mutationFn: (conteudo: string) => { startJob(); return fnUpload({ data: { conteudo } }); },
+    onSuccess: () => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["backup-job"] });
+      toast.success("Backup importado com sucesso. Agora você pode restaurá-lo.");
+    },
     onError: (e: Error) => { qc.invalidateQueries({ queryKey: ["backup-job"] }); toast.error(e.message); },
   });
 
@@ -160,6 +175,27 @@ export function BackupRestore() {
     validar.mutate(id);
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx. 100 MB).");
+      return;
+    }
+    try {
+      const text = await file.text();
+      if (!text.trim().startsWith("{")) {
+        toast.error("O arquivo selecionado não parece ser um backup do Rotas.");
+        return;
+      }
+      importar.mutate(text);
+    } catch {
+      toast.error("Não foi possível ler o arquivo.");
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Último backup + ação principal */}
@@ -187,14 +223,32 @@ export function BackupRestore() {
               )}
             </p>
           </div>
-          <Button
-            onClick={() => criar.mutate()}
-            disabled={criar.isPending || restaurar.isPending}
-            className="w-full sm:w-auto shrink-0"
-          >
-            {criar.isPending ? <Loader2 className="size-4 animate-spin" /> : <DatabaseBackup className="size-4" />}
-            <span className="ml-2">Realizar novo backup</span>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importar.isPending || criar.isPending || restaurar.isPending}
+              className="w-full sm:w-auto"
+            >
+              {importar.isPending ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+              <span className="ml-2">Importar backup</span>
+            </Button>
+            <Button
+              onClick={() => criar.mutate()}
+              disabled={criar.isPending || restaurar.isPending}
+              className="w-full sm:w-auto"
+            >
+              {criar.isPending ? <Loader2 className="size-4 animate-spin" /> : <DatabaseBackup className="size-4" />}
+              <span className="ml-2">Realizar novo backup</span>
+            </Button>
+          </div>
         </div>
       </Card>
 
