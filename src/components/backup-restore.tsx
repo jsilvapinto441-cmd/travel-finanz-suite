@@ -71,6 +71,7 @@ export function BackupRestore() {
   const [restaurarId, setRestaurarId] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const [rodando, setRodando] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: backups, isLoading } = useQuery({
     queryKey: ["backups"],
