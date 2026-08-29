@@ -50,6 +50,13 @@ const SELF_REF: Partial<Record<TableName, string>> = {
   recebiveis: "parent_id",
 };
 
+// Colunas geradas pelo banco — não podem ser enviadas em INSERT/UPSERT.
+const GENERATED_COLS: Partial<Record<TableName, string[]>> = {
+  contratos: ["valor_saldo"],
+};
+
+
+
 const FORMAT_VERSION = 2;
 const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const MAX_TOTAL_FILE_BYTES = 120 * 1024 * 1024;
