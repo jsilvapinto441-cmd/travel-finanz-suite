@@ -50,6 +50,13 @@ const SELF_REF: Partial<Record<TableName, string>> = {
   recebiveis: "parent_id",
 };
 
+// Colunas geradas pelo banco — não podem ser enviadas em INSERT/UPSERT.
+const GENERATED_COLS: Partial<Record<TableName, string[]>> = {
+  contratos: ["valor_saldo"],
+};
+
+
+
 const FORMAT_VERSION = 2;
 const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const MAX_TOTAL_FILE_BYTES = 120 * 1024 * 1024;
@@ -540,7 +547,11 @@ export async function restaurar(ownerId: string, backupId: string, job: Job | nu
 
     for (const lote of lotes) {
       for (let k = 0; k < lote.length; k += 200) {
-        const chunk = lote.slice(k, k + 200).map((r) => ({ ...r, owner_id: ownerId }));
+        const chunk = lote.slice(k, k + 200).map((r) => {
+          const row: Row = { ...r, owner_id: ownerId };
+          for (const col of GENERATED_COLS[t] ?? []) delete row[col];
+          return row;
+        });
         const { error } = await db.from(t).upsert(chunk as never, { onConflict: "id" });
         if (error) throw new Error(`Falha ao restaurar ${t}: ${error.message}`);
       }
