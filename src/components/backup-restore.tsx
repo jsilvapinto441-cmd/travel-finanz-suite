@@ -108,6 +108,18 @@ export function BackupRestore() {
     onError: (e: Error) => { qc.invalidateQueries({ queryKey: ["backup-job"] }); toast.error(e.message); },
   });
 
+  const fnUpload = useServerFn(uploadBackup);
+
+  const importar = useMutation({
+    mutationFn: (conteudo: string) => { startJob(); return fnUpload({ data: { conteudo } }); },
+    onSuccess: () => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["backup-job"] });
+      toast.success("Backup importado com sucesso. Agora você pode restaurá-lo.");
+    },
+    onError: (e: Error) => { qc.invalidateQueries({ queryKey: ["backup-job"] }); toast.error(e.message); },
+  });
+
   const baixar = useMutation({
     mutationFn: (id: string) => fnBaixar({ data: { id } }),
     onSuccess: (r) => { window.open(r.url, "_blank"); },
