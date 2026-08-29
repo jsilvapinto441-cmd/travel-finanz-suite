@@ -223,14 +223,32 @@ export function BackupRestore() {
               )}
             </p>
           </div>
-          <Button
-            onClick={() => criar.mutate()}
-            disabled={criar.isPending || restaurar.isPending}
-            className="w-full sm:w-auto shrink-0"
-          >
-            {criar.isPending ? <Loader2 className="size-4 animate-spin" /> : <DatabaseBackup className="size-4" />}
-            <span className="ml-2">Realizar novo backup</span>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importar.isPending || criar.isPending || restaurar.isPending}
+              className="w-full sm:w-auto"
+            >
+              {importar.isPending ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+              <span className="ml-2">Importar backup</span>
+            </Button>
+            <Button
+              onClick={() => criar.mutate()}
+              disabled={criar.isPending || restaurar.isPending}
+              className="w-full sm:w-auto"
+            >
+              {criar.isPending ? <Loader2 className="size-4 animate-spin" /> : <DatabaseBackup className="size-4" />}
+              <span className="ml-2">Realizar novo backup</span>
+            </Button>
+          </div>
         </div>
       </Card>
 
