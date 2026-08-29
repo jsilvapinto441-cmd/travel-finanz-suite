@@ -44,6 +44,7 @@ const TIPO_LABEL: Record<string, string> = {
   manual: "Manual",
   automatico: "Automático",
   seguranca: "Segurança (pré-restauração)",
+  upload: "Arquivo importado",
 };
 
 const JOB_TIPO_LABEL: Record<string, string> = {
