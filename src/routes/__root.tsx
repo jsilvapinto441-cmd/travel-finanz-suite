@@ -162,6 +162,18 @@ function RootComponent() {
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
 
+  useEffect(() => {
+    const onPreloadError = (event: Event) => {
+      event.preventDefault();
+      const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) ?? 0);
+      if (Date.now() - last < 20_000) return;
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+      window.location.reload();
+    };
+    window.addEventListener("vite:preloadError", onPreloadError);
+    return () => window.removeEventListener("vite:preloadError", onPreloadError);
+  }, []);
+
   useAutoUpdate();
 
   return (
