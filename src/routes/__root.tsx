@@ -38,9 +38,51 @@ function NotFoundComponent() {
   );
 }
 
+const CHUNK_RELOAD_KEY = "rotas:chunk-reload";
+
+function isChunkLoadError(error: unknown) {
+  const msg = error instanceof Error ? error.message : String(error ?? "");
+  return (
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("error loading dynamically imported module") ||
+    msg.includes("Importing a module script failed")
+  );
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !isChunkLoadError(error)) return;
+    const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) ?? 0);
+    // Evita loop: só recarrega se não recarregou nos últimos 20s
+    if (Date.now() - last < 20_000) return;
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+    window.location.reload();
+  }, [error]);
+
+  if (isChunkLoadError(error)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold">Atualizando o sistema…</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Uma nova versão foi publicada. Carregando novamente.
+          </p>
+          <div className="mt-6">
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            >
+              Recarregar agora
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -119,6 +161,18 @@ function RootComponent() {
     });
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
+
+  useEffect(() => {
+    const onPreloadError = (event: Event) => {
+      event.preventDefault();
+      const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) ?? 0);
+      if (Date.now() - last < 20_000) return;
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
+      window.location.reload();
+    };
+    window.addEventListener("vite:preloadError", onPreloadError);
+    return () => window.removeEventListener("vite:preloadError", onPreloadError);
+  }, []);
 
   useAutoUpdate();
 
