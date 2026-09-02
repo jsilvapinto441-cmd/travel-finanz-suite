@@ -320,21 +320,45 @@ function Page() {
   );
 
   const totaisPeriodo = useMemo(() => {
-    let total = 0, recebido = 0;
+    let total = 0, abatido = 0, liquido = 0, recebido = 0;
     for (const r of filtered) {
       if (r.status === "cancelado") continue;
-      total += Number(r.valor_parcela ?? r.valor_total ?? 0);
+      total += valorOriginal(r);
+      abatido += Number(r.total_abatimentos ?? 0);
+      liquido += valorLiquido(r);
       recebido += sumFinancialPayments(scopedPayments(r));
     }
-    const restante = filtered.reduce(
-      (sum, r) => sum + Math.max(
-        Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0),
-        0,
-      ),
-      0,
-    );
-    return { total, recebido, restante };
+    const restante = filtered.reduce((sum, r) => sum + saldoLiquido(r), 0);
+    return { total, abatido, liquido, recebido, restante };
   }, [filtered, dataDe, dataAte, formaFilter]);
+
+  const saveAbatimentos = async (recebivelId: string) => {
+    const originais = editing?.recebivel_abatimentos ?? [];
+    const atuais = abatimentos.filter((a) => Number(a.valor ?? 0) > 0);
+    const atuaisIds = new Set(atuais.filter((a) => !a._new).map((a) => a.id));
+    const removidos = originais.filter((o) => !atuaisIds.has(o.id)).map((o) => o.id);
+    if (removidos.length) {
+      const { error } = await supabase.from("recebivel_abatimentos" as any).delete().in("id", removidos);
+      if (error) throw error;
+    }
+    for (const a of atuais) {
+      const payload = {
+        recebivel_id: recebivelId,
+        tipo: a.tipo,
+        valor: Number(a.valor ?? 0),
+        descricao: a.descricao || null,
+        data_abatimento: a.data_abatimento || null,
+      };
+      if (a._new) {
+        const { error } = await supabase.from("recebivel_abatimentos" as any).insert(payload as any);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("recebivel_abatimentos" as any)
+          .update(payload as any).eq("id", a.id);
+        if (error) throw error;
+      }
+    }
+  };
 
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
@@ -342,6 +366,8 @@ function Page() {
       if (editing) {
         const { error } = await supabase.from("recebiveis").update(clean as any).eq("id", editing.id);
         if (error) throw error;
+        await saveAbatimentos(editing.id);
+
 
         // Mantém as demais parcelas do mesmo grupo consistentes (empresa,
         // missão, contrato e pagador são atributos do grupo, não da parcela).
