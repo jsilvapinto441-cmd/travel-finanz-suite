@@ -668,7 +668,13 @@ function Page() {
                               <td className="px-4 py-2">{r.numero_fatura ?? "—"}</td>
                               <td className="px-4 py-2 text-right tabular-nums">
                                 <div className="font-medium">{formatCurrency(v)}</div>
-                                {pago > 0 && pago < v && (
+                                {abat > 0 && (
+                                  <>
+                                    <div className="text-[10px] text-destructive">Abatimento − {formatCurrency(abat)}</div>
+                                    <div className="text-[10px] text-primary">Líquido {formatCurrency(liq)}</div>
+                                  </>
+                                )}
+                                {pago > 0 && pago < liq && (
                                   <div className="text-[10px] text-success">Pago {formatCurrency(pago)}</div>
                                 )}
                               </td>
