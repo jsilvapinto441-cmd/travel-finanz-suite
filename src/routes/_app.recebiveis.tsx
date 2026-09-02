@@ -486,7 +486,7 @@ function Page() {
                   { header: "Forma de recebimento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
                   { header: "Conta", accessor: (r) => r.pagamento ? contaLabelById(r.pagamento.conta_bancaria_id) : "—" },
                   { header: "Total recebido no filtro", accessor: (r) => formatCurrency(r.totalRecebidoEscopo) },
-                  { header: "Saldo a receber", accessor: (r) => formatCurrency(Math.max(Number(r.rec.valor_parcela ?? r.rec.valor_total) - Number(r.rec.valor_pago ?? 0), 0)) },
+                  { header: "Saldo a receber", accessor: (r) => formatCurrency(saldoLiquido(r.rec)) },
                   { header: "Status", accessor: (r) => formatStatus(r.rec.status) },
                 ]}
               />
