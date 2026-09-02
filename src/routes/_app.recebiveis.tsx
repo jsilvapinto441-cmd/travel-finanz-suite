@@ -46,6 +46,10 @@ import {
   sumFinancialPayments,
   type FinancialPayment,
 } from "@/lib/financial-report";
+import { AbatimentosRecebivel, type AbatimentoDraft } from "@/components/abatimentos-recebivel";
+import {
+  tipoAbatimentoLabel, valorLiquido, valorOriginal, saldoLiquido, type Abatimento,
+} from "@/lib/abatimentos";
 
 export const Route = createFileRoute("/_app/recebiveis")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -80,7 +84,9 @@ type T = {
   parent_id: string | null;
   numero_parcela: number;
   frequencia: string;
+  total_abatimentos?: number | null;
   registros_pagamento?: Pagamento[];
+  recebivel_abatimentos?: Abatimento[];
 };
 
 type Pagamento = FinancialPayment & {
@@ -97,7 +103,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 function RecebivelForm({
-  values, setValues, empresas, missoes, contratos, contas,
+  values, setValues, empresas, missoes, contratos, contas, abatimentos, setAbatimentos,
 }: {
   values: Partial<T>;
   setValues: React.Dispatch<React.SetStateAction<Partial<T>>>;
@@ -105,6 +111,8 @@ function RecebivelForm({
   missoes: { id: string; nome: string }[];
   contratos: { id: string; numero: string | null; cliente: string }[];
   contas: ContaBancariaComEmpresa[];
+  abatimentos: AbatimentoDraft[];
+  setAbatimentos: (rows: AbatimentoDraft[]) => void;
 }) {
   const linkedContrato = useMemo(
     () => contratos.find((c) => c.id === values.contrato_id) ?? null,
@@ -139,6 +147,12 @@ function RecebivelForm({
       </div>
 
 
+      <AbatimentosRecebivel
+        valorOriginal={Number(values.valor_parcela ?? values.valor_total ?? 0)}
+        rows={abatimentos}
+        onChange={setAbatimentos}
+      />
+
       <div className="grid grid-cols-2 gap-3">
         <TextField label="Nº Fatura" value={values.numero_fatura} onChange={(v) => setValues({ ...values, numero_fatura: v })} />
         <SelectField
@@ -168,6 +182,7 @@ type Group = {
   contratoLabel: string | null;
   rows: T[];
   total: number;
+  abatido: number;
   pago: number;
   restante: number;
   proximoVenc: string | null;
@@ -194,18 +209,19 @@ function buildGroups(
         contrato_id: r.contrato_id,
         contratoLabel: c ? `${c.numero ?? ""} ${c.cliente}`.trim() : null,
         rows: [],
-        total: 0, pago: 0, restante: 0,
+        total: 0, abatido: 0, pago: 0, restante: 0,
         proximoVenc: null,
         countAberto: 0, countVencido: 0,
       };
       map.set(key, g);
     }
     g.rows.push(r);
-    const v = Number(r.valor_parcela ?? r.valor_total ?? 0);
+    const v = valorOriginal(r);
     const pago = sumFinancialPayments(scopedPayments(r));
     g.total += v;
+    g.abatido += Number(r.total_abatimentos ?? 0);
     g.pago += pago;
-    g.restante += Math.max(v - Number(r.valor_pago ?? 0), 0);
+    g.restante += saldoLiquido(r);
 
     if (r.status !== "pago" && r.data_vencimento) {
       const dv = new Date(r.data_vencimento);
@@ -253,6 +269,7 @@ function Page() {
   const [editing, setEditing] = useState<T | null>(null);
   const defaultValues: Partial<T> = { status: "em_aberto", parcelas: 1, frequencia: "mensal" };
   const [values, setValues] = useState<Partial<T>>(defaultValues);
+  const [abatimentos, setAbatimentos] = useState<AbatimentoDraft[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -260,7 +277,7 @@ function Page() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recebiveis")
-        .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id)")
+        .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id), recebivel_abatimentos(id, recebivel_id, tipo, valor, descricao, data_abatimento)")
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as T[];
@@ -303,21 +320,45 @@ function Page() {
   );
 
   const totaisPeriodo = useMemo(() => {
-    let total = 0, recebido = 0;
+    let total = 0, abatido = 0, liquido = 0, recebido = 0;
     for (const r of filtered) {
       if (r.status === "cancelado") continue;
-      total += Number(r.valor_parcela ?? r.valor_total ?? 0);
+      total += valorOriginal(r);
+      abatido += Number(r.total_abatimentos ?? 0);
+      liquido += valorLiquido(r);
       recebido += sumFinancialPayments(scopedPayments(r));
     }
-    const restante = filtered.reduce(
-      (sum, r) => sum + Math.max(
-        Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0),
-        0,
-      ),
-      0,
-    );
-    return { total, recebido, restante };
+    const restante = filtered.reduce((sum, r) => sum + saldoLiquido(r), 0);
+    return { total, abatido, liquido, recebido, restante };
   }, [filtered, dataDe, dataAte, formaFilter]);
+
+  const saveAbatimentos = async (recebivelId: string) => {
+    const originais = editing?.recebivel_abatimentos ?? [];
+    const atuais = abatimentos.filter((a) => Number(a.valor ?? 0) > 0);
+    const atuaisIds = new Set(atuais.filter((a) => !a._new).map((a) => a.id));
+    const removidos = originais.filter((o) => !atuaisIds.has(o.id)).map((o) => o.id);
+    if (removidos.length) {
+      const { error } = await supabase.from("recebivel_abatimentos" as any).delete().in("id", removidos);
+      if (error) throw error;
+    }
+    for (const a of atuais) {
+      const payload = {
+        recebivel_id: recebivelId,
+        tipo: a.tipo,
+        valor: Number(a.valor ?? 0),
+        descricao: a.descricao || null,
+        data_abatimento: a.data_abatimento || null,
+      };
+      if (a._new) {
+        const { error } = await supabase.from("recebivel_abatimentos" as any).insert(payload as any);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("recebivel_abatimentos" as any)
+          .update(payload as any).eq("id", a.id);
+        if (error) throw error;
+      }
+    }
+  };
 
   const upsert = useMutation({
     mutationFn: async (payload: Partial<T>) => {
@@ -325,6 +366,8 @@ function Page() {
       if (editing) {
         const { error } = await supabase.from("recebiveis").update(clean as any).eq("id", editing.id);
         if (error) throw error;
+        await saveAbatimentos(editing.id);
+
 
         // Mantém as demais parcelas do mesmo grupo consistentes (empresa,
         // missão, contrato e pagador são atributos do grupo, não da parcela).
@@ -338,8 +381,10 @@ function Page() {
           await supabase.from("recebiveis").update(shared as any).eq("parent_id", rootId).neq("id", editing.id);
         }
       } else {
-        const { error } = await supabase.from("recebiveis").insert(clean as any);
+        const { data: inserted, error } = await supabase
+          .from("recebiveis").insert(clean as any).select("id").single();
         if (error) throw error;
+        if (inserted?.id) await saveAbatimentos(inserted.id);
       }
     },
     onSuccess: () => {
@@ -350,7 +395,7 @@ function Page() {
         qc.invalidateQueries({ queryKey: key });
       }
       toast.success(editing ? "Atualizado com sucesso" : "Criado com sucesso");
-      setFormOpen(false); setEditing(null); setValues(defaultValues);
+      setFormOpen(false); setEditing(null); setValues(defaultValues); setAbatimentos([]);
     },
 
     onError: (e: Error) => toast.error(e.message),
@@ -368,8 +413,13 @@ function Page() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const openNew = () => { setEditing(null); setValues(defaultValues); setFormOpen(true); };
-  const openEdit = (row: T) => { setEditing(row); setValues(row); setFormOpen(true); };
+  const openNew = () => { setEditing(null); setValues(defaultValues); setAbatimentos([]); setFormOpen(true); };
+  const openEdit = (row: T) => {
+    setEditing(row);
+    setValues(row);
+    setAbatimentos((row.recebivel_abatimentos ?? []).map((a) => ({ ...a, valor: Number(a.valor ?? 0) })));
+    setFormOpen(true);
+  };
 
   return (
     <PageContainer>
@@ -406,7 +456,9 @@ function Page() {
                 ]}
                 summary={[
                   { label: "Registros", value: String(filtered.length) },
-                  { label: "Total a receber", value: formatCurrency(totaisPeriodo.total) },
+                  { label: "Valor original das faturas", value: formatCurrency(totaisPeriodo.total) },
+                  { label: "Abatimentos (reembolso/comissão)", value: formatCurrency(totaisPeriodo.abatido) },
+                  { label: "Total líquido a receber", value: formatCurrency(totaisPeriodo.liquido) },
                   { label: "Recebido", value: formatCurrency(totaisPeriodo.recebido) },
                   { label: "A receber", value: formatCurrency(totaisPeriodo.restante) },
                 ]}
@@ -417,13 +469,24 @@ function Page() {
                   { header: "Fatura", accessor: (r) => r.rec.numero_fatura ?? "—" },
                   { header: "Parcela", accessor: (r) => r.rec.parcelas > 1 ? `${r.rec.numero_parcela}/${r.rec.parcelas}` : "Única" },
                   { header: "Vencimento", accessor: (r) => formatDate(r.rec.data_vencimento) },
-                  { header: "Valor do contrato", accessor: (r) => formatCurrency(Number(r.rec.valor_parcela ?? r.rec.valor_total)) },
+                  { header: "Valor da fatura", accessor: (r) => formatCurrency(valorOriginal(r.rec)) },
+                  {
+                    header: "Reembolso/Comissão",
+                    accessor: (r) => formatCurrency(Number(r.rec.total_abatimentos ?? 0)),
+                  },
+                  {
+                    header: "Detalhe dos abatimentos",
+                    accessor: (r) => (r.rec.recebivel_abatimentos ?? [])
+                      .map((a) => `${tipoAbatimentoLabel(a.tipo)}: ${formatCurrency(Number(a.valor ?? 0))}${a.descricao ? ` (${a.descricao})` : ""}`)
+                      .join(" | ") || "—",
+                  },
+                  { header: "Valor líquido a receber", accessor: (r) => formatCurrency(valorLiquido(r.rec)) },
                   { header: "Data do recebimento", accessor: (r) => r.pagamento ? formatDate(r.pagamento.data_pagamento) : "—" },
                   { header: "Valor recebido", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor)) : formatCurrency(0) },
                   { header: "Forma de recebimento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
                   { header: "Conta", accessor: (r) => r.pagamento ? contaLabelById(r.pagamento.conta_bancaria_id) : "—" },
                   { header: "Total recebido no filtro", accessor: (r) => formatCurrency(r.totalRecebidoEscopo) },
-                  { header: "Saldo a receber", accessor: (r) => formatCurrency(Math.max(Number(r.rec.valor_parcela ?? r.rec.valor_total) - Number(r.rec.valor_pago ?? 0), 0)) },
+                  { header: "Saldo a receber", accessor: (r) => formatCurrency(saldoLiquido(r.rec)) },
                   { header: "Status", accessor: (r) => formatStatus(r.rec.status) },
                 ]}
               />
@@ -500,9 +563,21 @@ function Page() {
           </div>
           <div className="md:hidden grid grid-cols-3 gap-2 rounded-lg border border-border bg-muted/20 p-3 text-xs">
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total a Receber</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Valor das faturas</div>
               <div className="font-semibold tabular-nums">{formatCurrency(totaisPeriodo.total)}</div>
             </div>
+            {totaisPeriodo.abatido > 0 && (
+              <>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Abatimentos</div>
+                  <div className="font-semibold tabular-nums text-destructive">− {formatCurrency(totaisPeriodo.abatido)}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Líquido</div>
+                  <div className="font-semibold tabular-nums">{formatCurrency(totaisPeriodo.liquido)}</div>
+                </div>
+              </>
+            )}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Recebido</div>
               <div className="font-semibold tabular-nums text-success">{formatCurrency(totaisPeriodo.recebido)}</div>
@@ -549,6 +624,11 @@ function Page() {
                     </div>
                     <div className="hidden sm:flex flex-col items-end shrink-0 tabular-nums">
                       <div className="text-sm font-semibold">{formatCurrency(g.total)}</div>
+                      {g.abatido > 0 && (
+                        <div className="text-[11px] text-destructive">
+                          Abatimentos − {formatCurrency(g.abatido)} · Líquido {formatCurrency(Math.max(g.total - g.abatido, 0))}
+                        </div>
+                      )}
                       <div className="text-[11px] text-muted-foreground">
                         {g.pago > 0 && <span className="text-success">Pago {formatCurrency(g.pago)} · </span>}
                         A receber <span className="text-primary">{formatCurrency(g.restante)}</span>
@@ -573,7 +653,9 @@ function Page() {
                       </thead>
                       <tbody>
                         {g.rows.map((r) => {
-                          const v = Number(r.valor_parcela ?? r.valor_total);
+                          const v = valorOriginal(r);
+                          const abat = Number(r.total_abatimentos ?? 0);
+                          const liq = valorLiquido(r);
                           const pago = Number(r.valor_pago ?? 0);
                           return (
                             <tr key={r.id} className="border-b last:border-b-0 hover:bg-muted/30">
@@ -586,7 +668,13 @@ function Page() {
                               <td className="px-4 py-2">{r.numero_fatura ?? "—"}</td>
                               <td className="px-4 py-2 text-right tabular-nums">
                                 <div className="font-medium">{formatCurrency(v)}</div>
-                                {pago > 0 && pago < v && (
+                                {abat > 0 && (
+                                  <>
+                                    <div className="text-[10px] text-destructive">Abatimento − {formatCurrency(abat)}</div>
+                                    <div className="text-[10px] text-primary">Líquido {formatCurrency(liq)}</div>
+                                  </>
+                                )}
+                                {pago > 0 && pago < liq && (
                                   <div className="text-[10px] text-success">Pago {formatCurrency(pago)}</div>
                                 )}
                               </td>
@@ -626,7 +714,7 @@ function Page() {
         )}
       </Card>
 
-      <Dialog open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) { setEditing(null); setValues(defaultValues); } }}>
+      <Dialog open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) { setEditing(null); setValues(defaultValues); setAbatimentos([]); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar Recebível" : "Novo Recebível"}</DialogTitle>
@@ -634,7 +722,8 @@ function Page() {
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); upsert.mutate(values); }} className="space-y-4">
             <RecebivelForm values={values} setValues={setValues}
-              empresas={empresas ?? []} missoes={missoes ?? []} contratos={contratos ?? []} contas={contas ?? []} />
+              empresas={empresas ?? []} missoes={missoes ?? []} contratos={contratos ?? []} contas={contas ?? []}
+              abatimentos={abatimentos} setAbatimentos={setAbatimentos} />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={upsert.isPending} className="bg-primary text-primary-foreground hover:bg-primary/90">

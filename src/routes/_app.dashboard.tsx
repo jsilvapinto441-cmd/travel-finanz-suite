@@ -58,7 +58,7 @@ function Dashboard() {
     queryFn: async () => {
       let q = supabase
         .from("recebiveis")
-        .select("id,pagador,empresa_id,contrato_id,valor_total,valor_parcela,valor_pago,status,data_vencimento,data_recebimento,missao_id");
+        .select("id,pagador,empresa_id,contrato_id,valor_total,valor_parcela,valor_pago,total_abatimentos,status,data_vencimento,data_recebimento,missao_id");
       if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
       if (missaoId !== "all") q = q.eq("missao_id", missaoId);
       return (await q).data ?? [];
@@ -190,12 +190,13 @@ function Dashboard() {
     const totalRecebido = pagsCliente.reduce((s, p) => s + Number(p.valor ?? 0), 0);
 
     // 3. TOTAL EM ABERTO = Contratado - Recebido
-    const totalEmAberto = Math.max(totalContratado - totalRecebido, 0);
+    const totalAbatimentos = recs.filter((r) => st(r) !== "cancelado").reduce((s, r) => s + Number((r as any).total_abatimentos ?? 0), 0);
+    const totalEmAberto = Math.max(totalContratado - totalAbatimentos - totalRecebido, 0);
 
     // 4. EM ATRASO
     const totalVencido = recs
       .filter((r) => ["atrasado", "vencido"].includes(st(r)))
-      .reduce((s, r) => s + Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0), 0), 0);
+      .reduce((s, r) => s + Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number((r as any).total_abatimentos ?? 0) - Number(r.valor_pago ?? 0), 0), 0);
 
     const contratosComVencidos = new Set(
       recsAll.filter((r) => ["atrasado", "vencido"].includes(st(r)) && r.contrato_id).map((r) => r.contrato_id),
@@ -229,7 +230,7 @@ function Dashboard() {
           tipo: "Recebível" as const,
           nome: r.pagador ?? "—",
           data_vencimento: r.data_vencimento,
-          valor: Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0), 0),
+          valor: Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number((r as any).total_abatimentos ?? 0) - Number(r.valor_pago ?? 0), 0),
           status: r.status,
         })),
       ...desps
@@ -253,7 +254,7 @@ function Dashboard() {
     const despsAtrasadas = desps.filter((d: any) => vencido(d.status, d.data_vencimento));
     const qtdRecAtraso = recsAtrasados.length;
     const qtdDespAtraso = despsAtrasadas.length;
-    const valorRecAtraso = recsAtrasados.reduce((s2: number, r: any) => s2 + Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number(r.valor_pago ?? 0), 0), 0);
+    const valorRecAtraso = recsAtrasados.reduce((s2: number, r: any) => s2 + Math.max(Number(r.valor_parcela ?? r.valor_total ?? 0) - Number((r as any).total_abatimentos ?? 0) - Number(r.valor_pago ?? 0), 0), 0);
     const valorDespAtraso = despsAtrasadas.reduce((s2: number, d: any) => s2 + Math.max(Number(d.valor ?? 0) - Number(d.valor_pago ?? 0), 0), 0);
 
 

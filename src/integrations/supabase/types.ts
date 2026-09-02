@@ -1214,6 +1214,7 @@ export type Database = {
           parcelas: number
           parent_id: string | null
           status: Database["public"]["Enums"]["status_financeiro"]
+          total_abatimentos: number
           updated_at: string
           valor_pago: number
           valor_parcela: number
@@ -1238,6 +1239,7 @@ export type Database = {
           parcelas?: number
           parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
+          total_abatimentos?: number
           updated_at?: string
           valor_pago?: number
           valor_parcela?: number
@@ -1262,6 +1264,7 @@ export type Database = {
           parcelas?: number
           parent_id?: string | null
           status?: Database["public"]["Enums"]["status_financeiro"]
+          total_abatimentos?: number
           updated_at?: string
           valor_pago?: number
           valor_parcela?: number
@@ -1306,6 +1309,50 @@ export type Database = {
           {
             foreignKeyName: "recebiveis_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "recebiveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recebivel_abatimentos: {
+        Row: {
+          created_at: string
+          data_abatimento: string | null
+          descricao: string | null
+          id: string
+          owner_id: string
+          recebivel_id: string
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data_abatimento?: string | null
+          descricao?: string | null
+          id?: string
+          owner_id: string
+          recebivel_id: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          data_abatimento?: string | null
+          descricao?: string | null
+          id?: string
+          owner_id?: string
+          recebivel_id?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recebivel_abatimentos_recebivel_id_fkey"
+            columns: ["recebivel_id"]
             isOneToOne: false
             referencedRelation: "recebiveis"
             referencedColumns: ["id"]

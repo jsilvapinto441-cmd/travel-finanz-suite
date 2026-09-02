@@ -21,6 +21,7 @@ type Recebivel = {
   valor_pago: number;
   numero_parcela: number;
   parcelas: number;
+  total_abatimentos?: number | null;
 };
 
 type Despesa = {
@@ -72,9 +73,11 @@ export function PagamentoDialog(props: Props) {
 
   const titulo = mode === "despesa" ? "Registrar pagamento da despesa" : "Registrar recebimento";
   const nome = mode === "despesa" ? target?.descricao : target?.pagador;
-  const valorAlvo = mode === "despesa"
+  const valorBruto = mode === "despesa"
     ? Number(target?.valor ?? 0)
     : Number(target?.valor_parcela ?? target?.valor_total ?? 0);
+  const abatimentos = mode === "despesa" ? 0 : Number(target?.total_abatimentos ?? 0);
+  const valorAlvo = Math.max(valorBruto - abatimentos, 0);
   const valorPago = Number(target?.valor_pago ?? 0);
   const restante = Math.max(valorAlvo - valorPago, 0);
 
@@ -243,9 +246,23 @@ export function PagamentoDialog(props: Props) {
 
         <div className="grid grid-cols-3 gap-3 rounded-lg border border-border bg-muted/30 p-3 text-sm">
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Valor</div>
-            <div className="font-semibold tabular-nums">{formatCurrency(valorAlvo)}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {abatimentos > 0 ? "Valor da fatura" : "Valor"}
+            </div>
+            <div className="font-semibold tabular-nums">{formatCurrency(valorBruto)}</div>
           </div>
+          {abatimentos > 0 && (
+            <>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Abatimentos</div>
+                <div className="font-semibold tabular-nums text-destructive">− {formatCurrency(abatimentos)}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Líquido a receber</div>
+                <div className="font-semibold tabular-nums">{formatCurrency(valorAlvo)}</div>
+              </div>
+            </>
+          )}
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Já {mode === "despesa" ? "pago" : "recebido"}</div>
             <div className="font-semibold tabular-nums text-success">{formatCurrency(valorPago)}</div>
