@@ -216,11 +216,12 @@ function buildGroups(
       map.set(key, g);
     }
     g.rows.push(r);
-    const v = Number(r.valor_parcela ?? r.valor_total ?? 0);
+    const v = valorOriginal(r);
     const pago = sumFinancialPayments(scopedPayments(r));
     g.total += v;
+    g.abatido += Number(r.total_abatimentos ?? 0);
     g.pago += pago;
-    g.restante += Math.max(v - Number(r.valor_pago ?? 0), 0);
+    g.restante += saldoLiquido(r);
 
     if (r.status !== "pago" && r.data_vencimento) {
       const dv = new Date(r.data_vencimento);
