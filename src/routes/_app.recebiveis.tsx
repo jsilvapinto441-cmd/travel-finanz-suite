@@ -182,6 +182,7 @@ type Group = {
   contratoLabel: string | null;
   rows: T[];
   total: number;
+  abatido: number;
   pago: number;
   restante: number;
   proximoVenc: string | null;
