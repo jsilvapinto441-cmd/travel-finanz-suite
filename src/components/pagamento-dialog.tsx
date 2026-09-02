@@ -21,6 +21,7 @@ type Recebivel = {
   valor_pago: number;
   numero_parcela: number;
   parcelas: number;
+  total_abatimentos?: number | null;
 };
 
 type Despesa = {
