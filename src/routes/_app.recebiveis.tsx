@@ -208,7 +208,7 @@ function buildGroups(
         contrato_id: r.contrato_id,
         contratoLabel: c ? `${c.numero ?? ""} ${c.cliente}`.trim() : null,
         rows: [],
-        total: 0, pago: 0, restante: 0,
+        total: 0, abatido: 0, pago: 0, restante: 0,
         proximoVenc: null,
         countAberto: 0, countVencido: 0,
       };
