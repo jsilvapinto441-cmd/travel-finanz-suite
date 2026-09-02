@@ -563,9 +563,21 @@ function Page() {
           </div>
           <div className="md:hidden grid grid-cols-3 gap-2 rounded-lg border border-border bg-muted/20 p-3 text-xs">
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total a Receber</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Valor das faturas</div>
               <div className="font-semibold tabular-nums">{formatCurrency(totaisPeriodo.total)}</div>
             </div>
+            {totaisPeriodo.abatido > 0 && (
+              <>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Abatimentos</div>
+                  <div className="font-semibold tabular-nums text-destructive">− {formatCurrency(totaisPeriodo.abatido)}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Líquido</div>
+                  <div className="font-semibold tabular-nums">{formatCurrency(totaisPeriodo.liquido)}</div>
+                </div>
+              </>
+            )}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Recebido</div>
               <div className="font-semibold tabular-nums text-success">{formatCurrency(totaisPeriodo.recebido)}</div>
