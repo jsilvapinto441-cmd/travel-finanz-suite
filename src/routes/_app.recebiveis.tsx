@@ -103,7 +103,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 function RecebivelForm({
-  values, setValues, empresas, missoes, contratos, contas,
+  values, setValues, empresas, missoes, contratos, contas, abatimentos, setAbatimentos,
 }: {
   values: Partial<T>;
   setValues: React.Dispatch<React.SetStateAction<Partial<T>>>;
@@ -111,6 +111,8 @@ function RecebivelForm({
   missoes: { id: string; nome: string }[];
   contratos: { id: string; numero: string | null; cliente: string }[];
   contas: ContaBancariaComEmpresa[];
+  abatimentos: AbatimentoDraft[];
+  setAbatimentos: (rows: AbatimentoDraft[]) => void;
 }) {
   const linkedContrato = useMemo(
     () => contratos.find((c) => c.id === values.contrato_id) ?? null,
