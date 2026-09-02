@@ -19,7 +19,7 @@ function useMissaoTotais() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recebiveis")
-        .select("missao_id, valor_parcela, valor_pago, data_vencimento, status");
+        .select("missao_id, valor_parcela, valor_pago, total_abatimentos, data_vencimento, status");
       if (error) throw error;
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
@@ -29,7 +29,7 @@ function useMissaoTotais() {
         const t = map.get(r.missao_id) ?? { vendido: 0, recebido: 0, aReceber: 0, emAtraso: 0 };
         const parcela = Number(r.valor_parcela ?? 0);
         const pago = Number(r.valor_pago ?? 0);
-        const saldo = Math.max(0, parcela - pago);
+        const saldo = Math.max(0, parcela - Number(r.total_abatimentos ?? 0) - pago);
         t.vendido += parcela;
         t.recebido += pago;
         if (saldo > 0.005) {
