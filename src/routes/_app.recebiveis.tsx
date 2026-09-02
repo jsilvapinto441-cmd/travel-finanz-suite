@@ -624,6 +624,11 @@ function Page() {
                     </div>
                     <div className="hidden sm:flex flex-col items-end shrink-0 tabular-nums">
                       <div className="text-sm font-semibold">{formatCurrency(g.total)}</div>
+                      {g.abatido > 0 && (
+                        <div className="text-[11px] text-destructive">
+                          Abatimentos − {formatCurrency(g.abatido)} · Líquido {formatCurrency(Math.max(g.total - g.abatido, 0))}
+                        </div>
+                      )}
                       <div className="text-[11px] text-muted-foreground">
                         {g.pago > 0 && <span className="text-success">Pago {formatCurrency(g.pago)} · </span>}
                         A receber <span className="text-primary">{formatCurrency(g.restante)}</span>
