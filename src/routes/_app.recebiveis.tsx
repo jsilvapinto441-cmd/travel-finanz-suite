@@ -381,8 +381,10 @@ function Page() {
           await supabase.from("recebiveis").update(shared as any).eq("parent_id", rootId).neq("id", editing.id);
         }
       } else {
-        const { error } = await supabase.from("recebiveis").insert(clean as any);
+        const { data: inserted, error } = await supabase
+          .from("recebiveis").insert(clean as any).select("id").single();
         if (error) throw error;
+        if (inserted?.id) await saveAbatimentos(inserted.id);
       }
     },
     onSuccess: () => {
