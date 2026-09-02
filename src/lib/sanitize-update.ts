@@ -7,7 +7,7 @@ const GLOBAL_STRIP = ["id", "created_at", "updated_at", "owner_id"] as const;
 const PER_TABLE_STRIP: Record<string, string[]> = {
   contratos: ["valor_saldo"],
   despesas: ["registros_pagamento"],
-  recebiveis: ["registros_pagamento"],
+  recebiveis: ["registros_pagamento", "recebivel_abatimentos", "total_abatimentos"],
 };
 
 // Colunas JSONB reais que devem ser preservadas mesmo sendo array/objeto.
