@@ -469,7 +469,18 @@ function Page() {
                   { header: "Fatura", accessor: (r) => r.rec.numero_fatura ?? "—" },
                   { header: "Parcela", accessor: (r) => r.rec.parcelas > 1 ? `${r.rec.numero_parcela}/${r.rec.parcelas}` : "Única" },
                   { header: "Vencimento", accessor: (r) => formatDate(r.rec.data_vencimento) },
-                  { header: "Valor do contrato", accessor: (r) => formatCurrency(Number(r.rec.valor_parcela ?? r.rec.valor_total)) },
+                  { header: "Valor da fatura", accessor: (r) => formatCurrency(valorOriginal(r.rec)) },
+                  {
+                    header: "Reembolso/Comissão",
+                    accessor: (r) => formatCurrency(Number(r.rec.total_abatimentos ?? 0)),
+                  },
+                  {
+                    header: "Detalhe dos abatimentos",
+                    accessor: (r) => (r.rec.recebivel_abatimentos ?? [])
+                      .map((a) => `${tipoAbatimentoLabel(a.tipo)}: ${formatCurrency(Number(a.valor ?? 0))}${a.descricao ? ` (${a.descricao})` : ""}`)
+                      .join(" | ") || "—",
+                  },
+                  { header: "Valor líquido a receber", accessor: (r) => formatCurrency(valorLiquido(r.rec)) },
                   { header: "Data do recebimento", accessor: (r) => r.pagamento ? formatDate(r.pagamento.data_pagamento) : "—" },
                   { header: "Valor recebido", accessor: (r) => r.pagamento ? formatCurrency(Number(r.pagamento.valor)) : formatCurrency(0) },
                   { header: "Forma de recebimento", accessor: (r) => r.pagamento ? formaPagamentoLabel(r.pagamento.forma_pagamento) : "—" },
