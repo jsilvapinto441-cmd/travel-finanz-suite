@@ -84,7 +84,9 @@ type T = {
   parent_id: string | null;
   numero_parcela: number;
   frequencia: string;
+  total_abatimentos?: number | null;
   registros_pagamento?: Pagamento[];
+  recebivel_abatimentos?: Abatimento[];
 };
 
 type Pagamento = FinancialPayment & {
