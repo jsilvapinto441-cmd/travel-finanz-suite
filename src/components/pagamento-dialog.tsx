@@ -73,9 +73,11 @@ export function PagamentoDialog(props: Props) {
 
   const titulo = mode === "despesa" ? "Registrar pagamento da despesa" : "Registrar recebimento";
   const nome = mode === "despesa" ? target?.descricao : target?.pagador;
-  const valorAlvo = mode === "despesa"
+  const valorBruto = mode === "despesa"
     ? Number(target?.valor ?? 0)
     : Number(target?.valor_parcela ?? target?.valor_total ?? 0);
+  const abatimentos = mode === "despesa" ? 0 : Number(target?.total_abatimentos ?? 0);
+  const valorAlvo = Math.max(valorBruto - abatimentos, 0);
   const valorPago = Number(target?.valor_pago ?? 0);
   const restante = Math.max(valorAlvo - valorPago, 0);
 
