@@ -46,6 +46,10 @@ import {
   sumFinancialPayments,
   type FinancialPayment,
 } from "@/lib/financial-report";
+import { AbatimentosRecebivel, type AbatimentoDraft } from "@/components/abatimentos-recebivel";
+import {
+  tipoAbatimentoLabel, valorLiquido, valorOriginal, saldoLiquido, type Abatimento,
+} from "@/lib/abatimentos";
 
 export const Route = createFileRoute("/_app/recebiveis")({
   validateSearch: (search: Record<string, unknown>) => ({
