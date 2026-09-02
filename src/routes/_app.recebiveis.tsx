@@ -456,7 +456,9 @@ function Page() {
                 ]}
                 summary={[
                   { label: "Registros", value: String(filtered.length) },
-                  { label: "Total a receber", value: formatCurrency(totaisPeriodo.total) },
+                  { label: "Valor original das faturas", value: formatCurrency(totaisPeriodo.total) },
+                  { label: "Abatimentos (reembolso/comissão)", value: formatCurrency(totaisPeriodo.abatido) },
+                  { label: "Total líquido a receber", value: formatCurrency(totaisPeriodo.liquido) },
                   { label: "Recebido", value: formatCurrency(totaisPeriodo.recebido) },
                   { label: "A receber", value: formatCurrency(totaisPeriodo.restante) },
                 ]}
