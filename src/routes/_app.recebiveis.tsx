@@ -267,6 +267,7 @@ function Page() {
   const [editing, setEditing] = useState<T | null>(null);
   const defaultValues: Partial<T> = { status: "em_aberto", parcelas: 1, frequencia: "mensal" };
   const [values, setValues] = useState<Partial<T>>(defaultValues);
+  const [abatimentos, setAbatimentos] = useState<AbatimentoDraft[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -274,7 +275,7 @@ function Page() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recebiveis")
-        .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id)")
+        .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id), recebivel_abatimentos(id, recebivel_id, tipo, valor, descricao, data_abatimento)")
         .order("data_vencimento", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as T[];
