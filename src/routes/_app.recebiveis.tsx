@@ -714,7 +714,7 @@ function Page() {
         )}
       </Card>
 
-      <Dialog open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) { setEditing(null); setValues(defaultValues); } }}>
+      <Dialog open={formOpen} onOpenChange={(v) => { setFormOpen(v); if (!v) { setEditing(null); setValues(defaultValues); setAbatimentos([]); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar Recebível" : "Novo Recebível"}</DialogTitle>
