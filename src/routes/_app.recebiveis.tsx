@@ -653,7 +653,9 @@ function Page() {
                       </thead>
                       <tbody>
                         {g.rows.map((r) => {
-                          const v = Number(r.valor_parcela ?? r.valor_total);
+                          const v = valorOriginal(r);
+                          const abat = Number(r.total_abatimentos ?? 0);
+                          const liq = valorLiquido(r);
                           const pago = Number(r.valor_pago ?? 0);
                           return (
                             <tr key={r.id} className="border-b last:border-b-0 hover:bg-muted/30">
