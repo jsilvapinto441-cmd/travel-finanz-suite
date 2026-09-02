@@ -413,8 +413,13 @@ function Page() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const openNew = () => { setEditing(null); setValues(defaultValues); setFormOpen(true); };
-  const openEdit = (row: T) => { setEditing(row); setValues(row); setFormOpen(true); };
+  const openNew = () => { setEditing(null); setValues(defaultValues); setAbatimentos([]); setFormOpen(true); };
+  const openEdit = (row: T) => {
+    setEditing(row);
+    setValues(row);
+    setAbatimentos((row.recebivel_abatimentos ?? []).map((a) => ({ ...a, valor: Number(a.valor ?? 0) })));
+    setFormOpen(true);
+  };
 
   return (
     <PageContainer>
