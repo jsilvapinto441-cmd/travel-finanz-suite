@@ -395,7 +395,7 @@ function Page() {
         qc.invalidateQueries({ queryKey: key });
       }
       toast.success(editing ? "Atualizado com sucesso" : "Criado com sucesso");
-      setFormOpen(false); setEditing(null); setValues(defaultValues);
+      setFormOpen(false); setEditing(null); setValues(defaultValues); setAbatimentos([]);
     },
 
     onError: (e: Error) => toast.error(e.message),
