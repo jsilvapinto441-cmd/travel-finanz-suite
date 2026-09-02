@@ -147,6 +147,12 @@ function RecebivelForm({
       </div>
 
 
+      <AbatimentosRecebivel
+        valorOriginal={Number(values.valor_parcela ?? values.valor_total ?? 0)}
+        rows={abatimentos}
+        onChange={setAbatimentos}
+      />
+
       <div className="grid grid-cols-2 gap-3">
         <TextField label="Nº Fatura" value={values.numero_fatura} onChange={(v) => setValues({ ...values, numero_fatura: v })} />
         <SelectField
