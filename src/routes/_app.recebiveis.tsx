@@ -722,7 +722,8 @@ function Page() {
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); upsert.mutate(values); }} className="space-y-4">
             <RecebivelForm values={values} setValues={setValues}
-              empresas={empresas ?? []} missoes={missoes ?? []} contratos={contratos ?? []} contas={contas ?? []} />
+              empresas={empresas ?? []} missoes={missoes ?? []} contratos={contratos ?? []} contas={contas ?? []}
+              abatimentos={abatimentos} setAbatimentos={setAbatimentos} />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={upsert.isPending} className="bg-primary text-primary-foreground hover:bg-primary/90">
