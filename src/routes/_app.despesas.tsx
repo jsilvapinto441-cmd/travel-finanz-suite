@@ -24,8 +24,7 @@ import { formatCurrency, formatDate, formatPeriodoLabel, formatStatus } from "@/
 import { StatusBadge } from "@/components/status-badge";
 import { AnexosCell } from "@/components/anexos";
 import { PagamentoDialog } from "@/components/pagamento-dialog";
-import { CircleDollarSign, CalendarClock, Target, Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
-import { EmpresaFilter } from "@/components/empresa-filter";
+import { CircleDollarSign, CalendarClock, Target, Plus, Pencil, Trash2, Search, Loader2, Building2 } from "lucide-react";
 import { matchesQuery } from "@/lib/search-match";
 import { sortByVencimento, sortRowsByVencimento } from "@/lib/sort-vencimento";
 import { ExportButton } from "@/components/export-button";
@@ -219,8 +218,8 @@ function Page() {
   });
   const rateiosDe = (id: string): RateioItem[] => rateiosByDespesa?.get(id) ?? [];
 
-  const [empresaFilter, setEmpresaFilter] = useState("");
-  const [missaoFilter, setMissaoFilter] = useState("");
+  const [empresaFilter, setEmpresaFilter] = useState<string[]>([]);
+  const [missaoFilter, setMissaoFilter] = useState<string[]>([]);
   const initialStatus = Route.useSearch().status;
   const [statusFilter, setStatusFilter] = useState<"" | "em_aberto" | "pago" | "atrasado">(initialStatus ?? "");
   const [formaFilter, setFormaFilter] = useState<string[]>([]);
@@ -255,12 +254,12 @@ function Page() {
 
   const filtered = useMemo(() => {
     let rows = data as T[];
-    if (empresaFilter) rows = rows.filter((r) => r.empresa_id === empresaFilter);
-    if (missaoFilter)
+    if (empresaFilter.length > 0) rows = rows.filter((r) => !!r.empresa_id && empresaFilter.includes(r.empresa_id));
+    if (missaoFilter.length > 0)
       rows = rows.filter(
         (r) =>
-          r.missao_id === missaoFilter ||
-          (rateiosByDespesa?.get(r.id) ?? []).some((x) => x.missao_id === missaoFilter),
+          (!!r.missao_id && missaoFilter.includes(r.missao_id)) ||
+          (rateiosByDespesa?.get(r.id) ?? []).some((x) => missaoFilter.includes(x.missao_id)),
       );
     if (statusFilter === "pago") {
       rows = rows.filter((r) => r.status === "pago");
@@ -291,11 +290,13 @@ function Page() {
   /** Valor da despesa considerando o rateio quando há filtro por missão. */
   const valorNoEscopo = (row: T): number => {
     const total = Number(row.valor ?? 0);
-    if (!missaoFilter) return total;
+    if (missaoFilter.length === 0) return total;
     const itens = rateiosByDespesa?.get(row.id) ?? [];
     if (itens.length === 0) return total;
-    const item = itens.find((x) => x.missao_id === missaoFilter);
-    return item ? Number(item.valor ?? 0) : total;
+    const valorRateado = itens
+      .filter((x) => missaoFilter.includes(x.missao_id))
+      .reduce((sum, item) => sum + Number(item.valor ?? 0), 0);
+    return valorRateado > 0 ? valorRateado : total;
   };
   /** Proporção do valor da despesa atribuída à missão filtrada (1 quando sem rateio/filtro). */
   const fatorEscopo = (row: T): number => {
@@ -421,8 +422,8 @@ function Page() {
             title="Despesas" filename="despesas" rows={exportRows}
             subtitle={formatPeriodoLabel(dataDe, dataAte)}
             filters={[
-              { label: "Empresa", value: empresaFilter ? nomeById(empresas, empresaFilter) : "Todas as empresas" },
-              { label: "Missão", value: missaoFilter ? nomeById(missoes, missaoFilter) : "Todas as missões" },
+              { label: "Empresa", value: empresaFilter.length ? empresaFilter.map((id) => nomeById(empresas, id)).join(", ") : "Todas as empresas" },
+              { label: "Missão", value: missaoFilter.length ? missaoFilter.map((id) => nomeById(missoes, id)).join(", ") : "Todas as missões" },
               { label: "Status", value: statusFilter === "pago" ? "Somente pagas" : statusFilter === "em_aberto" ? "Somente em aberto" : statusFilter === "atrasado" ? "Somente em atraso" : "Todos os status" },
               { label: "Forma de pagamento", value: formaFilter.length ? formaFilter.map(formaPagamentoLabel).join(", ") : "Todas" },
               { label: "Período", value: formatPeriodoLabel(dataDe, dataAte).replace(/^Período:\s*/i, "") },
@@ -462,13 +463,13 @@ function Page() {
         <KpiCard
           label="Total a pagar no período"
           value={formatCurrency(totaisPeriodo.restante)}
-          hint={`${dataDe ? formatDate(dataDe) : "início"} → ${dataAte ? formatDate(dataAte) : "hoje"}${empresaFilter ? " · empresa filtrada" : ""}`}
+          hint={`${dataDe ? formatDate(dataDe) : "início"} → ${dataAte ? formatDate(dataAte) : "hoje"}${empresaFilter.length ? ` · ${empresaFilter.length === 1 ? "1 empresa" : `${empresaFilter.length} empresas`}` : ""}`}
           icon={<CalendarClock className="size-5" />} tone="warning"
         />
       ) : (
         <KpiCard
           label="Total a pagar hoje" value={formatCurrency(totalHoje)}
-          hint={empresaFilter ? "Filtrado pela empresa selecionada" : "Todas as empresas"}
+          hint={empresaFilter.length ? (empresaFilter.length === 1 ? "Filtrado pela empresa selecionada" : `Filtrado por ${empresaFilter.length} empresas`) : "Todas as empresas"}
           icon={<CalendarClock className="size-5" />} tone="warning"
         />
       )}
@@ -488,13 +489,26 @@ function Page() {
             )}
           </div>
           <div className="grid grid-cols-1 sm:flex sm:flex-wrap sm:items-center gap-2">
-            <EmpresaFilter value={empresaFilter} onChange={setEmpresaFilter} />
-            <div className="flex items-center gap-2 sm:min-w-[200px]">
-              <Target className="size-4 text-muted-foreground shrink-0" />
-              <SelectField label="" value={missaoFilter === "" ? "__all__" : missaoFilter}
-                onChange={(v) => setMissaoFilter(v === "__all__" ? "" : v)}
-                options={[{ value: "__all__", label: "Todas as missões" }, ...(missoes ?? []).map((m) => ({ value: m.id, label: m.nome }))]} />
-            </div>
+            <MultiSelectFilter
+              label="Empresa"
+              placeholder="Todas as empresas"
+              selectedLabel="empresas selecionadas"
+              allLabel="Selecionar todas as empresas"
+              icon={<Building2 className="size-4 text-muted-foreground shrink-0" />}
+              options={(empresas ?? []).map((empresa) => ({ value: empresa.id, label: empresa.nome }))}
+              value={empresaFilter}
+              onChange={setEmpresaFilter}
+            />
+            <MultiSelectFilter
+              label="Missão"
+              placeholder="Todas as missões"
+              selectedLabel="missões selecionadas"
+              allLabel="Selecionar todas as missões"
+              icon={<Target className="size-4 text-muted-foreground shrink-0" />}
+              options={(missoes ?? []).map((missao) => ({ value: missao.id, label: missao.nome }))}
+              value={missaoFilter}
+              onChange={setMissaoFilter}
+            />
             <div className="sm:min-w-[180px]">
               <SelectField label="" value={statusFilter === "" ? "__all__" : statusFilter}
                 onChange={(v) => setStatusFilter(v === "__all__" ? "" : (v as "em_aberto" | "pago" | "atrasado"))}

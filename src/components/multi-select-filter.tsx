@@ -14,6 +14,8 @@ export function MultiSelectFilter({
   onChange,
   icon,
   className = "",
+  selectedLabel = "selecionadas",
+  allLabel = "Selecionar todas",
 }: {
   label?: string;
   placeholder?: string;
@@ -22,6 +24,8 @@ export function MultiSelectFilter({
   onChange: (next: string[]) => void;
   icon?: React.ReactNode;
   className?: string;
+  selectedLabel?: string;
+  allLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const toggle = (v: string) => {
@@ -32,7 +36,7 @@ export function MultiSelectFilter({
       ? placeholder
       : value.length === 1
         ? options.find((o) => o.value === value[0])?.label ?? value[0]
-        : `${value.length} selecionadas`;
+        : `${value.length} ${selectedLabel}`;
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {icon}
@@ -41,7 +45,7 @@ export function MultiSelectFilter({
           <Button
             variant="outline"
             size="sm"
-            className="h-9 justify-between font-normal min-w-[200px]"
+            className="h-9 w-full justify-between font-normal sm:min-w-[200px]"
           >
             <span className="truncate">
               {label ? <span className="text-muted-foreground mr-1">{label}:</span> : null}
@@ -66,6 +70,17 @@ export function MultiSelectFilter({
             )}
           </div>
           <div className="max-h-64 overflow-y-auto">
+            {options.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/60 text-sm text-left border-b border-border mb-1"
+              >
+                <Checkbox checked={value.length === 0} className="pointer-events-none" />
+                <span className="flex-1 truncate">{allLabel}</span>
+                {value.length === 0 && <Check className="size-3.5 text-primary" />}
+              </button>
+            )}
             {options.map((o) => {
               const checked = value.includes(o.value);
               return (
