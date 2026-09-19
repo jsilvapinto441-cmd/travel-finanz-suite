@@ -41,10 +41,7 @@ export function formaPagamentoLabel(v: string | null | undefined): string {
 // Retorna true se o valor bruto do banco (`forma`) casa com algum dos filtros
 // selecionados. Comparação por valor OU por rótulo, para tolerar variações
 // entre `pix`/`PIX`, `transferencia`/`transferencia_bancaria`, etc.
-export function formaMatches(
-  forma: string | null | undefined,
-  selected: string[],
-): boolean {
+export function formaMatches(forma: string | null | undefined, selected: string[]): boolean {
   if (selected.length === 0) return true;
   if (!forma) return false;
   const label = formaPagamentoLabel(forma).toLowerCase();
