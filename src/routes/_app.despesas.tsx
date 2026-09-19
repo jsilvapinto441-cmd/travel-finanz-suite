@@ -624,7 +624,7 @@ function Page() {
                               <td className="px-4 py-2">{r.banco ?? "—"}</td>
                               <td className="px-4 py-2 text-right tabular-nums">
                                 <div className="font-medium">{formatCurrency(v)}</div>
-                                {rateado && missaoFilter && (
+                                {rateado && missaoFilter.length > 0 && (
                                   <div className="text-[10px] text-muted-foreground">
                                     Rateada · total {formatCurrency(Number(r.valor))}
                                   </div>
@@ -632,7 +632,7 @@ function Page() {
                                 {pago > 0 && pago < v && (
                                   <div className="text-[10px] text-success">Pago {formatCurrency(pago)}</div>
                                 )}
-                                {rateado && !missaoFilter && (
+                                {rateado && missaoFilter.length === 0 && (
                                   <div className="mt-1 space-y-0.5 text-[10px] text-muted-foreground text-right">
                                     {rateiosDe(r.id).map((rt) => (
                                       <div key={rt.id ?? rt.missao_id}>
