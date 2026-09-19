@@ -34,15 +34,6 @@ const nav = [
   { to: "/admin", label: "Administração", icon: ShieldCheck, adminOnly: true },
 ] as const;
 
-// Barra inferior mobile — 4 módulos mais usados + botão Menu
-const bottomNav = [
-  { to: "/dashboard", label: "Início", icon: LayoutDashboard },
-  { to: "/recebiveis", label: "Receber", icon: ArrowDownLeft },
-  { to: "/despesas", label: "Pagar", icon: ArrowUpRight },
-  { to: "/contratos", label: "Contratos", icon: FileText },
-] as const;
-
-
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -97,11 +88,13 @@ export function AppShell() {
   );
 
 
-  const SidebarContent = (
+  const SidebarContent = ({ showLogo = true }: { showLogo?: boolean }) => (
     <>
-      <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center">
-        <img src={rotasLogo.url} alt="ROTAS" className="h-10 w-auto object-contain" />
-      </div>
+      {showLogo && (
+        <div className="px-6 py-7 border-b border-sidebar-border flex items-center justify-center">
+          <img src={rotasLogo.url} alt="ROTAS" className="h-10 w-auto object-contain" />
+        </div>
+      )}
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
@@ -162,7 +155,7 @@ export function AppShell() {
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar desktop - fixa, não acompanha o scroll do conteúdo */}
       <aside className="hidden md:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border h-screen sticky top-0 shrink-0">
-        {SidebarContent}
+        <SidebarContent />
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
@@ -198,7 +191,7 @@ export function AppShell() {
                   </Button>
                 </SheetClose>
               </div>
-              {SidebarContent}
+              <SidebarContent showLogo={false} />
             </SheetContent>
           </Sheet>
 
@@ -220,44 +213,9 @@ export function AppShell() {
         </header>
 
 
-        <main className="flex-1 min-w-0 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <main className="flex-1 min-w-0 overflow-y-auto pb-[env(safe-area-inset-bottom)] md:pb-0">
           <Outlet />
         </main>
-
-        {/* Bottom navigation — apenas mobile, respeita safe-area do iPhone */}
-        <nav
-          className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-5 border-t border-sidebar-border bg-sidebar/95 backdrop-blur-lg text-sidebar-foreground pb-[env(safe-area-inset-bottom)]"
-          aria-label="Navegação principal"
-        >
-          {bottomNav.map((item) => {
-            const active = location.pathname.startsWith(item.to);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 h-16 text-[10px] font-medium transition-colors active:bg-sidebar-accent/60",
-                  active
-                    ? "text-primary"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground",
-                )}
-              >
-                <Icon className={cn("size-5", active && "drop-shadow-[0_0_6px_var(--color-primary)]")} />
-                <span className="truncate max-w-full px-1">{item.label}</span>
-              </Link>
-            );
-          })}
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="flex flex-col items-center justify-center gap-0.5 h-16 text-[10px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground active:bg-sidebar-accent/60 transition-colors"
-            aria-label="Abrir menu completo"
-          >
-            <Menu className="size-5" />
-            <span>Menu</span>
-          </button>
-        </nav>
       </div>
 
       <AssistantFAB />
