@@ -37,7 +37,7 @@ import { deleteRecord, CONFIRM_DELETE_MESSAGE } from "@/lib/delete-record";
 import { sanitizeUpdatePayload } from "@/lib/sanitize-update";
 import { MultiSelectFilter } from "@/components/multi-select-filter";
 import { RateioMissoes, diferencaRateio, type RateioItem } from "@/components/rateio-missoes";
-import { FORMAS_PAGAMENTO_OPTIONS, formaPagamentoLabel, formaMatches } from "@/lib/formas-pagamento";
+import { FORMAS_PAGAMENTO_DESPESAS_OPTIONS, formaPagamentoLabel, formaMatches } from "@/lib/formas-pagamento";
 import { CreditCard } from "lucide-react";
 import {
   financialRecordMatchesScope,
@@ -523,7 +523,7 @@ function Page() {
               label="Forma de pagamento"
               placeholder="Todas"
               icon={<CreditCard className="size-4 text-muted-foreground shrink-0" />}
-              options={FORMAS_PAGAMENTO_OPTIONS}
+              options={FORMAS_PAGAMENTO_DESPESAS_OPTIONS}
               value={formaFilter}
               onChange={setFormaFilter}
             />

@@ -24,12 +24,18 @@ export const FORMAS_PAGAMENTO_OPTIONS = (() => {
   const seen = new Set<string>();
   const out: { value: string; label: string }[] = [];
   for (const f of FORMAS_PAGAMENTO) {
+    if (f.value === "debito_em_conta") continue;
     if (seen.has(f.label)) continue;
     seen.add(f.label);
     out.push(f);
   }
   return out;
 })();
+
+export const FORMAS_PAGAMENTO_DESPESAS_OPTIONS = [
+  ...FORMAS_PAGAMENTO_OPTIONS,
+  { value: "debito_em_conta", label: "Débito em conta" },
+];
 
 export function formaPagamentoLabel(v: string | null | undefined): string {
   if (!v) return "—";
