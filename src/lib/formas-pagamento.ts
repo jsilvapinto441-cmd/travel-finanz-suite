@@ -12,6 +12,7 @@ export const FORMAS_PAGAMENTO: { value: string; label: string }[] = [
   { value: "transferencia_bancaria", label: "Transferência bancária" },
   { value: "ted", label: "TED" },
   { value: "deposito", label: "Depósito" },
+  { value: "debito_em_conta", label: "Débito em conta" },
   { value: "boleto", label: "Boleto" },
   { value: "cheque", label: "Cheque" },
   { value: "comissao", label: "Comissão" },
