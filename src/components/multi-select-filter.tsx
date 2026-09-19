@@ -35,7 +35,7 @@ export function MultiSelectFilter({
     value.length === 0
       ? placeholder
       : value.length === 1
-        ? options.find((o) => o.value === value[0])?.label ?? value[0]
+        ? (options.find((o) => o.value === value[0])?.label ?? value[0])
         : `${value.length} ${selectedLabel}`;
   return (
     <div className={`flex items-center gap-2 ${className}`}>
