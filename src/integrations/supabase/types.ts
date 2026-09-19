@@ -1571,6 +1571,7 @@ export type Database = {
         | "cartao"
         | "dinheiro"
         | "comissao"
+        | "debito_em_conta"
       status_contrato:
         | "rascunho"
         | "ativo"
@@ -1739,6 +1740,7 @@ export const Constants = {
         "cartao",
         "dinheiro",
         "comissao",
+        "debito_em_conta",
       ],
       status_contrato: [
         "rascunho",
