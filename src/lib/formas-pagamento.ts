@@ -12,6 +12,7 @@ export const FORMAS_PAGAMENTO: { value: string; label: string }[] = [
   { value: "transferencia_bancaria", label: "Transferência bancária" },
   { value: "ted", label: "TED" },
   { value: "deposito", label: "Depósito" },
+  { value: "debito_em_conta", label: "Débito em conta" },
   { value: "boleto", label: "Boleto" },
   { value: "cheque", label: "Cheque" },
   { value: "comissao", label: "Comissão" },
@@ -23,12 +24,18 @@ export const FORMAS_PAGAMENTO_OPTIONS = (() => {
   const seen = new Set<string>();
   const out: { value: string; label: string }[] = [];
   for (const f of FORMAS_PAGAMENTO) {
+    if (f.value === "debito_em_conta") continue;
     if (seen.has(f.label)) continue;
     seen.add(f.label);
     out.push(f);
   }
   return out;
 })();
+
+export const FORMAS_PAGAMENTO_DESPESAS_OPTIONS = [
+  ...FORMAS_PAGAMENTO_OPTIONS,
+  { value: "debito_em_conta", label: "Débito em conta" },
+];
 
 export function formaPagamentoLabel(v: string | null | undefined): string {
   if (!v) return "—";
@@ -40,10 +47,7 @@ export function formaPagamentoLabel(v: string | null | undefined): string {
 // Retorna true se o valor bruto do banco (`forma`) casa com algum dos filtros
 // selecionados. Comparação por valor OU por rótulo, para tolerar variações
 // entre `pix`/`PIX`, `transferencia`/`transferencia_bancaria`, etc.
-export function formaMatches(
-  forma: string | null | undefined,
-  selected: string[],
-): boolean {
+export function formaMatches(forma: string | null | undefined, selected: string[]): boolean {
   if (selected.length === 0) return true;
   if (!forma) return false;
   const label = formaPagamentoLabel(forma).toLowerCase();

@@ -8,7 +8,7 @@ CREATE TYPE public.categoria_despesa AS ENUM (
 );
 
 CREATE TYPE public.forma_pagamento AS ENUM (
-  'pix','transferencia','boleto','cartao','dinheiro','comissao'
+  'pix','transferencia','boleto','cartao','dinheiro','comissao','debito_em_conta'
 );
 
 CREATE TYPE public.status_contrato AS ENUM (

@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789825034932,
+      "tag": "0000_add_debito_em_conta_forma_pagamento",
+      "breakpoints": true
+    }
+  ]
+}

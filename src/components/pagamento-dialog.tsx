@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useContasBancariasComEmpresa } from "@/lib/bancos";
 import { Link } from "@tanstack/react-router";
 import { validateDateString } from "@/lib/date-validation";
+import { formaPagamentoLabel } from "@/lib/formas-pagamento";
 
 
 type Recebivel = {
@@ -53,6 +54,11 @@ const FORMAS = [
   { value: "comissao", label: "Comissão" },
 ];
 
+const FORMAS_DESPESA = [
+  ...FORMAS,
+  { value: "debito_em_conta", label: "DÉBITO EM CONTA" },
+];
+
 function todayISO() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -70,6 +76,7 @@ export function PagamentoDialog(props: Props) {
 
   const mode: "recebivel" | "despesa" = "despesa" in props && props.despesa !== undefined ? "despesa" : "recebivel";
   const target = mode === "despesa" ? (props as any).despesa : (props as any).recebivel;
+  const formas = mode === "despesa" ? FORMAS_DESPESA : FORMAS;
 
   const titulo = mode === "despesa" ? "Registrar pagamento da despesa" : "Registrar recebimento";
   const nome = mode === "despesa" ? target?.descricao : target?.pagador;
@@ -280,7 +287,7 @@ export function PagamentoDialog(props: Props) {
         >
           <TextField label="Data do pagamento" type="date" value={data} onChange={setData} required />
           <CurrencyField label={mode === "despesa" ? "Valor pago" : "Valor recebido"} value={valor} onChange={setValor} required />
-          <SelectField label="Forma de pagamento" value={forma} onChange={setForma} options={FORMAS} />
+          <SelectField label="Forma de pagamento" value={forma} onChange={setForma} options={formas} />
           <SelectField
             label={mode === "despesa" ? "Banco de saída" : "Banco de entrada"}
             value={contaId}
@@ -362,7 +369,7 @@ export function PagamentoDialog(props: Props) {
                       <tr key={p.id} className="border-t border-border/60">
                         <td className="px-3 py-2 tabular-nums">{formatDate(p.data_pagamento)}</td>
                         <td className="px-3 py-2 text-right font-medium tabular-nums">{formatCurrency(p.valor)}</td>
-                        <td className="px-3 py-2 capitalize">{p.forma_pagamento}</td>
+                        <td className="px-3 py-2">{formaPagamentoLabel(p.forma_pagamento)}</td>
                         <td className="px-3 py-2 text-muted-foreground">{conta?.banco ?? "—"}</td>
                         <td className="px-3 py-2">
                           {p.comprovante_path ? (
@@ -409,7 +416,7 @@ export function PagamentoDialog(props: Props) {
         <EditPagamentoDialog
           pagamento={editing}
           onOpenChange={(v) => { if (!v) setEditing(null); }}
-          formas={FORMAS}
+          formas={formas}
           contaOptions={contaOptions}
           onSave={async (patch) => {
             if (!editing) return;
