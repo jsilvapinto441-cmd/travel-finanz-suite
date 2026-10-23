@@ -210,12 +210,25 @@ export async function gerarBackup(
     for (let i = 0; i < TABLES.length; i++) {
       const t = TABLES[i]!;
       const col = t === "profiles" ? "id" : "owner_id";
-      const q = db.from(t).select("*") as unknown as {
-        eq: (c: string, v: string) => Promise<{ data: Row[] | null; error: { message: string } | null }>;
-      };
-      const { data, error } = await q.eq(col, ownerId);
-      if (error) throw new Error(`${t}: ${error.message}`);
-      tabelas[t] = (data ?? []) as Row[];
+      // Paginado: a API limita 1000 linhas por requisição; sem isso tabelas
+      // grandes (despesas, pagamentos, movimentações) ficavam incompletas.
+      const pageSize = 1000;
+      const linhas: Row[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const q = db.from(t).select("*") as unknown as {
+          eq: (c: string, v: string) => {
+            order: (c: string, o: { ascending: boolean }) => {
+              range: (a: number, b: number) => Promise<{ data: Row[] | null; error: { message: string } | null }>;
+            };
+          };
+        };
+        const { data, error } = await q.eq(col, ownerId).order("id", { ascending: true }).range(from, from + pageSize - 1);
+        if (error) throw new Error(`${t}: ${error.message}`);
+        const page = (data ?? []) as Row[];
+        linhas.push(...page);
+        if (page.length < pageSize) break;
+      }
+      tabelas[t] = linhas;
       contagem[t] = tabelas[t].length;
       totalRegistros += tabelas[t].length;
       await passo(job, pct(0.05 + 0.55 * ((i + 1) / TABLES.length)), `${TABLE_LABEL[t] ?? t}: ${contagem[t]} registro(s)`);
@@ -557,13 +570,32 @@ export async function restaurar(ownerId: string, backupId: string, job: Job | nu
       }
     }
 
-    const ids = rows.map((r) => String(r["id"]));
-    const { error: pruneErr } = await db
-      .from(t)
-      .delete()
-      .eq("owner_id", ownerId)
-      .not("id", "in", `(${ids.join(",")})`);
-    if (pruneErr) throw new Error(`Falha ao normalizar ${t}: ${pruneErr.message}`);
+    // Remove registros atuais que não existem no backup. Lê os IDs atuais em
+    // páginas e apaga em lotes, para não montar uma URL gigante quando a
+    // tabela tem milhares de linhas.
+    const idsBackup = new Set(rows.map((r) => String(r["id"])));
+    const atuais: string[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data: pg, error: lerErr } = await db
+        .from(t)
+        .select("id")
+        .eq("owner_id", ownerId)
+        .order("id", { ascending: true })
+        .range(from, from + 999);
+      if (lerErr) throw new Error(`Falha ao normalizar ${t}: ${lerErr.message}`);
+      const lista = (pg ?? []) as unknown as { id: string }[];
+      for (const r of lista) atuais.push(String(r.id));
+      if (lista.length < 1000) break;
+    }
+    const sobrando = atuais.filter((id) => !idsBackup.has(id));
+    for (let k = 0; k < sobrando.length; k += 200) {
+      const { error: pruneErr } = await db
+        .from(t)
+        .delete()
+        .eq("owner_id", ownerId)
+        .in("id", sobrando.slice(k, k + 200));
+      if (pruneErr) throw new Error(`Falha ao normalizar ${t}: ${pruneErr.message}`);
+    }
 
     restaurado[t] = rows.length;
     await passo(job, prog, `${TABLE_LABEL[t] ?? t}: ${rows.length} registro(s) restaurado(s)`);

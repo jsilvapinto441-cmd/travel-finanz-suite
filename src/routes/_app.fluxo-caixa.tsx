@@ -12,6 +12,7 @@ import { useContasBancarias } from "@/lib/bancos";
 import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
 import { sortByDateAsc } from "@/lib/sort-vencimento";
+import { fetchAllRows } from "@/lib/fetch-all";
 
 export const Route = createFileRoute("/_app/fluxo-caixa")({ component: Page });
 
@@ -45,17 +46,20 @@ function Page() {
   const { data, isLoading } = useQuery({
     queryKey: ["fluxo-caixa", contaId, from, to],
     queryFn: async () => {
-      let q = supabase
-        .from("movimentacoes_financeiras" as any)
-        .select("*")
-        .gte("data_movimentacao", from)
-        .lte("data_movimentacao", to)
-        .order("data_movimentacao", { ascending: true })
-        .order("created_at", { ascending: true });
-      if (contaId !== "__all__") q = q.eq("conta_bancaria_id", contaId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return sortByDateAsc((data ?? []) as unknown as Mov[], (m) => m.data_movimentacao);
+      const data = await fetchAllRows((pFrom, pTo) => {
+        let q = supabase
+          .from("movimentacoes_financeiras" as any)
+          .select("*")
+          .gte("data_movimentacao", from)
+          .lte("data_movimentacao", to);
+        if (contaId !== "__all__") q = q.eq("conta_bancaria_id", contaId);
+        return q
+          .order("data_movimentacao", { ascending: true })
+          .order("created_at", { ascending: true })
+          .order("id", { ascending: true })
+          .range(pFrom, pTo);
+      });
+      return sortByDateAsc(data as unknown as Mov[], (m) => m.data_movimentacao);
     },
   });
 

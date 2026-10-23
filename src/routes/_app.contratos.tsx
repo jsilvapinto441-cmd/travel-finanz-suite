@@ -12,6 +12,7 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 import { ExportButton } from "@/components/export-button";
 import { sortByDateAsc } from "@/lib/sort-vencimento";
+import { fetchAllRows } from "@/lib/fetch-all";
 import { EmpresaFilter } from "@/components/empresa-filter";
 import { CalendarDays, Plane, Sparkles, Users, Target } from "lucide-react";
 
@@ -358,9 +359,13 @@ function Page() {
   const { data: recebiveis } = useQuery({
     queryKey: ["recebiveis-min-por-contrato"],
     queryFn: async () =>
-      (await supabase
-        .from("recebiveis")
-        .select("contrato_id,status,valor_total,valor_pago,data_vencimento,data_recebimento")).data ?? [],
+      fetchAllRows((from, to) =>
+        supabase
+          .from("recebiveis")
+          .select("contrato_id,status,valor_total,valor_pago,data_vencimento,data_recebimento")
+          .order("id", { ascending: true })
+          .range(from, to),
+      ),
     staleTime: 30_000,
   });
 
@@ -405,7 +410,12 @@ function Page() {
     queryKey: ["contratos-export"],
     queryFn: async () =>
       sortByDateAsc(
-        ((await supabase.from("contratos").select("*").order("data_inicio", { ascending: true })).data ?? []) as any[],
+        (await fetchAllRows((from, to) =>
+          supabase.from("contratos").select("*")
+            .order("data_inicio", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, to),
+        )) as any[],
         (c) => c.data_inicio,
       ),
     staleTime: 30_000,

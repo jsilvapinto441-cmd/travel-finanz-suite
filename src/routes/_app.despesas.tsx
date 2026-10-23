@@ -27,6 +27,7 @@ import { PagamentoDialog } from "@/components/pagamento-dialog";
 import { CircleDollarSign, CalendarClock, Target, Plus, Pencil, Trash2, Search, Loader2, Building2 } from "lucide-react";
 import { matchesQuery } from "@/lib/search-match";
 import { sortByVencimento, sortRowsByVencimento } from "@/lib/sort-vencimento";
+import { fetchAllRows } from "@/lib/fetch-all";
 import { ExportButton } from "@/components/export-button";
 import { KpiCard } from "@/components/kpi-card";
 import { useContasBancariasComEmpresa } from "@/lib/bancos";
@@ -203,10 +204,13 @@ function Page() {
   const { data: rateiosByDespesa } = useQuery({
     queryKey: ["despesa-rateios"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("despesa_rateios")
-        .select("id, despesa_id, missao_id, valor");
-      if (error) throw error;
+      const data = await fetchAllRows((from, to) =>
+        supabase
+          .from("despesa_rateios")
+          .select("id, despesa_id, missao_id, valor")
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
       const map = new Map<string, RateioItem[]>();
       for (const r of (data ?? []) as any[]) {
         const list = map.get(r.despesa_id) ?? [];
@@ -244,11 +248,16 @@ function Page() {
   const { data = [], isLoading } = useQuery({
     queryKey: ["despesas"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("despesas")
-        .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id)")
-        .order("data_vencimento", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as unknown as T[];
+      // Paginado: a API limita 1000 linhas por requisição; sem isso as
+      // despesas com vencimento mais distante (ex.: 2027+) eram descartadas.
+      const rows = await fetchAllRows((from, to) =>
+        supabase.from("despesas")
+          .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id)")
+          .order("data_vencimento", { ascending: true })
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
+      return rows as unknown as T[];
     },
   });
 

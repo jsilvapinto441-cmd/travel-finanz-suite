@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/fetch-all";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { TextField, CurrencyField, SelectField, TextAreaField, Field } from "@/components/form-fields";
 import { Input } from "@/components/ui/input";
@@ -275,12 +276,15 @@ function Page() {
   const { data, isLoading } = useQuery({
     queryKey: ["recebiveis"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("recebiveis")
-        .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id), recebivel_abatimentos(id, recebivel_id, tipo, valor, descricao, data_abatimento)")
-        .order("data_vencimento", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as unknown as T[];
+      const rows = await fetchAllRows((from, to) =>
+        supabase
+          .from("recebiveis")
+          .select("*, registros_pagamento(id, data_pagamento, valor, forma_pagamento, conta_bancaria_id), recebivel_abatimentos(id, recebivel_id, tipo, valor, descricao, data_abatimento)")
+          .order("data_vencimento", { ascending: true })
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
+      return rows as unknown as T[];
     },
   });
 
