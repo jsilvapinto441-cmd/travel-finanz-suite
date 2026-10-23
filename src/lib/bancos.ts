@@ -109,9 +109,14 @@ export function useSaldosBancarios() {
       const { data: contas, error: e1 } = await supabase
         .from("contas_bancarias" as any).select("id, saldo_inicial");
       if (e1) throw e1;
-      const { data: movs, error: e2 } = await supabase
-        .from("movimentacoes_financeiras" as any).select("conta_bancaria_id, tipo, valor");
-      if (e2) throw e2;
+      // Paginado: com mais de 1000 movimentações o saldo ficava incompleto.
+      const movs = await fetchAllRows((from, to) =>
+        supabase
+          .from("movimentacoes_financeiras" as any)
+          .select("id, conta_bancaria_id, tipo, valor")
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
       const map = new Map<string, number>();
       for (const c of (contas ?? []) as any[]) {
         map.set(c.id, Number(c.saldo_inicial ?? 0));

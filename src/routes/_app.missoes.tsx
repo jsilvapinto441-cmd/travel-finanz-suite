@@ -5,6 +5,7 @@ import { DataTable } from "@/components/data-table";
 import { TextField, TextAreaField, SelectField } from "@/components/form-fields";
 import { StatusBadge } from "@/components/status-badge";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/fetch-all";
 import { formatCurrency } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/missoes")({ component: Page });
@@ -17,10 +18,13 @@ function useMissaoTotais() {
   return useQuery({
     queryKey: ["missoes-totais"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("recebiveis")
-        .select("missao_id, valor_parcela, valor_pago, total_abatimentos, data_vencimento, status");
-      if (error) throw error;
+      const data = await fetchAllRows((from, to) =>
+        supabase
+          .from("recebiveis")
+          .select("missao_id, valor_parcela, valor_pago, total_abatimentos, data_vencimento, status")
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
       const map = new Map<string, Totais>();
