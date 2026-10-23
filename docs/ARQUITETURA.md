@@ -77,3 +77,7 @@
 - Interface e mensagens em português do Brasil.
 - Cores, sombras e fontes definidas como tokens em `src/styles.css` (identidade preto e laranja, fontes Sora e Manrope).
 - `src/routeTree.gen.ts` e `src/integrations/supabase/types.ts` são gerados automaticamente e não devem ser editados à mão.
+
+## Leitura paginada
+
+A API de dados devolve no máximo 1000 linhas por requisição. Listagens, dashboard, saldos bancários, fluxo de caixa e backups leem os dados em páginas com `fetchAllRows` (`src/lib/fetch-all.ts`), ordenando por um campo estável (`id` como desempate), para que nenhum registro seja descartado.
