@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/fetch-all";
 import { PageContainer, PageHeader } from "@/components/page-header";
 import { KpiCard } from "@/components/kpi-card";
 import { Card } from "@/components/ui/card";
@@ -55,24 +56,29 @@ function Dashboard() {
 
   const { data: recebiveis } = useQuery({
     queryKey: ["dash-recebiveis", empresaId, missaoId],
-    queryFn: async () => {
-      let q = supabase
-        .from("recebiveis")
-        .select("id,pagador,empresa_id,contrato_id,valor_total,valor_parcela,valor_pago,total_abatimentos,status,data_vencimento,data_recebimento,missao_id");
-      if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
-      if (missaoId !== "all") q = q.eq("missao_id", missaoId);
-      return (await q).data ?? [];
-    },
+    queryFn: async () =>
+      fetchAllRows((from, to) => {
+        let q = supabase
+          .from("recebiveis")
+          .select("id,pagador,empresa_id,contrato_id,valor_total,valor_parcela,valor_pago,total_abatimentos,status,data_vencimento,data_recebimento,missao_id");
+        if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+        if (missaoId !== "all") q = q.eq("missao_id", missaoId);
+        return q.order("id", { ascending: true }).range(from, to);
+      }),
     staleTime: 60_000,
   });
 
   const { data: pagamentos } = useQuery({
     queryKey: ["dash-pagamentos", empresaId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("registros_pagamento" as any)
-        .select("id,data_pagamento,valor,recebivel_id,despesa_id");
-      return (data ?? []) as unknown as { id: string; data_pagamento: string; valor: number; recebivel_id: string | null; despesa_id: string | null }[];
+      const data = await fetchAllRows((from, to) =>
+        supabase
+          .from("registros_pagamento" as any)
+          .select("id,data_pagamento,valor,recebivel_id,despesa_id")
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
+      return data as unknown as { id: string; data_pagamento: string; valor: number; recebivel_id: string | null; despesa_id: string | null }[];
     },
     staleTime: 60_000,
   });
@@ -85,21 +91,27 @@ function Dashboard() {
       const rateioValor = new Map<string, number>();
       const temRateio = new Set<string>();
       if (missaoId !== "all") {
-        const { data: rat } = await supabase
-          .from("despesa_rateios")
-          .select("despesa_id, missao_id, valor");
-        for (const r of (rat ?? []) as any[]) {
+        const rat = await fetchAllRows((from, to) =>
+          supabase
+            .from("despesa_rateios")
+            .select("despesa_id, missao_id, valor")
+            .order("id", { ascending: true })
+            .range(from, to),
+        );
+        for (const r of rat as any[]) {
           temRateio.add(r.despesa_id);
           if (r.missao_id === missaoId) rateioValor.set(r.despesa_id, Number(r.valor ?? 0));
         }
       }
-      let q = supabase
-        .from("despesas")
-        .select(
-          "id,descricao,empresa_id,fornecedor_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id,registros_pagamento(data_pagamento,valor)",
-        );
-      if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
-      const rows = ((await q).data ?? []) as any[];
+      const rows = (await fetchAllRows((from, to) => {
+        let q = supabase
+          .from("despesas")
+          .select(
+            "id,descricao,empresa_id,fornecedor_id,valor,valor_pago,status,categoria,data_vencimento,data_pagamento,missao_id,registros_pagamento(data_pagamento,valor)",
+          );
+        if (empresaId !== "all") q = q.eq("empresa_id", empresaId);
+        return q.order("id", { ascending: true }).range(from, to);
+      })) as any[];
       if (missaoId === "all") {
         return { rows, fator: new Map<string, number>() };
       }

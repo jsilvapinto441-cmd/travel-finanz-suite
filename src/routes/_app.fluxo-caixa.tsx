@@ -12,6 +12,7 @@ import { useContasBancarias } from "@/lib/bancos";
 import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 import { ExportButton } from "@/components/export-button";
 import { sortByDateAsc } from "@/lib/sort-vencimento";
+import { fetchAllRows } from "@/lib/fetch-all";
 
 export const Route = createFileRoute("/_app/fluxo-caixa")({ component: Page });
 

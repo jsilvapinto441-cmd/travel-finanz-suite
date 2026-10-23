@@ -210,12 +210,25 @@ export async function gerarBackup(
     for (let i = 0; i < TABLES.length; i++) {
       const t = TABLES[i]!;
       const col = t === "profiles" ? "id" : "owner_id";
-      const q = db.from(t).select("*") as unknown as {
-        eq: (c: string, v: string) => Promise<{ data: Row[] | null; error: { message: string } | null }>;
-      };
-      const { data, error } = await q.eq(col, ownerId);
-      if (error) throw new Error(`${t}: ${error.message}`);
-      tabelas[t] = (data ?? []) as Row[];
+      // Paginado: a API limita 1000 linhas por requisição; sem isso tabelas
+      // grandes (despesas, pagamentos, movimentações) ficavam incompletas.
+      const pageSize = 1000;
+      const linhas: Row[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const q = db.from(t).select("*") as unknown as {
+          eq: (c: string, v: string) => {
+            order: (c: string, o: { ascending: boolean }) => {
+              range: (a: number, b: number) => Promise<{ data: Row[] | null; error: { message: string } | null }>;
+            };
+          };
+        };
+        const { data, error } = await q.eq(col, ownerId).order("id", { ascending: true }).range(from, from + pageSize - 1);
+        if (error) throw new Error(`${t}: ${error.message}`);
+        const page = (data ?? []) as Row[];
+        linhas.push(...page);
+        if (page.length < pageSize) break;
+      }
+      tabelas[t] = linhas;
       contagem[t] = tabelas[t].length;
       totalRegistros += tabelas[t].length;
       await passo(job, pct(0.05 + 0.55 * ((i + 1) / TABLES.length)), `${TABLE_LABEL[t] ?? t}: ${contagem[t]} registro(s)`);

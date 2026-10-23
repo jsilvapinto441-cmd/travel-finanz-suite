@@ -169,10 +169,14 @@ async function detectDuplicates(
 
   switch (module) {
     case "despesas": {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: existing } = await (supabase as any)
-        .from("despesas")
-        .select("id, descricao, valor, data_vencimento, empresa_id");
+      const existing = await fetchAllRows<Record<string, unknown>>((from, to) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any)
+          .from("despesas")
+          .select("id, descricao, valor, data_vencimento, empresa_id")
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
       const map = new Map<string, string>();
       for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
         map.set(
@@ -188,10 +192,14 @@ async function detectDuplicates(
       break;
     }
     case "recebiveis": {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: existing } = await (supabase as any)
-        .from("recebiveis")
-        .select("id, pagador, valor_total, data_vencimento, empresa_id");
+      const existing = await fetchAllRows<Record<string, unknown>>((from, to) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any)
+          .from("recebiveis")
+          .select("id, pagador, valor_total, data_vencimento, empresa_id")
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
       const map = new Map<string, string>();
       for (const r of (existing ?? []) as Array<Record<string, unknown>>) {
         map.set(
