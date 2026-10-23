@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { fetchAllRows } from "@/lib/fetch-all";
 
 // Enum categoria_despesa do banco
 const CATEGORIAS_DESPESA = [
