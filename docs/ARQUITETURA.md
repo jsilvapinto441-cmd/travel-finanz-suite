@@ -76,6 +76,8 @@
 
 ## Convenções
 
+- A entrada em `/` usa SVGs separados para logo e avião, animados com Framer Motion (transform/opacity, até 1,2 s). `intro-session.ts` controla a execução única por sessão; clique, toque ou teclado pulam, e movimento reduzido usa apenas fade. O fundo da intro e do manifesto PWA coincidem. A sessão de autenticação define o destino sem alterar as telas internas.
+
 - Interface e mensagens em português do Brasil.
 - Cores, sombras e fontes definidas como tokens em `src/styles.css` (identidade preto e laranja, fontes Sora e Manrope).
 - `src/routeTree.gen.ts` e `src/integrations/supabase/types.ts` são gerados automaticamente e não devem ser editados à mão.

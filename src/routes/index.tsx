@@ -1,5 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { createFileRoute } from "@tanstack/react-router";
 import { SplashScreen } from "@/components/splash-screen";
 
 export const Route = createFileRoute("/")({
@@ -9,14 +8,9 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Sistema interno de gestão financeira e operacional Rotas." },
       { property: "og:title", content: "Rotas" },
       { property: "og:description", content: "Sistema interno de gestão financeira e operacional Rotas." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
-  beforeLoad: async () => {
-    if (typeof window === "undefined") return;
-    const { data } = await supabase.auth.getSession();
-    if (data.session) {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
   component: SplashScreen,
 });
