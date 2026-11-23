@@ -6,3 +6,4 @@
 
 - Push sending goes through `src/lib/fcm.server.ts` (Firebase Messaging connector) from TanStack server functions/routes, never Supabase Edge Functions; due-date reminders run in `check-due-items` (server route + managed cron), with pure rules in `src/lib/due-items.ts` so they stay unit-tested.
 - Entry animation uses separate SVG logo/plane elements with Framer Motion transforms/opacity; session claiming is isolated in `intro-session.ts` so repeat visits and the duration cap are testable without rendering.
+- The intro plane must enter from off the left edge of the *screen* on every device: derive the arc from the rendered logo width in `intro-route.ts` (`computeIntroRoute`) instead of hardcoding viewBox coordinates, and keep the dashed trail bound to the plane's own position so it never runs ahead of the nose.

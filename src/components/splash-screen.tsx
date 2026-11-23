@@ -3,6 +3,7 @@ import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { claimIntroSession, INTRO_DURATION_MS } from "@/lib/intro-session";
+import { computeIntroRoute, introHeading, introPoint, INTRO_ROUTE_DEFAULT, type IntroRoute } from "@/lib/intro-route";
 
 const letters = [
   { name: "R", delay: 0.75, path: "M2 7H48C77 7 91 19 91 41C91 57 83 68 67 73L94 120H68L43 77H23V120H2ZM23 25V59H46C62 59 70 53 70 42S62 25 46 25Z" },
@@ -24,10 +25,15 @@ export function SplashScreen() {
   const sessionReady = useRef<Promise<void> | null>(null);
   const finished = useRef(false);
   const progress = useMotionValue(0);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const route = useRef<IntroRoute>(INTRO_ROUTE_DEFAULT);
+  const [trail, setTrail] = useState<IntroRoute>(INTRO_ROUTE_DEFAULT);
   // Quadratic arc: tangent-derived heading keeps the plane aligned with its route.
-  const x = useTransform(progress, (t) => (1 - t) ** 2 * -350 + 2 * (1 - t) * t * -90 + t * t * 173);
-  const y = useTransform(progress, (t) => (1 - t) ** 2 * 125 + 2 * (1 - t) * t * -100 + t * t * 59);
-  const rotate = useTransform(progress, (t) => Math.atan2(2 * ((1 - t) * -225 + t * 159), 2 * ((1 - t) * 260 + t * 263)) * 180 / Math.PI);
+  const x = useTransform(progress, (t) => introPoint(route.current, t).x);
+  const y = useTransform(progress, (t) => introPoint(route.current, t).y);
+  const rotate = useTransform(progress, (t) => introHeading(route.current, t));
+  // Dashed trail is uncovered by the plane's own position, so it never runs ahead of the nose.
+  const revealX = useTransform(progress, (t) => introPoint(route.current, t).x + 14 - (route.current.x1 + 47));
   const finish = useCallback(() => {
     if (finished.current) return;
     finished.current = true;
@@ -48,6 +54,8 @@ export function SplashScreen() {
       finish();
       return () => { active = false; };
     }
+    route.current = computeIntroRoute(stageRef.current?.getBoundingClientRect(), window.innerWidth);
+    setTrail(route.current);
     setReady(true);
     const flight = reduced ? undefined : animate(progress, 1, { duration: 0.5, ease: "linear" });
     const timer = setTimeout(finish, reduced ? 250 : INTRO_DURATION_MS);
@@ -57,6 +65,10 @@ export function SplashScreen() {
       flight?.stop();
     };
   }, [finish, progress, reduced]);
+
+  const clipX = trail.x0 - 20;
+  const clipW = trail.x1 + 47 - clipX;
+  const trailD = `M${trail.x0} ${trail.y0}Q${trail.cx} ${trail.cy} ${trail.x1} ${trail.y1}`;
 
   return (
     <motion.div
@@ -72,16 +84,16 @@ export function SplashScreen() {
     >
       <div className="splash-glow" aria-hidden="true" />
       <div className="splash-ring" aria-hidden="true" />
-      <div className="intro-stage" aria-hidden="true">
+      <div className="intro-stage" aria-hidden="true" ref={stageRef}>
         <svg className="intro-logo" viewBox="0 0 568 170">
           <defs>
-            <clipPath id="intro-route-reveal"><motion.rect x="-370" y="-140" width="570" height="330" initial={{ x: -570 }} animate={ready ? { x: 0 } : { x: -570 }} transition={{ duration: 0.5, ease: "linear" }} /></clipPath>
+            <clipPath id="intro-route-reveal"><motion.rect x={clipX} y={-140} width={clipW} height={330} style={{ x: revealX }} /></clipPath>
             <clipPath id="intro-letter-mask">{letters.map((letter) => <path key={letter.name} d={letter.path} fillRule="evenodd" />)}<path d={pin} fillRule="evenodd" /></clipPath>
           </defs>
           <motion.g initial={false} animate={{ opacity: ready && !reduced ? 0 : 1 }} transition={{ duration: 0.08 }}><StaticLogo /></motion.g>
           {ready && !reduced && <>
             <motion.g className="intro-orange" initial={{ opacity: 1 }} animate={{ opacity: 0 }} transition={{ delay: 0.6, duration: 0.3 }}>
-              <path d="M-350 125Q-90 -100 173 59" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="7 9" clipPath="url(#intro-route-reveal)" />
+              <path d={trailD} fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="7 9" clipPath="url(#intro-route-reveal)" />
             </motion.g>
             <motion.g className="intro-orange intro-pin" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5, type: "spring", stiffness: 400, damping: 15 }}>
               <circle className="intro-white" cx="173" cy="59" r="36" />
