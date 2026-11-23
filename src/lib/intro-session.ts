@@ -1,4 +1,4 @@
-export const INTRO_DURATION_MS = 1200;
+export const INTRO_DURATION_MS = 3000;
 export const INTRO_SESSION_KEY = "rotas:intro-seen";
 
 type SessionStore = Pick<Storage, "getItem" | "setItem">;
