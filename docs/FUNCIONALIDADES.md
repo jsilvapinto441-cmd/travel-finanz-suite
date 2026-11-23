@@ -89,6 +89,15 @@ Em **Configurações → Backup e Restauração**:
 - download do arquivo e importação de um backup salvo;
 - validação antes de restaurar e cópia de segurança automática do estado atual.
 
+## Notificações push
+
+Em **Configurações → Notificações**, cada usuário ativa para si (tudo vem desligado): aviso geral, recebíveis e despesas.
+
+- Resumo diário às 08:00 (Brasília), no máximo 1 push de recebíveis e 1 de despesas por dia, em todos os aparelhos do usuário.
+- Régua: 3 dias antes, véspera, dia do vencimento, 1 dia de atraso (uma vez cada) e atraso contínuo a cada 3 dias. Itens pagos ou cancelados saem na hora.
+- Valores somados em R$; o clique abre Recebíveis ou Despesas com o filtro de atrasados ou em aberto.
+- Botão **Enviar teste agora** para conferir sem esperar o horário.
+
 ## Assistente de IA
 
 - Chat sobre os dados financeiros do usuário.

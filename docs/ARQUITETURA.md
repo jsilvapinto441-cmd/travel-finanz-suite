@@ -58,13 +58,14 @@
 | `POST /api/ai-extract` | Extração estruturada de registros de arquivos/texto | Token do usuário |
 | `POST /api/ai-transcribe` | Transcrição de áudio | Token do usuário |
 | `POST /api/public/hooks/backup-cron` | Executa backups agendados (chamado pelo `pg_cron`) | Header `apikey` |
+| `POST /api/public/hooks/check-due-items` | Avisos push diários de vencimentos (agendador às 11:00 UTC; teste manual via `apikey`) | Segredo do agendador ou header `apikey` |
 | `GET /api/public/version` | Versão publicada, usada para atualização automática | Público |
 | `/mcp` | Servidor MCP com ferramentas de consulta (empresas, missões, despesas, recebíveis, resumo) | OAuth |
 
 ## Integrações
 
 - **Lovable AI Gateway** — API compatível com OpenAI para chat, extração (modelo Gemini) e transcrição de áudio. Chave apenas no servidor (`LOVABLE_API_KEY`).
-- **Firebase Cloud Messaging** — `src/lib/firebase-client.ts` gera o token no navegador (`public/firebase-messaging-sw.js` recebe em segundo plano); `sendNotification` (`src/lib/notifications.functions.ts`, autenticada) envia pela API FCM HTTP v1 via conector.
+- **Firebase Cloud Messaging** — `src/lib/firebase-client.ts` gera o token no navegador (`public/firebase-messaging-sw.js` recebe em segundo plano); `sendNotification` (`src/lib/notifications.functions.ts`, autenticada) envia pela API FCM HTTP v1 via conector. A régua de avisos fica em `src/lib/due-items.ts` (regras puras, testadas) e `src/lib/due-items.server.ts` (busca, agrupamento, envio e histórico).
 - **MCP** — `src/lib/mcp/` expõe ferramentas de leitura para clientes de IA compatíveis, autenticadas por OAuth.
 
 ## Build e execução

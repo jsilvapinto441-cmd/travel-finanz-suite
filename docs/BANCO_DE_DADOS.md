@@ -49,3 +49,10 @@ O `pg_cron` chama periodicamente o endpoint `/api/public/hooks/backup-cron`, que
 ## Recriar o banco
 
 Siga o [guia de migração](../supabase/migracao-externa/README.md): ordem de execução dos scripts, importação de dados preservando IDs e checklist de validação.
+
+
+## Notificações
+
+- `notification_settings` — preferências push por usuário (padrão desligado).
+- `user_push_tokens` — aparelhos do usuário (token único; removido se o envio o rejeitar).
+- `notification_log` — avisos enviados por item e etapa; usuário só lê, o servidor grava.

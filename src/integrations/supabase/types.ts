@@ -1092,6 +1092,68 @@ export type Database = {
           },
         ]
       }
+      notification_log: {
+        Row: {
+          enviado_em: string
+          etapa: string
+          id: string
+          item_id: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          enviado_em?: string
+          etapa: string
+          id?: string
+          item_id: string
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          enviado_em?: string
+          etapa?: string
+          id?: string
+          item_id?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_settings: {
+        Row: {
+          created_at: string
+          despesas_ativo: boolean
+          push_ativo: boolean
+          recebiveis_ativo: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          despesas_ativo?: boolean
+          push_ativo?: boolean
+          recebiveis_ativo?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          despesas_ativo?: boolean
+          push_ativo?: boolean
+          recebiveis_ativo?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prestadores_mei: {
         Row: {
           ativo: boolean
@@ -1452,6 +1514,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_push_tokens: {
+        Row: {
+          created_at: string
+          dispositivo: string
+          id: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dispositivo?: string
+          id?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dispositivo?: string
+          id?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_push_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

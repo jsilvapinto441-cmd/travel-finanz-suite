@@ -8,6 +8,13 @@
       "when": 1789825034932,
       "tag": "0000_add_debito_em_conta_forma_pagamento",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795455760742,
+      "tag": "0001_notificacoes_push",
+      "breakpoints": true
     }
   ]
 }

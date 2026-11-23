@@ -39,6 +39,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as ApiPublicHooksBackupCronRouteImport } from './routes/api/public/hooks/backup-cron'
+import { Route as ApiPublicHooksCheckDueItemsRouteImport } from './routes/api/public/hooks/check-due-items'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -193,6 +194,12 @@ const ApiPublicHooksBackupCronRoute =
     path: '/api/public/hooks/backup-cron',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCheckDueItemsRoute =
+  ApiPublicHooksCheckDueItemsRouteImport.update({
+    id: '/api/public/hooks/check-due-items',
+    path: '/api/public/hooks/check-due-items',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/api/public/hooks/backup-cron': typeof ApiPublicHooksBackupCronRoute
+  '/api/public/hooks/check-due-items': typeof ApiPublicHooksCheckDueItemsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -255,6 +263,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/api/public/hooks/backup-cron': typeof ApiPublicHooksBackupCronRoute
+  '/api/public/hooks/check-due-items': typeof ApiPublicHooksCheckDueItemsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -288,6 +297,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/api/public/hooks/backup-cron': typeof ApiPublicHooksBackupCronRoute
+  '/api/public/hooks/check-due-items': typeof ApiPublicHooksCheckDueItemsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/version'
     | '/api/public/hooks/backup-cron'
+    | '/api/public/hooks/check-due-items'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/version'
     | '/api/public/hooks/backup-cron'
+    | '/api/public/hooks/check-due-items'
   id:
     | '__root__'
     | '/'
@@ -384,6 +396,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/version'
     | '/api/public/hooks/backup-cron'
+    | '/api/public/hooks/check-due-items'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -401,6 +414,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
   ApiPublicHooksBackupCronRoute: typeof ApiPublicHooksBackupCronRoute
+  ApiPublicHooksCheckDueItemsRoute: typeof ApiPublicHooksCheckDueItemsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -615,6 +629,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBackupCronRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/check-due-items': {
+      id: '/api/public/hooks/check-due-items'
+      path: '/api/public/hooks/check-due-items'
+      fullPath: '/api/public/hooks/check-due-items'
+      preLoaderRoute: typeof ApiPublicHooksCheckDueItemsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -674,6 +695,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
   ApiPublicHooksBackupCronRoute: ApiPublicHooksBackupCronRoute,
+  ApiPublicHooksCheckDueItemsRoute: ApiPublicHooksCheckDueItemsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

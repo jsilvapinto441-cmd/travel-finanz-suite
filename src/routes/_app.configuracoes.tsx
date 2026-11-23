@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { BackupRestore } from "@/components/backup-restore";
-import { TestNotification } from "@/components/test-notification";
+import { NotificationSettings } from "@/components/notification-settings";
 
 
 export const Route = createFileRoute("/_app/configuracoes")({ component: Page });
@@ -41,9 +41,9 @@ function Page() {
 
   return (
     <PageContainer>
-      <PageHeader title="Configurações" description="Gerencie usuários, permissões e backups." />
+      <PageHeader title="Configurações" description="Gerencie usuários, permissões, notificações e backups." />
       <div className="space-y-4">
-        <TestNotification />
+        <NotificationSettings />
         <BackupRestore />
         {isAdmin ? (
           <Card className="p-4 sm:p-6">

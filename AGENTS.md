@@ -4,4 +4,4 @@
 - Never commit real customer data or screenshots of authenticated screens to `docs/`; the repo is public-facing portfolio material.
 - Client and server reads of tables that can exceed 1000 rows must go through `fetchAllRows` (`src/lib/fetch-all.ts`) with `.order(..., "id")` and `.range()`; the Data API silently caps each request at 1000 rows.
 
-- Push sending uses the authenticated `sendNotification` server function through the Firebase Messaging connector, not a Supabase Edge Function; this project keeps backend logic in TanStack server functions.
+- Push sending goes through `src/lib/fcm.server.ts` (Firebase Messaging connector) from TanStack server functions/routes, never Supabase Edge Functions; due-date reminders run in `check-due-items` (server route + managed cron), with pure rules in `src/lib/due-items.ts` so they stay unit-tested.
