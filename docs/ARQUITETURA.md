@@ -64,6 +64,7 @@
 ## Integrações
 
 - **Lovable AI Gateway** — API compatível com OpenAI para chat, extração (modelo Gemini) e transcrição de áudio. Chave apenas no servidor (`LOVABLE_API_KEY`).
+- **Firebase Cloud Messaging** — `src/lib/firebase-client.ts` gera o token no navegador (`public/firebase-messaging-sw.js` recebe em segundo plano); `sendNotification` (`src/lib/notifications.functions.ts`, autenticada) envia pela API FCM HTTP v1 via conector.
 - **MCP** — `src/lib/mcp/` expõe ferramentas de leitura para clientes de IA compatíveis, autenticadas por OAuth.
 
 ## Build e execução
