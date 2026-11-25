@@ -76,7 +76,7 @@
 
 ## Convenções
 
-- A entrada em `/` usa SVGs separados para logo e avião, animados com Framer Motion (transform/opacity/stroke-dashoffset): o avião desce em arco do canto superior, contorna a cabeça do pin desenhando o contorno laranja enquanto as letras surgem, e mergulha no centro do pin. A duração total vem de `INTRO_DURATION_MS` em `intro-session.ts` (hoje 2,2 s) e todos os tempos da sequência são escalados por `intro-timeline.ts`, então alterar o total deixa o efeito inteiro mais lento ou mais rápido — não só a tela final parada. `intro-session.ts` controla a execução única por sessão; clique, toque ou teclado pulam, e movimento reduzido usa apenas fade. O fundo da intro e do manifesto PWA coincidem. A sessão de autenticação define o destino sem alterar as telas internas.
+- A entrada em `/` usa SVGs separados para logo e avião, animados com Framer Motion (transform/opacity/stroke-dashoffset): o avião desce em arco do canto superior, contorna a cabeça do pin desenhando o contorno laranja enquanto as letras surgem, e mergulha no centro do pin. A duração total vem de `INTRO_DURATION_MS` em `intro-session.ts` (hoje 3 s) e todos os tempos da sequência são escalados por `intro-timeline.ts`, então alterar o total deixa o efeito inteiro mais lento ou mais rápido — não só a tela final parada. `intro-session.ts` controla a execução única por sessão; clique, toque ou teclado pulam, e movimento reduzido usa apenas fade. O fundo da intro e do manifesto PWA coincidem. A sessão de autenticação define o destino sem alterar as telas internas.
 
 - Interface e mensagens em português do Brasil.
 - Cores, sombras e fontes definidas como tokens em `src/styles.css` (identidade preto e laranja, fontes Sora e Manrope).
