@@ -3,32 +3,31 @@ import { introSpeed, introTimeline } from "./intro-timeline";
 import { INTRO_DURATION_MS } from "./intro-session";
 
 describe("intro timeline", () => {
-  it("keeps the original sequence when the total is the designed 1.2s", () => {
-    const t = introTimeline(1200);
-    expect(introSpeed(1200)).toBe(1);
-    expect(t.flight).toBeCloseTo(0.5);
-    expect(t.shineDelay).toBeCloseTo(0.9);
-    expect(t.exitDuration).toBeCloseTo(0.3);
-    expect(t.letterDuration).toBeCloseTo(0.15);
+  it("matches the designed 1.5s sequence at speed 1", () => {
+    const t = introTimeline(1500);
+    expect(t.entryDelay).toBeCloseTo(0.2);
+    expect(t.orbitStart).toBeCloseTo(0.45);
+    expect(t.orbitStart + t.orbit).toBeCloseTo(1.05);
+    expect(t.pinDelay).toBeCloseTo(1.05);
+    expect(t.shineDelay).toBeCloseTo(1.25);
+    expect(t.letterStagger).toBeCloseTo(0.06);
   });
 
-  it("scales the whole sequence with the total, not just the wait", () => {
-    const t = introTimeline(2200);
-    expect(introSpeed(2200)).toBeCloseTo(2200 / 1200);
-    expect(t.flight).toBeCloseTo(0.5 * (2200 / 1200));
-    expect(t.shineDelay).toBeCloseTo(0.9 * (2200 / 1200));
-    expect(t.pinStiffness).toBeCloseTo(400 / (2200 / 1200) ** 2);
-    expect(t.pinDamping).toBeCloseTo(15 / (2200 / 1200));
+  it("reveals letters on the right side before the left side (clockwise lap)", () => {
+    const t = introTimeline(1500);
+    expect(t.rightSide).toBeCloseTo(0.6);
+    expect(t.leftSide).toBeCloseTo(0.9);
   });
 
-  it("finishes the exit exactly when the total ends", () => {
-    for (const total of [1200, 2200, 3000, 4000]) {
+  it("scales the whole sequence and ends exactly at the total", () => {
+    for (const total of [1500, 2200, 3000]) {
       const t = introTimeline(total);
       expect(t.exitDelay + t.exitDuration).toBeCloseTo(total / 1000);
+      expect(t.pinStiffness).toBeCloseTo(400 / (total / 1500) ** 2);
     }
   });
 
   it("uses the project's current total", () => {
-    expect(introSpeed()).toBeCloseTo(INTRO_DURATION_MS / 1200);
+    expect(introSpeed()).toBeCloseTo(INTRO_DURATION_MS / 1500);
   });
 });

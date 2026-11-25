@@ -1,65 +1,37 @@
 import { describe, expect, it } from "vitest";
-import {
-  computeIntroRoute,
-  introHeading,
-  introPoint,
-  INTRO_PIN,
-  INTRO_ROUTE_DEFAULT,
-  toScreenX,
-} from "./intro-route";
+import { computeIntroRoute, introHeading, introPoint, INTRO_ORBIT_R, INTRO_PIN } from "./intro-route";
 
-// Phone: logo box is 80vw wide and centred.
-const PHONE = { rect: { x: 39, width: 312 }, viewport: 390 };
-// Desktop: logo box is capped at 480px and centred.
-const DESKTOP = { rect: { x: 400, width: 480 }, viewport: 1280 };
+const phone = { left: 39, top: 380, width: 312 };
+const desktop = { left: 400, top: 380, width: 480 };
 
 describe("intro route", () => {
-  it("starts the plane off the left screen edge on a phone", () => {
-    const route = computeIntroRoute(PHONE.rect, PHONE.viewport);
-    expect(toScreenX(PHONE.rect, route.x0)).toBeLessThan(0);
-  });
-
-  it("starts the plane off the left screen edge on a PC", () => {
-    const route = computeIntroRoute(DESKTOP.rect, DESKTOP.viewport);
-    expect(toScreenX(DESKTOP.rect, route.x0)).toBeLessThan(0);
-  });
-
-  it("has the plane inside the screen a quarter of the way through the flight, on both", () => {
-    for (const { rect, viewport } of [PHONE, DESKTOP]) {
-      const route = computeIntroRoute(rect, viewport);
-      const screenX = toScreenX(rect, introPoint(route, 0.25).x);
-      expect(screenX).toBeGreaterThan(0);
-      expect(screenX).toBeLessThan(viewport);
+  it("starts off the top-left of the screen on phone and desktop", () => {
+    for (const rect of [phone, desktop]) {
+      const r = computeIntroRoute(rect);
+      const s = rect.width / 568;
+      const p = introPoint(r, 0);
+      expect(rect.left + p.x * s).toBeLessThan(0);
+      expect(rect.top + p.y * s).toBeLessThan(0);
     }
   });
 
-  it("keeps a phone flight long enough to read", () => {
-    const route = computeIntroRoute(PHONE.rect, PHONE.viewport);
-    const travel = toScreenX(PHONE.rect, route.x1) - toScreenX(PHONE.rect, route.x0);
-    expect(travel).toBeGreaterThanOrEqual(0.35 * PHONE.viewport);
+  it("enters tangent to the pin head, heading right, with no corner", () => {
+    const r = computeIntroRoute(phone);
+    expect(introPoint(r, 1).y).toBeCloseTo(INTRO_PIN.y - INTRO_ORBIT_R);
+    expect(introHeading(r, 1)).toBeCloseTo(0);
+    expect(introHeading(r, 1.0001)).toBeCloseTo(0, 0);
   });
 
-  it("lands on the pin that forms the O", () => {
-    for (const { rect, viewport } of [PHONE, DESKTOP]) {
-      const route = computeIntroRoute(rect, viewport);
-      expect(introPoint(route, 1)).toEqual({ x: INTRO_PIN.x, y: INTRO_PIN.y });
-    }
+  it("laps clockwise: right side at a quarter, left side at three quarters", () => {
+    const r = computeIntroRoute(desktop);
+    expect(introPoint(r, 1.25).x).toBeCloseTo(INTRO_PIN.x + INTRO_ORBIT_R);
+    expect(introPoint(r, 1.75).x).toBeCloseTo(INTRO_PIN.x - INTRO_ORBIT_R);
+    expect(introPoint(r, 2).y).toBeCloseTo(INTRO_PIN.y - INTRO_ORBIT_R);
   });
 
-  it("keeps a finite heading the whole way", () => {
-    const route = computeIntroRoute(PHONE.rect, PHONE.viewport);
-    for (const t of [0, 0.25, 0.5, 0.999, 1]) {
-      expect(Number.isFinite(introHeading(route, t))).toBe(true);
-    }
-  });
-
-  it("falls back to the built-in arc before the logo is laid out", () => {
-    expect(computeIntroRoute(undefined, 390)).toEqual(INTRO_ROUTE_DEFAULT);
-    expect(computeIntroRoute({ x: 0, width: 0 }, 390)).toEqual(INTRO_ROUTE_DEFAULT);
-  });
-
-  it("caps the arc on ultra-wide screens", () => {
-    const route = computeIntroRoute({ x: 1040, width: 480 }, 2560);
-    expect(route.x0).toBe(-1200);
+  it("ends at the pin centre", () => {
+    const p = introPoint(computeIntroRoute(phone), 3);
+    expect(p.x).toBeCloseTo(INTRO_PIN.x);
+    expect(p.y).toBeCloseTo(INTRO_PIN.y);
   });
 });

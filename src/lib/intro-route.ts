@@ -1,72 +1,53 @@
-// Intro flight path: a quadratic arc that starts just off the left edge of the
-// *screen* (not of the logo box) and lands on the pin that forms the "O".
-// Deriving it from the rendered logo width keeps the entry readable on phones
-// and on ultra-wide monitors with the same 0.5s timing.
+// Intro flight path in logo viewBox units: a smooth arc from the top-left screen
+// corner that lands tangent on the pin head, one clockwise lap around it, then a
+// short dive to the pin's centre. Derived from the rendered logo box so the
+// plane always starts off-screen on phones and desktops alike.
 
 export const INTRO_VIEWBOX_WIDTH = 568;
 export const INTRO_PIN = { x: 173, y: 59 };
+export const INTRO_ORBIT_R = 58;
 
-export type IntroRoute = {
-  x0: number;
-  y0: number;
-  cx: number;
-  cy: number;
-  x1: number;
-  y1: number;
-};
+export type IntroRoute = { x0: number; y0: number; cx: number; cy: number };
+type Point = { x: number; y: number };
 
-/** How far left of the screen edge the plane starts, in CSS px. */
-const OFFSCREEN_PX = 20;
-/** Safety bound so ultra-wide screens do not stretch the arc forever. */
-const MIN_X0 = -1200;
-/** Fraction of the horizontal span where the arc's control point sits. */
-const CONTROL_AT = 0.5;
+const TOP = { x: INTRO_PIN.x, y: INTRO_PIN.y - INTRO_ORBIT_R };
+const OFFSCREEN_PX = 30;
 
-export const INTRO_ROUTE_DEFAULT: IntroRoute = {
-  x0: -350,
-  y0: 125,
-  cx: -90,
-  cy: -100,
-  x1: INTRO_PIN.x,
-  y1: INTRO_PIN.y,
-};
+export const INTRO_ROUTE_DEFAULT: IntroRoute = { x0: -300, y0: -260, cx: -63, cy: TOP.y };
 
-type Box = { x: number; width: number };
+type Rect = { left: number; top: number; width: number };
 
-export function computeIntroRoute(rect: Box | undefined, viewportWidth: number): IntroRoute {
-  if (!rect || rect.width <= 0 || !Number.isFinite(rect.width) || !Number.isFinite(viewportWidth)) {
-    return INTRO_ROUTE_DEFAULT;
-  }
+export function computeIntroRoute(rect: Rect | undefined): IntroRoute {
+  if (!rect || rect.width <= 0) return INTRO_ROUTE_DEFAULT;
   const scale = rect.width / INTRO_VIEWBOX_WIDTH;
-  const x0 = Math.max(MIN_X0, (-OFFSCREEN_PX - rect.x) / scale);
-  return {
-    x0,
-    y0: INTRO_ROUTE_DEFAULT.y0,
-    cx: x0 + (INTRO_PIN.x - x0) * CONTROL_AT,
-    cy: INTRO_ROUTE_DEFAULT.cy,
-    x1: INTRO_PIN.x,
-    y1: INTRO_PIN.y,
-  };
+  const x0 = Math.max(-1200, -(rect.left + OFFSCREEN_PX) / scale);
+  const y0 = Math.max(-900, -(rect.top + OFFSCREEN_PX) / scale);
+  // Control point on the tangent line y = TOP.y makes the arc meet the circle tangentially.
+  return { x0, y0, cx: (x0 + TOP.x) / 2, cy: TOP.y };
 }
 
-/** Position along the arc at t in [0,1]. */
-export function introPoint(route: IntroRoute, t: number): { x: number; y: number } {
-  const u = 1 - t;
-  return {
-    x: u * u * route.x0 + 2 * u * t * route.cx + t * t * route.x1,
-    y: u * u * route.y0 + 2 * u * t * route.cy + t * t * route.y1,
-  };
+/** Phase 0..1 entry arc, 1..2 clockwise lap, 2..3 dive to the centre. */
+export function introPoint(r: IntroRoute, p: number): Point {
+  if (p <= 1) {
+    const t = Math.max(0, p), u = 1 - t;
+    return { x: u * u * r.x0 + 2 * u * t * r.cx + t * t * TOP.x, y: u * u * r.y0 + 2 * u * t * r.cy + t * t * TOP.y };
+  }
+  if (p <= 2) {
+    const a = -Math.PI / 2 + (p - 1) * 2 * Math.PI;
+    return { x: INTRO_PIN.x + INTRO_ORBIT_R * Math.cos(a), y: INTRO_PIN.y + INTRO_ORBIT_R * Math.sin(a) };
+  }
+  const t = Math.min(1, p - 2);
+  return { x: TOP.x, y: TOP.y + (INTRO_PIN.y - TOP.y) * t };
 }
 
-/** Plane heading in degrees, following the arc's tangent. */
-export function introHeading(route: IntroRoute, t: number): number {
-  const u = 1 - t;
-  const dx = 2 * (u * (route.cx - route.x0) + t * (route.x1 - route.cx));
-  const dy = 2 * (u * (route.cy - route.y0) + t * (route.y1 - route.cy));
-  return (Math.atan2(dy, dx) * 180) / Math.PI;
-}
-
-/** Convert an arc x (viewBox units) to a screen x in CSS px. */
-export function toScreenX(rect: Box, x: number): number {
-  return rect.x + x * (rect.width / INTRO_VIEWBOX_WIDTH);
+/** Nose direction in degrees (0 = pointing right), following the curve tangent. */
+export function introHeading(r: IntroRoute, p: number): number {
+  if (p <= 1) {
+    const t = Math.max(0, p);
+    const dx = 2 * (1 - t) * (r.cx - r.x0) + 2 * t * (TOP.x - r.cx);
+    const dy = 2 * (1 - t) * (r.cy - r.y0) + 2 * t * (TOP.y - r.cy);
+    return (Math.atan2(dy, dx) * 180) / Math.PI;
+  }
+  if (p <= 2) return (p - 1) * 360;
+  return 90;
 }
