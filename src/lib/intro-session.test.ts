@@ -3,7 +3,7 @@ import { claimIntroSession, INTRO_DURATION_MS } from "./intro-session";
 
 describe("intro", () => {
   it("never exceeds the agreed total", () => {
-    expect(INTRO_DURATION_MS).toBe(3000);
+    expect(INTRO_DURATION_MS).toBe(2200);
   });
   it("runs only once in the same session", () => {
     const values = new Map<string, string>();
